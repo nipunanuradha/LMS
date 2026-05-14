@@ -8,12 +8,12 @@ import { useState } from "react";
 import Modal from "../layout/Modal";
 import { Input, Select } from "../../ui/Primitives";
 import { Ic } from "../../ui/Icons";
-import { DISTRICTS, COURSE_CATEGORIES } from "../../Constants";
+import { DISTRICTS, COURSE_CATEGORIES } from "../../constants";
 import { STUDENT_COLORS, COURSE_ACCENTS } from "../../data/mockData";
 import {
     createStudent, resetStudentPassword,
     enrollStudent, createCourse, updateCourse,
-} from "../../../Api/api";
+} from "../../../../api/api";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ADD STUDENT

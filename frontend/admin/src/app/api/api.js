@@ -17,8 +17,8 @@
 import { STUDENTS_INIT, COURSES_INIT, REVENUE_DATA } from "../data/mockData";
 
 // ── Config ────────────────────────────────────────────────────────────────────
-const USE_MOCK = true; // ← flip to false when real backend is ready
-const BASE_URL = "https://api.anuradhaathukorala.site/api"; // ← your CI4 API root
+//const USE_MOCK = true; // ← flip to false when real backend is ready
+//const BASE_URL = "https://api.anuradhaathukorala.site/api"; // ← your CI4 API root
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

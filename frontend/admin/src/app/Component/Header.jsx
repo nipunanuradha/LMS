@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from "react";
-import { Avatar } from "../../UI/Primitives";
+import { Avatar } from "../ui/Primitives";
 import { Ic } from "../ui/Icons";
 
 const NOTIFICATIONS = [

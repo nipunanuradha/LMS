@@ -5,7 +5,7 @@
 
 import { CategoryBadge } from "../components/ui/Primitives";
 import { Ic } from "../components/ui/Icons";
-import { deleteCourse as apiDeleteCourse } from "../../api/api";
+import { deleteCourse as apiDeleteCourse } from "../../../../api/api";
 
 // ── Course Thumbnail (SVG geometric pattern) ────────────────────────────────
 function CourseThumbnail({ course }) {

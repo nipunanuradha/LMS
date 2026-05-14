@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { Input } from "../components/ui/Primitives";
 import { Ic } from "../components/ui/Icons";
-import { saveSettings as apiSaveSettings } from "../../../api/api";
+import { saveSettings as apiSaveSettings } from "../../../../api/api";
 
 // ── Toggle Row ────────────────────────────────────────────────────────────────
 function ToggleRow({ label, desc, value, onChange }) {
