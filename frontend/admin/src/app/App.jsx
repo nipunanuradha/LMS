@@ -8,11 +8,11 @@ import Sidebar from "./components/layout/Sidebar";
 import Header from "./components/layout/Header";
 import ModalManager from "./components/modals/ModalManager";
 
-import DashboardPage from "./pages/DashboardPage";
-import StudentsPage from "./pages/StudentsPage";
-import CoursesPage from "./pages/CoursesPage";
-import RevenuePage from "./pages/RevenuePage";
-import SettingsPage from "./pages/SettingsPage";
+import DashboardPage from "./pages/Dashboardpage";
+import StudentsPage from "./pages/Studentspage";
+import CoursesPage from "./pages/Coursespage";
+import RevenuePage from "./pages/Revenuepage";
+import SettingsPage from "./pages/Settingspage";
 
 import { STUDENTS_INIT, COURSES_INIT } from "./data/mockData";
 import { PAGE_NAMES } from "./constants";
