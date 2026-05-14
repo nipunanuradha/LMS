@@ -1,0 +1,112 @@
+import { useState } from "react";
+import { useNavigate, Link } from "react-router";
+import { GraduationCap, Eye, EyeOff } from "lucide-react";
+
+export function Login() {
+  const navigate = useNavigate();
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    // Check localStorage for demo users
+    const users = JSON.parse(localStorage.getItem("lmsUsers") || "[]");
+    const user = users.find((u: any) => u.phone === phone && u.password === password);
+
+    // Also check mock user for demo
+    if (user || (phone === "0771234567" && password === "demo123")) {
+      const currentUser = user || { name: "John Doe", phone: "0771234567", id: "1" };
+      localStorage.setItem("currentUser", JSON.stringify(currentUser));
+      navigate("/dashboard");
+    } else {
+      setError("Invalid phone number or password");
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
+            <GraduationCap className="w-8 h-8 text-white" />
+          </div>
+          <h2>Welcome Back</h2>
+          <p className="text-gray-600 mt-2">Login to access your courses</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-8">
+          <div className="space-y-4">
+            {error && (
+              <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="phone" className="block text-sm mb-1 text-gray-700">
+                Phone Number
+              </label>
+              <input
+                id="phone"
+                type="tel"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="07XXXXXXXX"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm mb-1 text-gray-700">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter your password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Login
+            </button>
+
+            <div className="text-center text-sm">
+              <span className="text-gray-600">Don't have an account? </span>
+              <Link to="/register" className="text-blue-600 hover:underline">
+                Register here
+              </Link>
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <p className="text-xs text-gray-500 text-center">
+                Demo credentials: Phone: 0771234567 | Password: demo123
+              </p>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
