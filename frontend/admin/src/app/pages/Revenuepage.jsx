@@ -3,7 +3,7 @@
 // Revenue & enrollment analytics: KPI summary, bar chart, line chart, breakdown table.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { REVENUE_DATA } from "../data/mockData";
+import { REVENUE_DATA } from "../../mock data/Mockdata";
 
 const MAX_REVENUE = Math.max(...REVENUE_DATA.map(d => d.revenue));
 const MAX_ENROLLMENT = Math.max(...REVENUE_DATA.map(d => d.enrollments));

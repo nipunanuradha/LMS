@@ -5,15 +5,15 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from "react";
-import Modal from "../layout/Modal";
-import { Input, Select } from "../../ui/Primitives";
-import { Ic } from "../../ui/Icons";
-import { DISTRICTS, COURSE_CATEGORIES } from "../../constants";
-import { STUDENT_COLORS, COURSE_ACCENTS } from "../../data/mockData";
+import Modal from "./Modal";
+import { Input, Select } from "../UI/Primitives";
+import { Ic } from "../UI/icons";
+import { DISTRICTS, COURSE_CATEGORIES } from "../../../../Constants/config";
+import { STUDENT_COLORS, COURSE_ACCENTS } from "../../../../mock data/Mockdata";
 import {
     createStudent, resetStudentPassword,
     enrollStudent, createCourse, updateCourse,
-} from "../../../../api/api";
+} from "../../../api/api";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ADD STUDENT

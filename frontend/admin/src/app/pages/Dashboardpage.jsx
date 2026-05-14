@@ -4,8 +4,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect } from "react";
-import { Avatar, StatusBadge } from "../components/ui/Primitives";
-import { Ic } from "../components/ui/Icons";
+import { Avatar, StatusBadge } from "../Component/UI/Primitives";
+import { Ic } from "../Component/UI/icons";
 
 // ── Animated KPI Card ──────────────────────────────────────────────────────────
 function KPICard({ label, target, icon, accent }) {

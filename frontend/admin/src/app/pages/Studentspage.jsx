@@ -4,10 +4,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from "react";
-import { Avatar, StatusBadge } from "../components/ui/Primitives";
-import { Ic } from "../components/ui/Icons";
-import { DISTRICTS } from "../constants";
-import { deleteStudent as apiDeleteStudent } from "../../../../api/api";
+import { Avatar, StatusBadge } from "../Component/UI/Primitives";
+import { Ic } from "../Component/UI/icons";
+import { DISTRICTS } from "../../Constants/config";
+import { deleteStudent as apiDeleteStudent } from "../api/api";
 
 export default function StudentsPage({ students, setStudents, setModal }) {
     const [search, setSearch] = useState("");

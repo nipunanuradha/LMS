@@ -3,9 +3,9 @@
 // Dark-themed collapsible sidebar with navigation links and user footer.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { Avatar } from "../../ui/Primitives";
-import { Ic } from "../ui/Icons";
-import { NAV_ITEMS } from "../../constants";
+import { Avatar } from "./UI/Primitives";
+import { Ic } from "./UI/icons";
+import { NAV_ITEMS } from "../../../Constants/config";
 
 const NAV_ICONS = {
     dashboard: Ic.grid,

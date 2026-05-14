@@ -3,9 +3,9 @@
 // Course grid with SVG thumbnails, student count badges, edit and delete actions.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { CategoryBadge } from "../components/ui/Primitives";
-import { Ic } from "../components/ui/Icons";
-import { deleteCourse as apiDeleteCourse } from "../../../../api/api";
+import { CategoryBadge } from "../Component/UI/Primitives";
+import { Ic } from "../Component/UI/icons";
+import { deleteCourse as apiDeleteCourse } from "../api/api";
 
 // ── Course Thumbnail (SVG geometric pattern) ────────────────────────────────
 function CourseThumbnail({ course }) {

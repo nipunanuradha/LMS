@@ -4,9 +4,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from "react";
-import Sidebar from "./components/layout/Sidebar";
-import Header from "./components/layout/Header";
-import ModalManager from "./components/modals/ModalManager";
+import Sidebar from "./app/Component/Sidebar";
+import Header from "./app/Component/Header";
+import ModalManager from "./app/Component/Model/Modalmanager";
 
 import DashboardPage from "./app/pages/Dashboardpage";
 import StudentsPage from "./app/pages/Studentspage";
@@ -14,8 +14,8 @@ import CoursesPage from "./app/pages/Coursespage";
 import RevenuePage from "./app/pages/Revenuepage";
 import SettingsPage from "./app/pages/Settingspage";
 
-import { STUDENTS_INIT, COURSES_INIT } from "./data/mockData";
-import { PAGE_NAMES } from "./constants";
+import { STUDENTS_INIT, COURSES_INIT } from "./mock data/Mockdata";
+import { PAGE_NAMES } from "./Constants/config";
 
 export default function App() {
     // ── Global state ─────────────────────────────────────────────────────────────
