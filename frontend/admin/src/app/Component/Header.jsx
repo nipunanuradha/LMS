@@ -4,8 +4,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from "react";
-import { Avatar } from "../UI/Primitives";
-import { Ic } from "../UI/icons";
+import { Avatar } from "./ui/Primitives";
+import { Ic } from "./ui/icons";
 
 const NOTIFICATIONS = [
     { msg: "New student Amara Perera enrolled", time: "2m ago", dot: "#2563EB" },

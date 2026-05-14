@@ -3,7 +3,7 @@
 // Generic centered modal shell with overlay, header, close button and body slot.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { Ic } from "../UI/icons";
+import { Ic } from "../../component/ui/icons";
 
 /**
  * @param {{ title: string, subtitle?: string, onClose: () => void,

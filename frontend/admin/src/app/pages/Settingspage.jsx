@@ -4,9 +4,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from "react";
-import { Input } from "../Component/UI/Primitives";
-import { Ic } from "../Component/UI/icons";
-import { saveSettings as apiSaveSettings } from "../api/api";
+import { Input } from "../../component/ui/Primitives";
+import { Ic } from "../../component/ui/icons";
+import { saveSettings as apiSaveSettings } from "../../api/api";
 
 // ── Toggle Row ────────────────────────────────────────────────────────────────
 function ToggleRow({ label, desc, value, onChange }) {

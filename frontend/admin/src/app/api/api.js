@@ -14,7 +14,7 @@
 //     { success: false, data: null,     message: "Reason" }
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { STUDENTS_INIT, COURSES_INIT, REVENUE_DATA } from "../data/mockData";
+import { STUDENTS_INIT, COURSES_INIT, REVENUE_DATA } from "../../mock data/Mockdata";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 //const USE_MOCK = true; // ← flip to false when real backend is ready
