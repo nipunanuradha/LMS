@@ -49,39 +49,39 @@ function GlobalStyles() {
 }
 
 export default function App() {
-  const [page, setPage]           = useState("dashboard");
+  const [page, setPage] = useState("dashboard");
   const [sidebarOpen, setSidebar] = useState(true);
-  const [modal, setModal]         = useState(null);
-  const [students, setStudents]   = useState(STUDENTS_INIT);
-  const [courses, setCourses]     = useState(COURSES_INIT);
+  const [modal, setModal] = useState(null);
+  const [students, setStudents] = useState(STUDENTS_INIT);
+  const [courses, setCourses] = useState(COURSES_INIT);
   const [globalSearch, setGlobalSearch] = useState("");
 
-  const pageNames = { dashboard:"Dashboard", students:"Student Management", courses:"Course Management", revenue:"Revenue & Enrollments", settings:"Settings" };
+  const pageNames = { dashboard: "Dashboard", students: "Student Management", courses: "Course Management", revenue: "Revenue & Enrollments", settings: "Settings" };
 
   return (
     <>
       <GlobalStyles />
-      <div style={{ display:"flex", height:"100vh", fontFamily:"'DM Sans', sans-serif", background:"#F9FAFB", overflow:"hidden" }}>
+      <div style={{ display: "flex", height: "100vh", fontFamily: "'DM Sans', sans-serif", background: "#F9FAFB", overflow: "hidden" }}>
         {/* Sidebar */}
-        <Sidebar page={page} setPage={setPage} open={sidebarOpen} onClose={()=>setSidebar(false)} />
+        <Sidebar page={page} setPage={setPage} open={sidebarOpen} onClose={() => setSidebar(false)} />
         {/* Main */}
-        <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden", minWidth:0 }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
           <Header
             sidebarOpen={sidebarOpen} setSidebarOpen={setSidebar}
             notifCount={3} searchVal={globalSearch} onSearch={setGlobalSearch}
           />
           {/* Breadcrumb */}
-          <div style={{ padding:"10px 28px", background:"#fff", borderBottom:"1px solid #F1F5F9", display:"flex", alignItems:"center", gap:8 }}>
-            <span style={{ fontSize:12, color:"#94A3B8" }}>NEXTERA</span>
-            <span style={{ fontSize:12, color:"#CBD5E1" }}>/</span>
-            <span style={{ fontSize:12, color:"#2563EB", fontWeight:500 }}>{pageNames[page]}</span>
+          <div style={{ padding: "10px 28px", background: "#fff", borderBottom: "1px solid #F1F5F9", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 12, color: "#94A3B8" }}>ICT With Anuradha Nipun</span>
+            <span style={{ fontSize: 12, color: "#CBD5E1" }}>/</span>
+            <span style={{ fontSize: 12, color: "#2563EB", fontWeight: 500 }}>{pageNames[page]}</span>
           </div>
-          <main style={{ flex:1, overflow:"auto", padding:"24px 28px" }}>
+          <main style={{ flex: 1, overflow: "auto", padding: "24px 28px" }}>
             {page === "dashboard" && <DashboardPage students={students} courses={courses} setModal={setModal} />}
-            {page === "students"  && <StudentsPage  students={students} setStudents={setStudents} setModal={setModal} />}
-            {page === "courses"   && <CoursesPage   courses={courses}   setCourses={setCourses}   setModal={setModal} />}
-            {page === "revenue"   && <RevenuePage />}
-            {page === "settings"  && <SettingsPage />}
+            {page === "students" && <StudentsPage students={students} setStudents={setStudents} setModal={setModal} />}
+            {page === "courses" && <CoursesPage courses={courses} setCourses={setCourses} setModal={setModal} />}
+            {page === "revenue" && <RevenuePage />}
+            {page === "settings" && <SettingsPage />}
           </main>
         </div>
         {/* Modals */}
@@ -89,7 +89,7 @@ export default function App() {
           <ModalManager
             modal={modal} setModal={setModal}
             students={students} setStudents={setStudents}
-            courses={courses}  setCourses={setCourses}
+            courses={courses} setCourses={setCourses}
           />
         )}
       </div>
