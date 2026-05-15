@@ -52,8 +52,24 @@ export default function App() {
   const [page, setPage] = useState("dashboard");
   const [sidebarOpen, setSidebar] = useState(true);
   const [modal, setModal] = useState(null);
-  const [students, setStudents] = useState(STUDENTS_INIT);
-  const [courses, setCourses] = useState(COURSES_INIT);
+  const [students, setStudents] = useState(() => {
+    const saved = localStorage.getItem("lms_students");
+    return saved ? JSON.parse(saved) : STUDENTS_INIT;
+  });
+  
+  const [courses, setCourses] = useState(() => {
+    const saved = localStorage.getItem("lms_courses");
+    return saved ? JSON.parse(saved) : COURSES_INIT;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("lms_students", JSON.stringify(students));
+  }, [students]);
+
+  useEffect(() => {
+    localStorage.setItem("lms_courses", JSON.stringify(courses));
+  }, [courses]);
+
   const [globalSearch, setGlobalSearch] = useState("");
 
   const pageNames = { dashboard: "Dashboard", students: "Student Management", courses: "Course Management", revenue: "Revenue & Enrollments", settings: "Settings" };

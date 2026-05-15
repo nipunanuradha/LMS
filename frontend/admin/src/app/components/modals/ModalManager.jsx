@@ -94,8 +94,21 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
       title: isEdit ? modal.course.title : "",
       desc:  isEdit ? modal.course.desc  : "",
       category: isEdit ? modal.course.category : "Web Dev",
+      thumbnail: isEdit ? modal.course.thumbnail : "",
     });
     const [dragOver, setDragOver] = useState(false);
+
+    const handleImageUpload = (e) => {
+      const file = e.target.files?.[0] || e.dataTransfer?.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setFormState(prev => ({ ...prev, thumbnail: reader.result }));
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
     const save = () => {
       if (!formState.title.trim()) return;
       if (isEdit) {
@@ -103,7 +116,7 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
       } else {
         const id = `C${String(courses.length+1).padStart(3,"0")}`;
         const accents = ["#2563EB","#059669","#7C3AED","#D97706","#DC2626","#0891B2"];
-        setCourses(prev => [...prev, { id, title:formState.title, desc:formState.desc, students:0, category:formState.category, accent:accents[prev.length%accents.length] }]);
+        setCourses(prev => [...prev, { id, title:formState.title, desc:formState.desc, students:0, category:formState.category, thumbnail:formState.thumbnail, accent:accents[prev.length%accents.length] }]);
       }
       close();
     };
@@ -121,18 +134,28 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
           {/* File Upload */}
           <div>
             <label style={{ fontSize:13, fontWeight:500, color:"#374151", display:"block", marginBottom:6 }}>Course Thumbnail</label>
-            <div onDragOver={e=>{e.preventDefault();setDragOver(true);}} onDragLeave={()=>setDragOver(false)} onDrop={e=>{e.preventDefault();setDragOver(false);}}
-              style={{ border:`2px dashed ${dragOver?"#2563EB":"#CBD5E1"}`, borderRadius:12, padding:"28px 20px", textAlign:"center", background:dragOver?"#EFF6FF":"#F8FAFC", transition:"all 0.2s", cursor:"pointer" }}>
-              <div style={{ color:dragOver?"#2563EB":"#94A3B8", display:"flex", flexDirection:"column", alignItems:"center", gap:10 }}>
-                {Ic.upload(32)}
-                <div style={{ fontSize:14, fontWeight:500, color:dragOver?"#1D4ED8":"#64748B" }}>
-                  Drag & drop image here
+            <div onDragOver={e=>{e.preventDefault();setDragOver(true);}} onDragLeave={()=>setDragOver(false)} onDrop={e=>{e.preventDefault();setDragOver(false); handleImageUpload(e);}}
+              style={{ border:`2px dashed ${dragOver?"#2563EB":"#CBD5E1"}`, borderRadius:12, padding:"28px 20px", textAlign:"center", background:dragOver?"#EFF6FF":"#F8FAFC", transition:"all 0.2s", cursor:"pointer", position:"relative", overflow:"hidden" }}>
+              {formState.thumbnail ? (
+                <div style={{ position:"absolute", inset:0 }}>
+                  <img src={formState.thumbnail} alt="Thumbnail" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                  <div style={{ position:"absolute", inset:0, background:"rgba(0,0,0,0.5)", display:"flex", alignItems:"center", justifyContent:"center", opacity:dragOver?1:0, transition:"opacity 0.2s" }}>
+                    <span style={{ color:"white", fontWeight:500 }}>Drop to replace</span>
+                  </div>
                 </div>
-                <div style={{ fontSize:12, color:"#94A3B8" }}>PNG, JPG, WEBP · Max 5MB · 16:9 ratio</div>
-                <button style={{ padding:"7px 16px", borderRadius:8, border:"1.5px solid #CBD5E1", background:"#fff", color:"#374151", cursor:"pointer", fontSize:13, fontWeight:500, marginTop:4, transition:"all 0.15s" }}>
-                  Browse Files
-                </button>
-              </div>
+              ) : (
+                <div style={{ color:dragOver?"#2563EB":"#94A3B8", display:"flex", flexDirection:"column", alignItems:"center", gap:10 }}>
+                  {Ic.upload(32)}
+                  <div style={{ fontSize:14, fontWeight:500, color:dragOver?"#1D4ED8":"#64748B" }}>
+                    Drag & drop image here
+                  </div>
+                  <div style={{ fontSize:12, color:"#94A3B8" }}>PNG, JPG, WEBP · Max 5MB · 16:9 ratio</div>
+                  <label style={{ display:"inline-block", padding:"7px 16px", borderRadius:8, border:"1.5px solid #CBD5E1", background:"#fff", color:"#374151", cursor:"pointer", fontSize:13, fontWeight:500, marginTop:4, transition:"all 0.15s" }}>
+                    Browse Files
+                    <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display:"none" }} />
+                  </label>
+                </div>
+              )}
             </div>
           </div>
           <div style={{ display:"flex", gap:10, marginTop:4 }}>

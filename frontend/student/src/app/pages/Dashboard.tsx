@@ -8,6 +8,7 @@ export function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [showEditPassword, setShowEditPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
+  const [courses, setCourses] = useState<any[]>([]);
 
   useEffect(() => {
     const currentUser = localStorage.getItem("currentUser");
@@ -15,6 +16,18 @@ export function Dashboard() {
       navigate("/");
     } else {
       setUser(JSON.parse(currentUser));
+    }
+
+    const savedCourses = localStorage.getItem("lms_courses");
+    if (savedCourses) {
+      const parsedCourses = JSON.parse(savedCourses);
+      const formattedCourses = parsedCourses.map((c: any) => ({
+        ...c,
+        expiryDate: c.expiryDate || new Date(new Date().getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      }));
+      setCourses(formattedCourses);
+    } else {
+      setCourses(mockCourses);
     }
   }, [navigate]);
 
@@ -102,7 +115,7 @@ export function Dashboard() {
         <div>
           <h2 className="mb-6">My Enrolled Courses</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {mockCourses.map((course) => {
+            {courses.map((course) => {
               const daysRemaining = getDaysRemaining(course.expiryDate);
               const isExpiringSoon = daysRemaining <= 7 && daysRemaining > 0;
               const isExpired = daysRemaining < 0;
@@ -111,10 +124,26 @@ export function Dashboard() {
                 <Link
                   key={course.id}
                   to={`/course/${course.id}`}
-                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 hover:border-blue-300"
+                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 hover:border-blue-300 flex flex-col"
                 >
-                  <div className="flex flex-col h-full">
-                    <h3 className="mb-4">{course.title}</h3>
+                  {/* Thumbnail Section */}
+                  <div className="w-full h-40 bg-gray-100 rounded-md mb-4 overflow-hidden relative shrink-0">
+                    {course.thumbnail ? (
+                      <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
+                    ) : course.accent ? (
+                      <div className="w-full h-full flex items-center justify-center text-white font-bold text-2xl" style={{ backgroundColor: course.accent }}>
+                        {course.category}
+                      </div>
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-blue-500 font-semibold">
+                        {course.title.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card Content Section */}
+                  <div className="flex flex-col flex-1">
+                    <h3 className="mb-4 font-semibold text-lg text-gray-800">{course.title}</h3>
 
                     <div className="mt-auto">
                       <div
@@ -141,7 +170,7 @@ export function Dashboard() {
                       {!isExpired && (
                         <div className="mt-3 bg-gray-200 rounded-full h-2 overflow-hidden">
                           <div
-                            className={`h-full ${isExpiringSoon ? "bg-orange-500" : "bg-blue-600"
+                            className={`h-full ${isExpiringSoon ? "bg-gradient-to-r from-orange-500 to-red-500" : "bg-gradient-to-r from-blue-500 to-green-500"
                               }`}
                             style={{
                               width: `${Math.min(100, (daysRemaining / 90) * 100)}%`,
