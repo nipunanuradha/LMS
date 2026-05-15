@@ -33,7 +33,7 @@ export function Registration() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-green-400 rounded-full mb-4">
             <GraduationCap className="w-8 h-8 text-white" />
           </div>
           <h2>Student Registration</h2>
@@ -84,7 +84,7 @@ export function Registration() {
                   value={formData.district}
                   onChange={(e) => setFormData({ ...formData, district: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter your district"
+                  placeholder="Enter your district or address"
                 />
               </div>
 
@@ -114,7 +114,7 @@ export function Registration() {
 
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-colors"
+                className="w-full bg-gradient-to-r from-blue-600 to-green-400 text-white py-2.5 rounded-lg hover:from-blue-700 hover:to-green-500 transition-all duration-300"
               >
                 Register
               </button>
@@ -136,7 +136,7 @@ export function Registration() {
                 </svg>
               </div>
               <h3 className="mb-4">Registration Successful!</h3>
-              <p className="text-gray-600 mb-4">Your account has been created. Please save your login credentials:</p>
+              <p className="text-gray-600 mb-4">Your account has been created. Please Remember & save your login credentials:</p>
 
               <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
                 <div className="mb-2">

@@ -31,7 +31,7 @@ export function Login() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-green-400 rounded-full mb-4">
             <GraduationCap className="w-8 h-8 text-white" />
           </div>
           <h2>Welcome Back</h2>
@@ -87,7 +87,7 @@ export function Login() {
 
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-colors"
+              className="w-full bg-gradient-to-r from-blue-600 to-green-400 text-white py-2.5 rounded-lg hover:from-blue-700 hover:to-green-500 transition-all duration-300"
             >
               Login
             </button>
@@ -100,6 +100,9 @@ export function Login() {
             </div>
 
             <div className="mt-6 pt-6 border-t border-gray-200">
+              <p className="text-xs text-gray-500 text-center">
+                Please Enter Previously You provided Phone Number & Genarated Password or Changed password.
+              </p>
               <p className="text-xs text-gray-500 text-center">
                 Demo credentials: Phone: 0771234567 | Password: demo123
               </p>
