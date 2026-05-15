@@ -45,10 +45,10 @@ export function Dashboard() {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-green-400 rounded-full flex items-center justify-center">
               <GraduationCap className="w-6 h-6 text-white" />
             </div>
-            <span className="font-semibold text-gray-900">Student Portal</span>
+            <span className="font-semibold text-gray-900">ICT Academy With Anuradha Athukorala</span>
           </div>
           <button
             onClick={handleLogout}
@@ -61,7 +61,7 @@ export function Dashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg shadow-md p-6 mb-8 text-white">
+        <div className="bg-gradient-to-r from-blue-500 to-blue-800 rounded-lg shadow-md p-6 mb-8 text-white">
           <div className="flex items-start justify-between">
             <div>
               <h1 className="mb-2">Welcome Back, {user.name}!</h1>
@@ -118,13 +118,12 @@ export function Dashboard() {
 
                     <div className="mt-auto">
                       <div
-                        className={`flex items-center gap-2 ${
-                          isExpired
-                            ? "text-red-600"
-                            : isExpiringSoon
+                        className={`flex items-center gap-2 ${isExpired
+                          ? "text-red-600"
+                          : isExpiringSoon
                             ? "text-orange-600"
                             : "text-gray-600"
-                        }`}
+                          }`}
                       >
                         <Clock className="w-5 h-5" />
                         <span className="text-sm">
@@ -142,9 +141,8 @@ export function Dashboard() {
                       {!isExpired && (
                         <div className="mt-3 bg-gray-200 rounded-full h-2 overflow-hidden">
                           <div
-                            className={`h-full ${
-                              isExpiringSoon ? "bg-orange-500" : "bg-blue-600"
-                            }`}
+                            className={`h-full ${isExpiringSoon ? "bg-orange-500" : "bg-blue-600"
+                              }`}
                             style={{
                               width: `${Math.min(100, (daysRemaining / 90) * 100)}%`,
                             }}

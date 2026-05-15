@@ -104,7 +104,7 @@ export function Login() {
                 Please Enter Previously You provided Phone Number & Genarated Password or Changed password.
               </p>
               <p className="text-xs text-gray-500 text-center">
-                Demo credentials: Phone: 0771234567 | Password: demo123
+                Demo credentials: Phone: 077xxxxx67 | Password: demo123
               </p>
             </div>
           </div>
