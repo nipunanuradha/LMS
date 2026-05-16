@@ -72,6 +72,7 @@ export default function Header({ sidebarOpen, setSidebarOpen, notifCount, search
                 label: "Sign Out", icon: Ic.close, danger: true, onClick: () => {
                   if (window.confirm("Are you sure you want to sign out?")) {
                     localStorage.removeItem("currentUser");
+                    localStorage.removeItem("admin_isLoggedIn");
                     window.location.reload();
                   }
                 }

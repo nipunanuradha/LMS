@@ -18,17 +18,19 @@ export function Dashboard() {
       setUser(JSON.parse(currentUser));
     }
 
-    const savedCourses = localStorage.getItem("lms_courses");
-    if (savedCourses) {
-      const parsedCourses = JSON.parse(savedCourses);
-      const formattedCourses = parsedCourses.map((c: any) => ({
-        ...c,
-        expiryDate: c.expiryDate || new Date(new Date().getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      }));
-      setCourses(formattedCourses);
-    } else {
-      setCourses(mockCourses);
-    }
+    const fetchCourses = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/courses");
+        const data = await response.json();
+        if (response.ok) {
+          setCourses(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch courses:", err);
+      }
+    };
+
+    fetchCourses();
   }, [navigate]);
 
   const handleLogout = () => {

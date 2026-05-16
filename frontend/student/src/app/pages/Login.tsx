@@ -9,21 +9,34 @@ export function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    // Check localStorage for demo users
-    const users = JSON.parse(localStorage.getItem("lmsUsers") || "[]");
-    const user = users.find((u: any) => u.phone === phone && u.password === password);
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone_number: phone, password }),
+      });
 
-    // Also check mock user for demo
-    if (user || (phone === "0771234567" && password === "demo123")) {
-      const currentUser = user || { name: "John Doe", phone: "0771234567", id: "1" };
-      localStorage.setItem("currentUser", JSON.stringify(currentUser));
-      navigate("/dashboard");
-    } else {
-      setError("Invalid phone number or password");
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("currentUser", JSON.stringify(data.user));
+
+        if (data.user.role === "admin") {
+          localStorage.setItem("admin_isLoggedIn", "true");
+          window.location.href = "http://localhost:5174"; // Redirect to Admin App
+        } else {
+          navigate("/dashboard");
+        }
+      } else {
+        setError(data.message || "Invalid login credentials");
+      }
+    } catch (err) {
+      setError("Server connection failed. Please try again.");
     }
   };
 
@@ -104,7 +117,7 @@ export function Login() {
                 Please Enter Previously You provided Phone Number & Genarated Password or Changed password.
               </p>
               <p className="text-xs text-gray-500 text-center">
-                Demo credentials: Phone: 077xxxxx67 | Password: demo123
+                Demo: Student (077xxxxx67 / demo123)
               </p>
             </div>
           </div>

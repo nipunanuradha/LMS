@@ -49,28 +49,37 @@ function GlobalStyles() {
 }
 
 export default function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem("admin_isLoggedIn") === "true";
+  });
   const [page, setPage] = useState("dashboard");
   const [sidebarOpen, setSidebar] = useState(true);
   const [modal, setModal] = useState(null);
-  const [students, setStudents] = useState(() => {
-    const saved = localStorage.getItem("lms_students");
-    return saved ? JSON.parse(saved) : STUDENTS_INIT;
-  });
-
-  const [courses, setCourses] = useState(() => {
-    const saved = localStorage.getItem("lms_courses");
-    return saved ? JSON.parse(saved) : COURSES_INIT;
-  });
+  const [students, setStudents] = useState([]);
+  const [courses, setCourses] = useState([]);
 
   useEffect(() => {
-    localStorage.setItem("lms_students", JSON.stringify(students));
-  }, [students]);
-
-  useEffect(() => {
-    localStorage.setItem("lms_courses", JSON.stringify(courses));
-  }, [courses]);
+    if (isLoggedIn) {
+      const fetchData = async () => {
+        try {
+          const sRes = await fetch("http://localhost:5000/api/admin/students");
+          const cRes = await fetch("http://localhost:5000/api/courses");
+          if (sRes.ok) setStudents(await sRes.json());
+          if (cRes.ok) setCourses(await cRes.json());
+        } catch (err) {
+          console.error("Data fetch failed:", err);
+        }
+      };
+      fetchData();
+    }
+  }, [isLoggedIn]);
 
   const [globalSearch, setGlobalSearch] = useState("");
+
+  if (!isLoggedIn) {
+    window.location.href = "http://localhost:5173";
+    return null;
+  }
 
   const pageNames = { dashboard: "Dashboard", students: "Student Management", courses: "Course Management", revenue: "Revenue & Enrollments", settings: "Settings" };
 

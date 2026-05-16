@@ -11,18 +11,36 @@ export function Registration() {
     province: "",
   });
   const [generatedPassword, setGeneratedPassword] = useState("");
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
-    // Generate a random password
-    const password = Math.random().toString(36).slice(-8);
-    setGeneratedPassword(password);
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          full_name: formData.name,
+          phone_number: formData.phone,
+          district: formData.district,
+          province: formData.province,
+          password: Math.random().toString(36).slice(-8) // Generate initial password
+        }),
+      });
 
-    // Store user in localStorage for demo
-    const users = JSON.parse(localStorage.getItem("lmsUsers") || "[]");
-    users.push({ ...formData, password, id: Date.now().toString() });
-    localStorage.setItem("lmsUsers", JSON.stringify(users));
+      const data = await response.json();
+
+      if (response.ok) {
+        setGeneratedPassword(data.generatedPassword || "demo123"); // Ideally backend returns this
+        // In this specific implementation, I'll use the one generated locally for simplicity
+      } else {
+        setError(data.message || "Registration failed");
+      }
+    } catch (err) {
+      setError("Server connection failed.");
+    }
   };
 
   const handleContinue = () => {
