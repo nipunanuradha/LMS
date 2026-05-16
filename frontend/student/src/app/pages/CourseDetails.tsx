@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router";
-import { ArrowLeft, Bell, Video, FileText, ExternalLink as ExternalLinkIcon, Download, Check } from "lucide-react";
+import { ArrowLeft, Bell, Video, FileText, ExternalLink as ExternalLinkIcon, Download, Check, Eye } from "lucide-react";
 import {
   mockCourses,
   mockRecordings,
@@ -103,18 +103,16 @@ export function CourseDetails() {
                       setActiveTab(tab.id);
                       setCurrentVideo(null);
                     }}
-                    className={`flex items-center gap-2 px-6 py-4 border-b-2 whitespace-nowrap transition-colors ${
-                      activeTab === tab.id
-                        ? "border-blue-600 text-blue-600"
-                        : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
-                    }`}
+                    className={`flex items-center gap-2 px-6 py-4 border-b-2 whitespace-nowrap transition-colors ${activeTab === tab.id
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
+                      }`}
                   >
                     <Icon className="w-5 h-5" />
                     <span>{tab.label}</span>
                     <span
-                      className={`px-2 py-0.5 rounded-full text-xs ${
-                        activeTab === tab.id ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600"
-                      }`}
+                      className={`px-2 py-0.5 rounded-full text-xs ${activeTab === tab.id ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600"
+                        }`}
                     >
                       {tab.count}
                     </span>
@@ -173,7 +171,7 @@ export function CourseDetails() {
                           onClick={() => setCurrentVideo(recording.id)}
                           className="flex-1 flex items-center gap-3 text-left"
                         >
-                          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                          <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-green-400 rounded-full flex items-center justify-center flex-shrink-0">
                             <Video className="w-5 h-5 text-white" />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -184,11 +182,10 @@ export function CourseDetails() {
 
                         <button
                           onClick={() => toggleWatched(recording.id)}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                            watchedVideos.has(recording.id)
-                              ? "bg-green-100 text-green-700 hover:bg-green-200"
-                              : "bg-white text-gray-600 hover:bg-gray-200 border border-gray-300"
-                          }`}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${watchedVideos.has(recording.id)
+                            ? "bg-green-100 text-green-700 hover:bg-green-200"
+                            : "bg-white text-gray-600 hover:bg-gray-200 border border-gray-300"
+                            }`}
                         >
                           <Check className="w-4 h-4" />
                           <span className="text-sm hidden sm:inline">
@@ -221,14 +218,25 @@ export function CourseDetails() {
                           <p className="text-sm text-gray-500">{pdf.size}</p>
                         </div>
                       </div>
-                      <a
-                        href={pdf.downloadUrl}
-                        download
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        <Download className="w-4 h-4" />
-                        <span className="hidden sm:inline">Download</span>
-                      </a>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={pdf.downloadUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span className="hidden sm:inline">View</span>
+                        </a>
+                        <a
+                          href={pdf.downloadUrl}
+                          download
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span className="hidden sm:inline">Download</span>
+                        </a>
+                      </div>
                     </div>
                   ))
                 )}
