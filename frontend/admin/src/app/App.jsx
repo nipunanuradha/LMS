@@ -56,7 +56,7 @@ export default function App() {
     const saved = localStorage.getItem("lms_students");
     return saved ? JSON.parse(saved) : STUDENTS_INIT;
   });
-  
+
   const [courses, setCourses] = useState(() => {
     const saved = localStorage.getItem("lms_courses");
     return saved ? JSON.parse(saved) : COURSES_INIT;
@@ -85,6 +85,7 @@ export default function App() {
           <Header
             sidebarOpen={sidebarOpen} setSidebarOpen={setSidebar}
             notifCount={3} searchVal={globalSearch} onSearch={setGlobalSearch}
+            setPage={setPage} setModal={setModal}
           />
           {/* Breadcrumb */}
           <div style={{ padding: "10px 28px", background: "#fff", borderBottom: "1px solid #F1F5F9", display: "flex", alignItems: "center", gap: 8 }}>

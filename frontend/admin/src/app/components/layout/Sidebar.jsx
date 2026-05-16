@@ -22,7 +22,7 @@ export default function Sidebar({ page, setPage, open, onClose }) {
               {Ic.cap(24)}
             </div>
             <div>
-              <div style={{ color: "#F8FAFC", fontWeight: 700, fontSize: 15, letterSpacing: "-0.3px" }}>ICT Academy With Anuradha Athukorala</div>
+              <div style={{ color: "#F8FAFC", fontWeight: 700, fontSize: 15, letterSpacing: "-0.3px" }}>ICT Academy</div>
               <div style={{ color: "#64748B", fontSize: 11, fontWeight: 500, letterSpacing: "0.5px" }}>LMS ADMIN</div>
             </div>
           </div>
