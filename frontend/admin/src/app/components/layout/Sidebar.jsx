@@ -18,8 +18,8 @@ export default function Sidebar({ page, setPage, open, onClose }) {
         {/* Logo */}
         <div style={{ padding: "24px 20px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: "#2563EB", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg style={{ width: 18, height: 18 }} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>
+            <div style={{ width: 40, height: 40, background: "linear-gradient(to right, #2563EB, #4ADE80)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+              {Ic.cap(24)}
             </div>
             <div>
               <div style={{ color: "#F8FAFC", fontWeight: 700, fontSize: 15, letterSpacing: "-0.3px" }}>ICT Academy With Anuradha Athukorala</div>
