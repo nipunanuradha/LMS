@@ -13,7 +13,7 @@ export default function StudentsPage({ students, setStudents, setModal }) {
     const matchStatus = statusFilter === "All" || s.status === statusFilter;
     return matchSearch && matchDist && matchStatus;
   });
-  const deleteStudent = id => setStudents(prev => prev.filter(s=>s.id!==id));
+  const deleteStudent = id => setStudents(prev => prev.filter(s => s.id !== id));
   return (
     <div style={{ animation: "fadeIn 0.25s ease", display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -66,18 +66,18 @@ export default function StudentsPage({ students, setStudents, setModal }) {
                 <td style={{ padding: "13px 16px", fontSize: 13, color: "#64748B", borderBottom: i < filtered.length - 1 ? "1px solid #F8FAFC" : "none" }}>{s.district}</td>
                 <td style={{ padding: "13px 16px", borderBottom: i < filtered.length - 1 ? "1px solid #F8FAFC" : "none" }}><StatusBadge status={s.status || "Active"} /></td>
                 <td style={{ padding: "13px 16px", fontSize: 13, color: "#64748B", borderBottom: i < filtered.length - 1 ? "1px solid #F8FAFC" : "none" }}>{new Date(s.created_at).toLocaleDateString()}</td>
-                <td style={{ padding:"13px 16px", borderBottom:i<filtered.length-1?"1px solid #F8FAFC":"none" }}>
-                  <div style={{ display:"flex", gap:6 }}>
-                    <button onClick={() => setModal({type:"resetPw",student:s})} className="btn-warning"
-                      style={{ display:"flex", alignItems:"center", gap:5, padding:"6px 10px", borderRadius:7, border:"1.5px solid #FDE68A", background:"#FFFBEB", color:"#92400E", cursor:"pointer", fontSize:12, fontWeight:500, transition:"all 0.15s" }}>
+                <td style={{ padding: "13px 16px", borderBottom: i < filtered.length - 1 ? "1px solid #F8FAFC" : "none" }}>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => setModal({ type: "resetPw", student: s })} className="btn-warning"
+                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 7, border: "1.5px solid #FDE68A", background: "#FFFBEB", color: "#92400E", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all 0.15s" }}>
                       {Ic.key()} Reset PW
                     </button>
-                    <button onClick={() => setModal({type:"enroll",student:s})} className="btn-success"
-                      style={{ display:"flex", alignItems:"center", gap:5, padding:"6px 10px", borderRadius:7, border:"1.5px solid #A7F3D0", background:"#F0FDF4", color:"#065F46", cursor:"pointer", fontSize:12, fontWeight:500, transition:"all 0.15s" }}>
+                    <button onClick={() => setModal({ type: "enroll", student: s })} className="btn-success"
+                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 7, border: "1.5px solid #A7F3D0", background: "#F0FDF4", color: "#065F46", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all 0.15s" }}>
                       {Ic.plus(12)} Enroll
                     </button>
                     <button onClick={() => deleteStudent(s.id)} className="btn-danger"
-                      style={{ display:"flex", alignItems:"center", gap:5, padding:"6px 10px", borderRadius:7, border:"1.5px solid #FECACA", background:"#FEF2F2", color:"#991B1B", cursor:"pointer", fontSize:12, fontWeight:500, transition:"all 0.15s" }}>
+                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 7, border: "1.5px solid #FECACA", background: "#FEF2F2", color: "#991B1B", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all 0.15s" }}>
                       {Ic.trash()}
                     </button>
                   </div>
@@ -85,7 +85,7 @@ export default function StudentsPage({ students, setStudents, setModal }) {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={7} style={{ padding:"48px", textAlign:"center", color:"#94A3B8", fontSize:14 }}>No students found matching your filters.</td></tr>
+              <tr><td colSpan={7} style={{ padding: "48px", textAlign: "center", color: "#94A3B8", fontSize: 14 }}>No students found matching your filters.</td></tr>
             )}
           </tbody>
         </table>
