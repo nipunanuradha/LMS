@@ -17,6 +17,8 @@ export function Registration() {
     e.preventDefault();
     setError("");
 
+    const passwordToSet = Math.random().toString(36).slice(-8);
+
     try {
       const response = await fetch("http://localhost:5000/api/auth/register", {
         method: "POST",
@@ -26,20 +28,19 @@ export function Registration() {
           phone_number: formData.phone,
           district: formData.district,
           province: formData.province,
-          password: Math.random().toString(36).slice(-8) // Generate initial password
+          password: passwordToSet
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setGeneratedPassword(data.generatedPassword || "demo123"); // Ideally backend returns this
-        // In this specific implementation, I'll use the one generated locally for simplicity
+        setGeneratedPassword(data.generatedPassword || passwordToSet);
       } else {
-        setError(data.message || "Registration failed");
+        setError(data.message || data.error || "Registration failed");
       }
     } catch (err) {
-      setError("Server connection failed.");
+      setError("Server connection failed. Please check if backend is running.");
     }
   };
 
@@ -61,6 +62,11 @@ export function Registration() {
         {!generatedPassword ? (
           <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-8">
             <div className="space-y-4">
+              {error && (
+                <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm border border-red-100">
+                  {error}
+                </div>
+              )}
               <div>
                 <label htmlFor="name" className="block text-sm mb-1 text-gray-700">
                   Full Name

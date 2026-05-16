@@ -16,8 +16,12 @@ const dbConfig = {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     ssl: {
-        rejectUnauthorized: true
-    }
+        // Change to false if you are having SSL certificate issues
+        rejectUnauthorized: false 
+    },
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 };
 
 let pool;
@@ -25,9 +29,12 @@ let pool;
 async function connectDB() {
     try {
         pool = await mysql.createPool(dbConfig);
-        console.log('Connected to TiDB successfully');
+        // Test connection
+        const [rows] = await pool.execute('SELECT 1');
+        console.log('Connected to TiDB successfully. Connection test passed.');
     } catch (err) {
-        console.error('Database connection failed:', err);
+        console.error('Database connection failed:', err.message);
+        console.log('Please check your .env credentials and TiDB status.');
     }
 }
 
@@ -37,22 +44,32 @@ connectDB();
 
 // Register Student
 app.post('/api/auth/register', async (req, res) => {
-    const { full_name, phone_number, district, province, password } = req.body;
+    const { full_name, phone_number, district, province, password: plainPassword } = req.body;
+    
+    if (!pool) {
+        return res.status(500).json({ message: 'Database not connected' });
+    }
+
     try {
         const [existing] = await pool.execute('SELECT * FROM users WHERE phone_number = ?', [phone_number]);
         if (existing.length > 0) {
             return res.status(400).json({ message: 'User already exists with this phone number' });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(plainPassword, 10);
         const [result] = await pool.execute(
             'INSERT INTO users (full_name, phone_number, district, province, password, role) VALUES (?, ?, ?, ?, ?, ?)',
             [full_name, phone_number, district, province, hashedPassword, 'student']
         );
 
-        res.status(201).json({ message: 'Registration successful', userId: result.insertId });
+        res.status(201).json({ 
+            message: 'Registration successful', 
+            userId: result.insertId,
+            generatedPassword: plainPassword // Return the plain password for display
+        });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Registration Error:', err);
+        res.status(500).json({ error: 'Database Error: ' + err.message });
     }
 });
 
