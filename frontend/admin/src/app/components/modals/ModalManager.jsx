@@ -8,7 +8,7 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
   const [pw, setPw] = useState({ pass: "", confirm: "" });
   const [enroll, setEnroll] = useState({ courseId: courses[0]?.id || "", expiry: "" });
   const [ec, setEc] = useState({ title: modal?.course?.title || "", desc: modal?.course?.desc || "" });
-  const [ns, setNs] = useState({ name: "", phone: "", district: "Colombo", status: "Active" });
+  const [ns, setNs] = useState({ name: "", phone: "", district: "Colombo", status: "Active", role: "student", password: "" });
   const close = () => setModal(null);
 
   if (modal === "profile") {
@@ -39,24 +39,48 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
   }
 
   if (modal === "addStudent") {
-    const add = () => {
-      if (!ns.name.trim()) return;
-      const id = `S${String(students.length + 1).padStart(3, "0")}`;
-      const initials = ns.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-      const colors = ["#2563EB", "#059669", "#7C3AED", "#D97706", "#DC2626", "#0891B2"];
-      setStudents(prev => [...prev, { id, name: ns.name, initials, phone: ns.phone || "—", district: ns.district, status: ns.status, joined: new Date().toISOString().slice(0, 10), color: colors[prev.length % colors.length] }]);
-      close();
+    const add = async () => {
+      if (!ns.name.trim() || !ns.phone.trim() || !ns.password.trim()) {
+        alert("Name, Phone, and Password are required fields.");
+        return;
+      }
+      try {
+        const res = await fetch("http://localhost:5000/api/admin/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            full_name: ns.name,
+            phone_number: ns.phone,
+            district: ns.district,
+            province: "Western", // simple default
+            password: ns.password,
+            role: ns.role
+          })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setStudents(prev => [data, ...prev]);
+          close();
+        } else {
+          alert(data.message || "Failed to create user");
+        }
+      } catch (err) {
+        console.error("Error creating user:", err);
+        alert("Server connection failed. Could not add user.");
+      }
     };
     return (
-      <Modal title="Add New Student" subtitle="Create a new student account" onClose={close}>
+      <Modal title="Add New User" subtitle="Create a new student or admin account" onClose={close}>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <Input label="Full Name *" value={ns.name} onChange={e => setNs(n => ({ ...n, name: e.target.value }))} placeholder="e.g. Amara Perera" />
-          <Input label="Phone Number" value={ns.phone} onChange={e => setNs(n => ({ ...n, phone: e.target.value }))} placeholder="+94 77 000 0000" />
+          <Input label="Phone Number *" value={ns.phone} onChange={e => setNs(n => ({ ...n, phone: e.target.value }))} placeholder="+94 77 000 0000" />
+          <Input label="Password *" type="password" value={ns.password} onChange={e => setNs(n => ({ ...n, password: e.target.value }))} placeholder="Enter login password" />
+          <Select label="Role" value={ns.role} onChange={e => setNs(n => ({ ...n, role: e.target.value }))} options={[{ value: "student", label: "Student" }, { value: "admin", label: "Admin" }]} />
           <Select label="District" value={ns.district} onChange={e => setNs(n => ({ ...n, district: e.target.value }))} options={DISTRICTS.slice(1)} />
           <Select label="Status" value={ns.status} onChange={e => setNs(n => ({ ...n, status: e.target.value }))} options={["Active", "Expired"]} />
           <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
             <button onClick={close} className="btn-ghost" style={{ flex: 1, padding: "10px", borderRadius: 9, border: "1.5px solid #E2E8F0", background: "#F8FAFC", cursor: "pointer", fontWeight: 500, fontSize: 14, color: "#64748B", transition: "all 0.15s" }}>Cancel</button>
-            <button onClick={add} className="btn-primary" style={{ flex: 1, padding: "10px", borderRadius: 9, border: "none", background: "#2563EB", cursor: "pointer", fontWeight: 600, fontSize: 14, color: "#fff", boxShadow: "0 2px 8px rgba(37,99,235,0.25)", transition: "all 0.2s" }}>Add Student</button>
+            <button onClick={add} className="btn-primary" style={{ flex: 1, padding: "10px", borderRadius: 9, border: "none", background: "#2563EB", cursor: "pointer", fontWeight: 600, fontSize: 14, color: "#fff", boxShadow: "0 2px 8px rgba(37,99,235,0.25)", transition: "all 0.2s" }}>Add User</button>
           </div>
         </div>
       </Modal>
@@ -64,14 +88,33 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
   }
 
   if (modal?.type === "resetPw") {
-    const reset = () => { if (pw.pass && pw.pass === pw.confirm) close(); };
+    const reset = async () => {
+      if (pw.pass && pw.pass === pw.confirm) {
+        try {
+          const res = await fetch(`http://localhost:5000/api/admin/users/${modal.student.id}/reset-password`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: pw.pass })
+          });
+          if (res.ok) {
+            alert("Password reset successfully!");
+            close();
+          } else {
+            alert("Failed to reset password");
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Server connection error");
+        }
+      }
+    };
     const ok = pw.pass.length >= 6 && pw.pass === pw.confirm;
     return (
-      <Modal title="Reset Password" subtitle={`Resetting password for ${modal.student?.name}`} onClose={close}>
+      <Modal title="Reset Password" subtitle={`Resetting password for ${modal.student?.full_name || modal.student?.name}`} onClose={close}>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div style={{ background: "#FFFBEB", border: "1.5px solid #FDE68A", borderRadius: 10, padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start" }}>
             <span style={{ fontSize: 18 }}>⚠️</span>
-            <p style={{ fontSize: 12, color: "#92400E", lineHeight: 1.6 }}>This will immediately reset the student's password. They will need to log in with the new credentials.</p>
+            <p style={{ fontSize: 12, color: "#92400E", lineHeight: 1.6 }}>This will immediately reset the user's password. They will need to log in with the new credentials.</p>
           </div>
           <Input label="New Password" type="password" value={pw.pass} onChange={e => setPw(p => ({ ...p, pass: e.target.value }))} placeholder="Min. 6 characters" />
           <Input label="Confirm Password" type="password" value={pw.confirm} onChange={e => setPw(p => ({ ...p, confirm: e.target.value }))} placeholder="Re-enter password" />
@@ -87,9 +130,33 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
   }
 
   if (modal?.type === "enroll") {
-    const confirm = () => { if (enroll.courseId && enroll.expiry) close(); };
+    const confirm = async () => {
+      if (enroll.courseId && enroll.expiry) {
+        try {
+          const res = await fetch("http://localhost:5000/api/admin/enrollments", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              student_id: modal.student.id,
+              course_id: enroll.courseId,
+              expiry_date: enroll.expiry
+            })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            alert("Student enrolled successfully!");
+            window.location.reload();
+          } else {
+            alert(data.error || "Enrollment failed");
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Server connection failed");
+        }
+      }
+    };
     return (
-      <Modal title="Enroll Student" subtitle={`Enrolling ${modal.student?.name} into a course`} onClose={close}>
+      <Modal title="Enroll Student" subtitle={`Enrolling ${modal.student?.full_name || modal.student?.name} into a course`} onClose={close}>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <Select label="Select Course" value={enroll.courseId} onChange={e => setEnroll(en => ({ ...en, courseId: e.target.value }))}
             options={courses.map(c => ({ value: c.id, label: `${c.title} (${c.students} students)` }))} />

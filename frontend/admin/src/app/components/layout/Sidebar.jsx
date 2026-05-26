@@ -5,12 +5,23 @@ import { Ic } from "../ui/icons";
 const NAV = [
   { id: "dashboard", label: "Dashboard", icon: Ic.grid },
   { id: "students", label: "Students", icon: Ic.users },
+  { id: "admins", label: "Admins", icon: Ic.users },
   { id: "courses", label: "Courses", icon: Ic.book },
   { id: "revenue", label: "Revenue", icon: Ic.dollar },
   { id: "settings", label: "Settings", icon: Ic.cog },
 ];
 
 export default function Sidebar({ page, setPage, open, onClose }) {
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("currentUser") || "{}");
+    } catch (e) {
+      return {};
+    }
+  })();
+  const name = currentUser.name || "Admin User";
+  const initials = name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "AD";
+
   return (
     <>
       {!open && null}
@@ -46,9 +57,9 @@ export default function Sidebar({ page, setPage, open, onClose }) {
         {/* Bottom */}
         <div style={{ padding: "16px 20px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Avatar initials="AD" size={34} bg="#1E40AF" />
+            <Avatar initials={initials} size={34} bg="#1E40AF" />
             <div style={{ overflow: "hidden" }}>
-              <div style={{ color: "#E2E8F0", fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Admin User</div>
+              <div style={{ color: "#E2E8F0", fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name}</div>
               <div style={{ color: "#64748B", fontSize: 11 }}>Super Admin</div>
             </div>
           </div>

@@ -28,7 +28,8 @@ export function Login() {
 
         if (data.user.role === "admin") {
           localStorage.setItem("admin_isLoggedIn", "true");
-          window.location.href = "http://localhost:5174"; // Redirect to Admin App
+          const userStr = encodeURIComponent(JSON.stringify(data.user));
+          window.location.href = `http://localhost:5174/?token=${data.token}&admin_isLoggedIn=true&user=${userStr}`; // Redirect to Admin App
         } else {
           navigate("/dashboard");
         }

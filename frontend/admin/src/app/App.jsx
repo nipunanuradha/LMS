@@ -50,6 +50,20 @@ function GlobalStyles() {
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tokenParam = params.get("token");
+    const loggedInParam = params.get("admin_isLoggedIn");
+    const userParam = params.get("user");
+    if (loggedInParam === "true" && tokenParam) {
+      localStorage.setItem("admin_isLoggedIn", "true");
+      localStorage.setItem("token", tokenParam);
+      if (userParam) {
+        localStorage.setItem("currentUser", decodeURIComponent(userParam));
+      }
+      // Clean query params from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return true;
+    }
     return localStorage.getItem("admin_isLoggedIn") === "true";
   });
   const [page, setPage] = useState("dashboard");
@@ -57,6 +71,7 @@ export default function App() {
   const [modal, setModal] = useState(null);
   const [students, setStudents] = useState([]);
   const [courses, setCourses] = useState([]);
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -70,7 +85,21 @@ export default function App() {
           console.error("Data fetch failed:", err);
         }
       };
+
+      const fetchNotifications = async () => {
+        try {
+          const nRes = await fetch("http://localhost:5000/api/admin/notifications");
+          if (nRes.ok) setNotifications(await nRes.json());
+        } catch (err) {
+          console.error("Notifications fetch failed:", err);
+        }
+      };
+
       fetchData();
+      fetchNotifications();
+
+      const interval = setInterval(fetchNotifications, 5000);
+      return () => clearInterval(interval);
     }
   }, [isLoggedIn]);
 
@@ -81,7 +110,7 @@ export default function App() {
     return null;
   }
 
-  const pageNames = { dashboard: "Dashboard", students: "Student Management", courses: "Course Management", revenue: "Revenue & Enrollments", settings: "Settings" };
+  const pageNames = { dashboard: "Dashboard", students: "Student Management", admins: "Admin Management", courses: "Course Management", revenue: "Revenue & Enrollments", settings: "Settings" };
 
   return (
     <>
@@ -92,9 +121,10 @@ export default function App() {
         {/* Main */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
           <Header
-            sidebarOpen={sidebarOpen} setSidebarOpen={setSidebar}
-            notifCount={3} searchVal={globalSearch} onSearch={setGlobalSearch}
-            setPage={setPage} setModal={setModal}
+             sidebarOpen={sidebarOpen} setSidebarOpen={setSidebar}
+             notifications={notifications} setNotifications={setNotifications}
+             searchVal={globalSearch} onSearch={setGlobalSearch}
+             setPage={setPage} setModal={setModal}
           />
           {/* Breadcrumb */}
           <div style={{ padding: "10px 28px", background: "#fff", borderBottom: "1px solid #F1F5F9", display: "flex", alignItems: "center", gap: 8 }}>
@@ -104,7 +134,8 @@ export default function App() {
           </div>
           <main style={{ flex: 1, overflow: "auto", padding: "24px 28px" }}>
             {page === "dashboard" && <DashboardPage students={students} courses={courses} setModal={setModal} />}
-            {page === "students" && <StudentsPage students={students} setStudents={setStudents} setModal={setModal} />}
+            {page === "students" && <StudentsPage students={students.filter(s => !s.role || s.role === 'student')} setStudents={setStudents} setModal={setModal} type="student" />}
+            {page === "admins" && <StudentsPage students={students.filter(s => s.role === 'admin')} setStudents={setStudents} setModal={setModal} type="admin" />}
             {page === "courses" && <CoursesPage courses={courses} setCourses={setCourses} setModal={setModal} />}
             {page === "revenue" && <RevenuePage />}
             {page === "settings" && <SettingsPage />}
