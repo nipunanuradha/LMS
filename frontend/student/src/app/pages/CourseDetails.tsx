@@ -12,6 +12,27 @@ import {
 
 type TabType = "notices" | "recordings" | "notes" | "links";
 
+function getYouTubeEmbedUrl(url: string): string | null {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  if (match && match[2].length === 11) {
+    const videoId = match[2];
+    return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3`;
+  }
+  return null;
+}
+
+function getVimeoEmbedUrl(url: string): string | null {
+  if (!url) return null;
+  const regExp = /vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|video\/|)(\d+)(?:$|\/|\?)/;
+  const match = url.match(regExp);
+  if (match && match[3]) {
+    return `https://player.vimeo.com/video/${match[3]}`;
+  }
+  return null;
+}
+
 export function CourseDetails() {
   const { courseId } = useParams();
   const navigate = useNavigate();
@@ -240,11 +261,64 @@ export function CourseDetails() {
                   const activeRec = recordings.find((r) => r.id === currentVideo);
                   if (!activeRec) return null;
                   const hasEmbed = activeRec.embedCode && activeRec.embedCode.trim() !== "";
+                  const ytEmbedUrl = getYouTubeEmbedUrl(activeRec.videoUrl);
+                  const vimeoEmbedUrl = getVimeoEmbedUrl(activeRec.videoUrl);
+                  
+                  let displayEmbed = activeRec.embedCode;
+                  if (hasEmbed && displayEmbed.includes("youtube.com/embed/")) {
+                    // Inject cleaner params into raw YouTube iframe code if not present
+                    if (!displayEmbed.includes("?")) {
+                      displayEmbed = displayEmbed.replace(
+                        /youtube\.com\/embed\/([^"?\s>]+)/g,
+                        "youtube.com/embed/$1?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3"
+                      );
+                    } else {
+                      displayEmbed = displayEmbed.replace(
+                        /youtube\.com\/embed\/([^"?\s>]+)\?/g,
+                        "youtube.com/embed/$1?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&"
+                      );
+                    }
+                  }
+
                   return (
                     <div className="max-w-2xl mx-auto mb-6">
                       {hasEmbed ? (
-                        <div className="bg-black rounded-lg overflow-hidden aspect-video flex items-center justify-center w-full" 
-                             dangerouslySetInnerHTML={{ __html: activeRec.embedCode }} />
+                        <div className="bg-black rounded-lg overflow-hidden aspect-video w-full relative">
+                          {displayEmbed.includes("youtube.com") && (
+                            <>
+                              {/* Top bar click blocker overlay */}
+                              <div className="absolute top-0 left-0 right-0 h-[60px] z-10" style={{ pointerEvents: 'auto' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} />
+                              {/* Bottom-right YouTube logo click blocker overlay */}
+                              <div className="absolute bottom-0 right-0 w-[120px] h-[40px] z-10" style={{ pointerEvents: 'auto' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} />
+                            </>
+                          )}
+                          <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: displayEmbed }} />
+                        </div>
+                      ) : ytEmbedUrl ? (
+                        <div className="bg-black rounded-lg overflow-hidden aspect-video w-full relative">
+                          {/* Top bar click blocker overlay */}
+                          <div className="absolute top-0 left-0 right-0 h-[60px] z-10" style={{ pointerEvents: 'auto' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} />
+                          {/* Bottom-right YouTube logo click blocker overlay */}
+                          <div className="absolute bottom-0 right-0 w-[120px] h-[40px] z-10" style={{ pointerEvents: 'auto' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} />
+                          
+                          <iframe 
+                            src={ytEmbedUrl} 
+                            className="w-full h-full aspect-video" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowFullScreen 
+                            frameBorder="0"
+                          />
+                        </div>
+                      ) : vimeoEmbedUrl ? (
+                        <div className="bg-black rounded-lg overflow-hidden aspect-video w-full">
+                          <iframe 
+                            src={vimeoEmbedUrl} 
+                            className="w-full h-full aspect-video" 
+                            allow="autoplay; fullscreen; picture-in-picture" 
+                            allowFullScreen 
+                            frameBorder="0"
+                          />
+                        </div>
                       ) : (
                         <div className="bg-black rounded-lg overflow-hidden">
                           <video
