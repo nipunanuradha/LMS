@@ -26,11 +26,10 @@ export function CourseDetails() {
   const [dbLinks, setDbLinks] = useState<any[]>([]);
   const [dbNotices, setDbNotices] = useState<any[]>([]);
 
-  const mockCourse = mockCourses.find((c) => c.id === courseId);
-  const recordings = mockCourse ? (mockRecordings[courseId || ""] || []) : dbRecordings;
-  const notices = mockCourse ? (mockNotices[courseId || ""] || []) : dbNotices;
-  const pdfs = mockCourse ? (mockPDFs[courseId || ""] || []) : dbPDFs;
-  const links = mockCourse ? (mockExternalLinks[courseId || ""] || []) : dbLinks;
+  const recordings = dbRecordings;
+  const notices = dbNotices;
+  const pdfs = dbPDFs;
+  const links = dbLinks;
 
   useEffect(() => {
     const currentUser = localStorage.getItem("currentUser");
@@ -40,12 +39,6 @@ export function CourseDetails() {
     }
 
     const fetchCourseDetails = async () => {
-      if (mockCourse) {
-        setCourse(mockCourse);
-        setLoading(false);
-        return;
-      }
-
       try {
         const response = await fetch(`http://localhost:5000/api/courses/${courseId}`);
         if (response.ok) {
