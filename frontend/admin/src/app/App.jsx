@@ -121,10 +121,10 @@ export default function App() {
         {/* Main */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
           <Header
-             sidebarOpen={sidebarOpen} setSidebarOpen={setSidebar}
-             notifications={notifications} setNotifications={setNotifications}
-             searchVal={globalSearch} onSearch={setGlobalSearch}
-             setPage={setPage} setModal={setModal}
+            sidebarOpen={sidebarOpen} setSidebarOpen={setSidebar}
+            notifications={notifications} setNotifications={setNotifications}
+            searchVal={globalSearch} onSearch={setGlobalSearch}
+            setPage={setPage} setModal={setModal}
           />
           {/* Breadcrumb */}
           <div style={{ padding: "10px 28px", background: "#fff", borderBottom: "1px solid #F1F5F9", display: "flex", alignItems: "center", gap: 8 }}>
