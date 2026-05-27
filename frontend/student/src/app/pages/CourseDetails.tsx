@@ -287,9 +287,21 @@ export function CourseDetails() {
                           {displayEmbed.includes("youtube.com") && (
                             <>
                               {/* Top bar click blocker overlay */}
-                              <div className="absolute top-0 left-0 right-0 h-[60px] z-10" style={{ pointerEvents: 'auto' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} />
+                              <div className="absolute top-0 left-0 right-0 h-[75px] z-10" 
+                                   style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }} 
+                                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                   onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                   onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                   onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                   onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
                               {/* Bottom-right YouTube logo click blocker overlay */}
-                              <div className="absolute bottom-0 right-0 w-[120px] h-[40px] z-10" style={{ pointerEvents: 'auto' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} />
+                              <div className="absolute bottom-0 right-0 w-[120px] h-[50px] z-10" 
+                                   style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }} 
+                                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                   onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                   onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                   onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                   onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
                             </>
                           )}
                           <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: displayEmbed }} />
@@ -297,9 +309,21 @@ export function CourseDetails() {
                       ) : ytEmbedUrl ? (
                         <div className="bg-black rounded-lg overflow-hidden aspect-video w-full relative">
                           {/* Top bar click blocker overlay */}
-                          <div className="absolute top-0 left-0 right-0 h-[60px] z-10" style={{ pointerEvents: 'auto' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} />
+                          <div className="absolute top-0 left-0 right-0 h-[75px] z-10" 
+                               style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }} 
+                               onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                               onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                               onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                               onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                               onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
                           {/* Bottom-right YouTube logo click blocker overlay */}
-                          <div className="absolute bottom-0 right-0 w-[120px] h-[40px] z-10" style={{ pointerEvents: 'auto' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} />
+                          <div className="absolute bottom-0 right-0 w-[120px] h-[50px] z-10" 
+                               style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }} 
+                               onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                               onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                               onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                               onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                               onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
                           
                           <iframe 
                             src={ytEmbedUrl} 
