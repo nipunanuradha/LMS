@@ -3,11 +3,20 @@ const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir);
+}
+app.use('/uploads', express.static(uploadsDir));
 
 const dbConfig = {
     host: process.env.DB_HOST,
@@ -249,6 +258,19 @@ app.get('/api/courses/:id/content', async (req, res) => {
     }
 });
 
+// Get all admins (for ChatWidget)
+app.get('/api/admins', async (req, res) => {
+    if (!pool) {
+        return res.status(500).json({ message: 'Database not connected' });
+    }
+    try {
+        const [admins] = await pool.execute('SELECT id, full_name, phone_number, role FROM users WHERE role = "admin"');
+        res.json(admins);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // ── ADMIN ROUTES (Simple middleware could be added here) ─────────────────────
 
 // Get all users (students and admins)
@@ -324,16 +346,57 @@ app.post('/api/admin/users/:id/reset-password', async (req, res) => {
     }
 });
 
+function saveBase64Image(base64String) {
+    if (base64String && base64String.startsWith('data:image/')) {
+        const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+        if (matches && matches.length === 3) {
+            const ext = matches[1].split('/')[1] || 'png';
+            const data = Buffer.from(matches[2], 'base64');
+            const filename = `thumbnail_${Date.now()}_${Math.round(Math.random() * 1E9)}.${ext}`;
+            const filepath = path.join(uploadsDir, filename);
+            fs.writeFileSync(filepath, data);
+            return `http://localhost:5000/uploads/${filename}`;
+        }
+    }
+    return base64String;
+}
+
 // Add new course
 app.post('/api/admin/courses', async (req, res) => {
     const { title, description, thumbnail_url, price } = req.body;
     try {
+        const savedUrl = saveBase64Image(thumbnail_url);
         const [result] = await pool.execute(
             'INSERT INTO courses (title, description, thumbnail_url, price) VALUES (?, ?, ?, ?)',
-            [title, description, thumbnail_url, price]
+            [title, description, savedUrl || '', price || 0]
         );
-        res.status(201).json({ id: result.insertId, message: 'Course created' });
+        res.status(201).json({ id: result.insertId, message: 'Course created', thumbnail_url: savedUrl });
         await createNotification(`Course '${title}' created successfully`, 'course');
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update course
+app.put('/api/admin/courses/:id', async (req, res) => {
+    const { title, description, thumbnail_url, price } = req.body;
+    try {
+        const savedUrl = saveBase64Image(thumbnail_url);
+        await pool.execute(
+            'UPDATE courses SET title = ?, description = ?, thumbnail_url = ?, price = ? WHERE id = ?',
+            [title, description, savedUrl || '', price || 0, req.params.id]
+        );
+        res.json({ message: 'Course updated successfully', thumbnail_url: savedUrl });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Delete course
+app.delete('/api/admin/courses/:id', async (req, res) => {
+    try {
+        await pool.execute('DELETE FROM courses WHERE id = ?', [req.params.id]);
+        res.json({ message: 'Course deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

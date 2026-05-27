@@ -186,9 +186,9 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
     const isEdit = modal?.type === "editCourse";
     const [formState, setFormState] = useState({
       title: isEdit ? modal.course.title : "",
-      desc: isEdit ? modal.course.desc : "",
-      category: isEdit ? modal.course.category : "Web Dev",
-      thumbnail: isEdit ? modal.course.thumbnail : "",
+      desc: isEdit ? (modal.course.description || modal.course.desc || "") : "",
+      category: isEdit ? (modal.course.category || "Web Dev") : "Web Dev",
+      thumbnail: isEdit ? (modal.course.thumbnail_url || modal.course.thumbnail || "") : "",
     });
     const [dragOver, setDragOver] = useState(false);
 
@@ -203,16 +203,44 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
       }
     };
 
-    const save = () => {
+    const save = async () => {
       if (!formState.title.trim()) return;
-      if (isEdit) {
-        setCourses(prev => prev.map(c => c.id === modal.course.id ? { ...c, ...formState } : c));
-      } else {
-        const id = `C${String(courses.length + 1).padStart(3, "0")}`;
-        const accents = ["#2563EB", "#059669", "#7C3AED", "#D97706", "#DC2626", "#0891B2"];
-        setCourses(prev => [...prev, { id, title: formState.title, desc: formState.desc, students: 0, category: formState.category, thumbnail: formState.thumbnail, accent: accents[prev.length % accents.length] }]);
+      const payload = {
+        title: formState.title,
+        description: formState.desc,
+        thumbnail_url: formState.thumbnail,
+        price: 0
+      };
+
+      try {
+        let res;
+        if (isEdit) {
+          res = await fetch(`http://localhost:5000/api/admin/courses/${modal.course.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+        } else {
+          res = await fetch("http://localhost:5000/api/admin/courses", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+        }
+
+        if (res.ok) {
+          const cRes = await fetch("http://localhost:5000/api/courses");
+          if (cRes.ok) {
+            setCourses(await cRes.json());
+          }
+          close();
+        } else {
+          alert("Failed to save course");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Server connection failed");
       }
-      close();
     };
     return (
       <Modal title={isEdit ? "Edit Course" : "Create New Course"} subtitle={isEdit ? `Editing: ${modal.course.title}` : "Fill in the details below"} onClose={close} width={520}>
