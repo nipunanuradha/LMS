@@ -5,9 +5,19 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
+const { Server } = require('socket.io');
 require('dotenv').config();
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: '*',
+        methods: ['GET', 'POST']
+    }
+});
+
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
@@ -98,6 +108,17 @@ async function connectDB() {
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                 FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
                 UNIQUE KEY unique_enrollment (user_id, course_id)
+            )
+        `);
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS messages (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                sender_id INT NOT NULL,
+                receiver_id INT NOT NULL,
+                message TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
             )
         `);
         await seedAdmin();
@@ -248,11 +269,40 @@ app.get('/api/courses', async (req, res) => {
     }
 });
 
+// Get enrolled courses for a student
+app.get('/api/student/:userId/courses', async (req, res) => {
+    try {
+        const [courses] = await pool.execute(`
+            SELECT c.*, e.expiry_date
+            FROM courses c
+            JOIN enrollments e ON c.id = e.course_id
+            WHERE e.user_id = ? AND e.expiry_date >= CURDATE()
+            ORDER BY e.created_at DESC
+        `, [req.params.userId]);
+        res.json(courses);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Get course content (videos/pdfs)
 app.get('/api/courses/:id/content', async (req, res) => {
     try {
         const [content] = await pool.execute('SELECT * FROM course_content WHERE course_id = ?', [req.params.id]);
         res.json(content);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get specific course details
+app.get('/api/courses/:id', async (req, res) => {
+    try {
+        const [courses] = await pool.execute('SELECT * FROM courses WHERE id = ?', [req.params.id]);
+        if (courses.length === 0) {
+            return res.status(404).json({ message: 'Course not found' });
+        }
+        res.json(courses[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -446,5 +496,83 @@ app.post('/api/admin/notifications/clear', async (req, res) => {
     }
 });
 
+// Get message history between current user and another user
+app.get('/api/admin/messages/:other_user_id', async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).json({ message: 'No authorization header provided' });
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const currentUserId = decoded.id;
+        const otherUserId = req.params.other_user_id;
+        
+        const [messages] = await pool.execute(
+            `SELECT * FROM messages 
+             WHERE (sender_id = ? AND receiver_id = ?) 
+                OR (sender_id = ? AND receiver_id = ?) 
+             ORDER BY created_at ASC`,
+            [currentUserId, otherUserId, otherUserId, currentUserId]
+        );
+        
+        res.json(messages);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+const userSockets = new Map();
+
+io.on('connection', (socket) => {
+    const token = socket.handshake.auth.token;
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const userId = decoded.id;
+            userSockets.set(userId, socket.id);
+            
+            socket.on('private_message', async (data) => {
+                const { to, message } = data;
+                try {
+                    await pool.execute(
+                        'INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)',
+                        [userId, to, message]
+                    );
+                    
+                    const msgPayload = {
+                        sender_id: userId,
+                        receiver_id: to,
+                        message,
+                        created_at: new Date().toISOString()
+                    };
+                    
+                    const receiverSocketId = userSockets.get(to);
+                    if (receiverSocketId) {
+                        io.to(receiverSocketId).emit('private_message', msgPayload);
+                    }
+                    
+                    socket.emit('private_message', msgPayload);
+                    
+                    const [[receiver]] = await pool.execute('SELECT role, full_name FROM users WHERE id = ?', [to]);
+                    if (receiver && receiver.role === 'admin') {
+                        const [[sender]] = await pool.execute('SELECT full_name FROM users WHERE id = ?', [userId]);
+                        const senderName = sender ? sender.full_name : 'Student';
+                        await createNotification(`New message from ${senderName}: "${message.substring(0, 30)}..."`, 'info');
+                    }
+                } catch (err) {
+                    console.error('Error handling private message:', err);
+                }
+            });
+            
+            socket.on('disconnect', () => {
+                userSockets.delete(userId);
+            });
+        } catch (err) {
+            console.error('Socket authentication error:', err.message);
+        }
+    }
+});
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

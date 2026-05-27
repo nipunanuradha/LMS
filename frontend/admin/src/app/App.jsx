@@ -7,6 +7,7 @@ import CoursesPage from "./pages/CoursesPage";
 import RevenuePage from "./pages/RevenuePage";
 import SettingsPage from "./pages/SettingsPage";
 import ModalManager from "./components/modals/ModalManager";
+import AdminChatWidget from "./components/AdminChatWidget";
 import { STUDENTS_INIT, COURSES_INIT } from "./data/mockData";
 
 // ── Font & Global Styles ──────────────────────────────────────────────────────
@@ -149,6 +150,7 @@ export default function App() {
             courses={courses} setCourses={setCourses}
           />
         )}
+        <AdminChatWidget students={students} />
       </div>
     </>
   );

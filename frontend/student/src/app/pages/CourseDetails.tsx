@@ -19,18 +19,97 @@ export function CourseDetails() {
   const [watchedVideos, setWatchedVideos] = useState<Set<string>>(new Set());
   const [currentVideo, setCurrentVideo] = useState<string | null>(null);
 
-  const course = mockCourses.find((c) => c.id === courseId);
-  const recordings = mockRecordings[courseId || ""] || [];
-  const notices = mockNotices[courseId || ""] || [];
-  const pdfs = mockPDFs[courseId || ""] || [];
-  const links = mockExternalLinks[courseId || ""] || [];
+  const [course, setCourse] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [dbRecordings, setDbRecordings] = useState<any[]>([]);
+  const [dbPDFs, setDbPDFs] = useState<any[]>([]);
+  const [dbLinks, setDbLinks] = useState<any[]>([]);
+  const [dbNotices, setDbNotices] = useState<any[]>([]);
+
+  const mockCourse = mockCourses.find((c) => c.id === courseId);
+  const recordings = mockCourse ? (mockRecordings[courseId || ""] || []) : dbRecordings;
+  const notices = mockCourse ? (mockNotices[courseId || ""] || []) : dbNotices;
+  const pdfs = mockCourse ? (mockPDFs[courseId || ""] || []) : dbPDFs;
+  const links = mockCourse ? (mockExternalLinks[courseId || ""] || []) : dbLinks;
 
   useEffect(() => {
     const currentUser = localStorage.getItem("currentUser");
     if (!currentUser) {
       navigate("/");
+      return;
     }
-  }, [navigate]);
+
+    const fetchCourseDetails = async () => {
+      if (mockCourse) {
+        setCourse(mockCourse);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:5000/api/courses/${courseId}`);
+        if (response.ok) {
+          const data = await response.json();
+          const userObj = JSON.parse(currentUser);
+          const enrollResponse = await fetch(`http://localhost:5000/api/student/${userObj.id}/courses`);
+          let expiry = null;
+          if (enrollResponse.ok) {
+            const enrolledCourses = await enrollResponse.json();
+            const matchingEnroll = enrolledCourses.find((c: any) => String(c.id) === String(courseId));
+            if (matchingEnroll) {
+              expiry = matchingEnroll.expiry_date;
+            }
+          }
+          setCourse({
+            ...data,
+            expiryDate: expiry
+          });
+
+          // Fetch content
+          const contentResponse = await fetch(`http://localhost:5000/api/courses/${courseId}/content`);
+          if (contentResponse.ok) {
+            const contents = await contentResponse.json();
+            const recs = contents.filter((c: any) => c.type === 'video' || c.type === 'recording').map((c: any) => ({
+              id: String(c.id),
+              title: c.title,
+              videoUrl: c.url,
+              duration: "Duration N/A",
+              watched: false
+            }));
+            const notes = contents.filter((c: any) => c.type === 'pdf' || c.type === 'notes').map((c: any) => ({
+              id: String(c.id),
+              title: c.title,
+              downloadUrl: c.url,
+              size: "N/A"
+            }));
+            const exLinks = contents.filter((c: any) => c.type === 'link').map((c: any) => ({
+              id: String(c.id),
+              title: c.title,
+              url: c.url,
+              description: ""
+            }));
+            const nots = contents.filter((c: any) => c.type === 'notice').map((c: any) => ({
+              id: String(c.id),
+              title: c.title,
+              content: c.url,
+              date: c.created_at
+            }));
+
+            setDbRecordings(recs);
+            setDbPDFs(notes);
+            setDbLinks(exLinks);
+            setDbNotices(nots);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch course details:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourseDetails();
+  }, [courseId, navigate]);
 
   useEffect(() => {
     const watched = localStorage.getItem(`watched_${courseId}`);
@@ -49,6 +128,14 @@ export function CourseDetails() {
     setWatchedVideos(newWatched);
     localStorage.setItem(`watched_${courseId}`, JSON.stringify([...newWatched]));
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-600">Loading course details...</p>
+      </div>
+    );
+  }
 
   if (!course) {
     return (

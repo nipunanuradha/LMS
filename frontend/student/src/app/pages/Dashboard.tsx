@@ -14,13 +14,14 @@ export function Dashboard() {
     const currentUser = localStorage.getItem("currentUser");
     if (!currentUser) {
       navigate("/");
-    } else {
-      setUser(JSON.parse(currentUser));
+      return;
     }
+    const loggedInUser = JSON.parse(currentUser);
+    setUser(loggedInUser);
 
     const fetchCourses = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/courses");
+        const response = await fetch(`http://localhost:5000/api/student/${loggedInUser.id}/courses`);
         const data = await response.json();
         if (response.ok) {
           setCourses(data);
@@ -118,9 +119,15 @@ export function Dashboard() {
           <h2 className="mb-6">My Enrolled Courses</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courses.map((course) => {
-              const daysRemaining = getDaysRemaining(course.expiryDate);
+              const expiryDate = course.expiry_date || course.expiryDate;
+              const daysRemaining = getDaysRemaining(expiryDate);
               const isExpiringSoon = daysRemaining <= 7 && daysRemaining > 0;
               const isExpired = daysRemaining < 0;
+
+              const accents = ["#2563EB", "#059669", "#7C3AED", "#D97706", "#DC2626", "#0891B2"];
+              const accent = course.accent || accents[course.id % accents.length] || "#2563EB";
+              const category = course.category || "Web Dev";
+              const thumbnail = course.thumbnail_url || course.thumbnail;
 
               return (
                 <Link
@@ -130,15 +137,11 @@ export function Dashboard() {
                 >
                   {/* Thumbnail Section */}
                   <div className="w-full h-40 bg-gray-100 rounded-md mb-4 overflow-hidden relative shrink-0">
-                    {course.thumbnail ? (
-                      <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
-                    ) : course.accent ? (
-                      <div className="w-full h-full flex items-center justify-center text-white font-bold text-2xl" style={{ backgroundColor: course.accent }}>
-                        {course.category}
-                      </div>
+                    {thumbnail ? (
+                      <img src={thumbnail} alt={course.title} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-blue-500 font-semibold">
-                        {course.title.slice(0, 2).toUpperCase()}
+                      <div className="w-full h-full flex items-center justify-center text-white font-bold text-2xl" style={{ backgroundColor: accent }}>
+                        {category}
                       </div>
                     )}
                   </div>
@@ -182,7 +185,7 @@ export function Dashboard() {
                       )}
 
                       <div className="mt-4 text-sm text-gray-500">
-                        Expires: {new Date(course.expiryDate).toLocaleDateString()}
+                        Expires: {expiryDate ? new Date(expiryDate).toLocaleDateString() : "N/A"}
                       </div>
                     </div>
                   </div>
