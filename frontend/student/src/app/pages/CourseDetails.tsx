@@ -239,23 +239,24 @@ export function CourseDetails() {
                 {currentVideo && (() => {
                   const activeRec = recordings.find((r) => r.id === currentVideo);
                   if (!activeRec) return null;
-                  if (activeRec.embedCode) {
-                    return (
-                      <div className="bg-black rounded-lg overflow-hidden mb-6 aspect-video flex items-center justify-center" 
-                           style={{ width: '100%', height: 'auto', maxHeight: '500px' }}
-                           dangerouslySetInnerHTML={{ __html: activeRec.embedCode }} />
-                    );
-                  }
+                  const hasEmbed = activeRec.embedCode && activeRec.embedCode.trim() !== "";
                   return (
-                    <div className="bg-black rounded-lg overflow-hidden mb-6">
-                      <video
-                        key={currentVideo}
-                        controls
-                        className="w-full aspect-video"
-                        src={activeRec.videoUrl}
-                      >
-                        Your browser does not support the video tag.
-                      </video>
+                    <div className="max-w-2xl mx-auto mb-6">
+                      {hasEmbed ? (
+                        <div className="bg-black rounded-lg overflow-hidden aspect-video flex items-center justify-center w-full" 
+                             dangerouslySetInnerHTML={{ __html: activeRec.embedCode }} />
+                      ) : (
+                        <div className="bg-black rounded-lg overflow-hidden">
+                          <video
+                            key={currentVideo}
+                            controls
+                            className="w-full aspect-video"
+                            src={activeRec.videoUrl}
+                          >
+                            Your browser does not support the video tag.
+                          </video>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
