@@ -69,35 +69,45 @@ export function CourseDetails() {
           const contentResponse = await fetch(`http://localhost:5000/api/courses/${courseId}/content`);
           if (contentResponse.ok) {
             const contents = await contentResponse.json();
-            const recs = contents.filter((c: any) => c.type === 'video' || c.type === 'recording').map((c: any) => ({
+            const notes = contents.filter((c: any) => c.content_type === 'pdf').map((c: any) => ({
               id: String(c.id),
               title: c.title,
-              videoUrl: c.url,
+              downloadUrl: c.content_url,
+              size: "N/A"
+            }));
+            const exLinks = contents.filter((c: any) => c.content_type === 'link').map((c: any) => ({
+              id: String(c.id),
+              title: c.title,
+              url: c.content_url,
+              description: ""
+            }));
+            setDbPDFs(notes);
+            setDbLinks(exLinks);
+          }
+
+          // Fetch video recordings
+          const recordingsResponse = await fetch(`http://localhost:5000/api/courses/${courseId}/recordings`);
+          if (recordingsResponse.ok) {
+            const recs = (await recordingsResponse.json()).map((c: any) => ({
+              id: String(c.id),
+              title: c.title,
+              videoUrl: c.video_url,
+              embedCode: c.embed_code,
               duration: "Duration N/A",
               watched: false
             }));
-            const notes = contents.filter((c: any) => c.type === 'pdf' || c.type === 'notes').map((c: any) => ({
+            setDbRecordings(recs);
+          }
+
+          // Fetch course notifications (Notices)
+          const notificationsResponse = await fetch(`http://localhost:5000/api/courses/${courseId}/notifications`);
+          if (notificationsResponse.ok) {
+            const nots = (await notificationsResponse.json()).map((c: any) => ({
               id: String(c.id),
               title: c.title,
-              downloadUrl: c.url,
-              size: "N/A"
-            }));
-            const exLinks = contents.filter((c: any) => c.type === 'link').map((c: any) => ({
-              id: String(c.id),
-              title: c.title,
-              url: c.url,
-              description: ""
-            }));
-            const nots = contents.filter((c: any) => c.type === 'notice').map((c: any) => ({
-              id: String(c.id),
-              title: c.title,
-              content: c.url,
+              content: c.message,
               date: c.created_at
             }));
-
-            setDbRecordings(recs);
-            setDbPDFs(notes);
-            setDbLinks(exLinks);
             setDbNotices(nots);
           }
         }
@@ -145,7 +155,8 @@ export function CourseDetails() {
     );
   }
 
-  const daysRemaining = getDaysRemaining(course.expiryDate);
+  const expiryDate = course.expiryDate || course.expiry_date;
+  const daysRemaining = expiryDate ? getDaysRemaining(expiryDate) : 0;
 
   const tabs = [
     { id: "notices" as TabType, label: "Notices", icon: Bell, count: notices.length },
@@ -232,18 +243,29 @@ export function CourseDetails() {
 
             {activeTab === "recordings" && (
               <div className="space-y-6">
-                {currentVideo && (
-                  <div className="bg-black rounded-lg overflow-hidden mb-6">
-                    <video
-                      key={currentVideo}
-                      controls
-                      className="w-full aspect-video"
-                      src={recordings.find((r) => r.id === currentVideo)?.videoUrl}
-                    >
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
-                )}
+                {currentVideo && (() => {
+                  const activeRec = recordings.find((r) => r.id === currentVideo);
+                  if (!activeRec) return null;
+                  if (activeRec.embedCode) {
+                    return (
+                      <div className="bg-black rounded-lg overflow-hidden mb-6 aspect-video flex items-center justify-center" 
+                           style={{ width: '100%', height: 'auto', maxHeight: '500px' }}
+                           dangerouslySetInnerHTML={{ __html: activeRec.embedCode }} />
+                    );
+                  }
+                  return (
+                    <div className="bg-black rounded-lg overflow-hidden mb-6">
+                      <video
+                        key={currentVideo}
+                        controls
+                        className="w-full aspect-video"
+                        src={activeRec.videoUrl}
+                      >
+                        Your browser does not support the video tag.
+                      </video>
+                    </div>
+                  );
+                })()}
 
                 {recordings.length === 0 ? (
                   <p className="text-gray-500 text-center py-8">No recordings available</p>

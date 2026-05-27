@@ -77,13 +77,39 @@ async function connectDB() {
             )
         `);
 
+        await pool.execute(`DROP TABLE IF EXISTS course_content`);
         await pool.execute(`
             CREATE TABLE IF NOT EXISTS course_content (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 course_id INT NOT NULL,
-                type VARCHAR(50),
+                content_type VARCHAR(50),
                 title VARCHAR(255) NOT NULL,
-                url VARCHAR(255),
+                content_url VARCHAR(255),
+                is_watched TINYINT DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+            )
+        `);
+
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS video_recordings (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                course_id INT NOT NULL,
+                title VARCHAR(255) NOT NULL,
+                video_url VARCHAR(255),
+                embed_code TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+            )
+        `);
+
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS course_notifications (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                course_id INT NOT NULL,
+                title VARCHAR(255) NOT NULL,
+                message TEXT,
+                created_by INT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
             )
@@ -285,11 +311,103 @@ app.get('/api/student/:userId/courses', async (req, res) => {
     }
 });
 
-// Get course content (videos/pdfs)
+// Get course content (Notes/PDFs & Links)
 app.get('/api/courses/:id/content', async (req, res) => {
     try {
         const [content] = await pool.execute('SELECT * FROM course_content WHERE course_id = ?', [req.params.id]);
         res.json(content);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Add course content (Notes/PDFs & Links)
+app.post('/api/courses/:id/content', async (req, res) => {
+    const { content_type, title, content_url } = req.body;
+    try {
+        const [result] = await pool.execute(
+            'INSERT INTO course_content (course_id, content_type, title, content_url) VALUES (?, ?, ?, ?)',
+            [req.params.id, content_type, title, content_url]
+        );
+        res.status(201).json({ id: result.insertId, message: 'Content added successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Delete course content
+app.delete('/api/courses/content/:contentId', async (req, res) => {
+    try {
+        await pool.execute('DELETE FROM course_content WHERE id = ?', [req.params.contentId]);
+        res.json({ message: 'Content deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get course video recordings
+app.get('/api/courses/:id/recordings', async (req, res) => {
+    try {
+        const [recordings] = await pool.execute('SELECT * FROM video_recordings WHERE course_id = ?', [req.params.id]);
+        res.json(recordings);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Add course video recording
+app.post('/api/courses/:id/recordings', async (req, res) => {
+    const { title, video_url, embed_code } = req.body;
+    try {
+        const [result] = await pool.execute(
+            'INSERT INTO video_recordings (course_id, title, video_url, embed_code) VALUES (?, ?, ?, ?)',
+            [req.params.id, title, video_url, embed_code || '']
+        );
+        res.status(201).json({ id: result.insertId, message: 'Video recording added successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Delete course video recording
+app.delete('/api/courses/recordings/:recordingId', async (req, res) => {
+    try {
+        await pool.execute('DELETE FROM video_recordings WHERE id = ?', [req.params.recordingId]);
+        res.json({ message: 'Video recording deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get course notices/notifications
+app.get('/api/courses/:id/notifications', async (req, res) => {
+    try {
+        const [notifications] = await pool.execute('SELECT * FROM course_notifications WHERE course_id = ? ORDER BY created_at DESC', [req.params.id]);
+        res.json(notifications);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Add course notice/notification
+app.post('/api/courses/:id/notifications', async (req, res) => {
+    const { title, message, created_by } = req.body;
+    try {
+        const [result] = await pool.execute(
+            'INSERT INTO course_notifications (course_id, title, message, created_by) VALUES (?, ?, ?, ?)',
+            [req.params.id, title, message, created_by || null]
+        );
+        res.status(201).json({ id: result.insertId, message: 'Notice added successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Delete course notice/notification
+app.delete('/api/courses/notifications/:notificationId', async (req, res) => {
+    try {
+        await pool.execute('DELETE FROM course_notifications WHERE id = ?', [req.params.notificationId]);
+        res.json({ message: 'Notice deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

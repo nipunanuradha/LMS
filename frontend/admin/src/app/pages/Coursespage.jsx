@@ -98,6 +98,10 @@ export default function CoursesPage({ courses, setCourses, setModal }) {
                     <span style={{ color: "#94A3B8" }}>students</span>
                   </div>
                   <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => setModal({ type: "manageContent", course })} className="btn-ghost"
+                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 7, border: "1.5px solid #E2E8F0", background: "#F8FAFC", color: "#2563EB", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all 0.15s" }}>
+                      📁 Content
+                    </button>
                     <button onClick={() => setModal({ type: "editCourse", course })} className="btn-ghost"
                       style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 7, border: "1.5px solid #E2E8F0", background: "#F8FAFC", color: "#334155", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all 0.15s" }}>
                       {Ic.edit(13)} Edit

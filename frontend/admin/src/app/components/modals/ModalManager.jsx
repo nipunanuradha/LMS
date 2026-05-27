@@ -189,6 +189,7 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
       desc: isEdit ? (modal.course.description || modal.course.desc || "") : "",
       category: isEdit ? (modal.course.category || "Web Dev") : "Web Dev",
       thumbnail: isEdit ? (modal.course.thumbnail_url || modal.course.thumbnail || "") : "",
+      price: isEdit ? (modal.course.price || "") : "",
     });
     const [dragOver, setDragOver] = useState(false);
 
@@ -209,7 +210,7 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
         title: formState.title,
         description: formState.desc,
         thumbnail_url: formState.thumbnail,
-        price: 0
+        price: parseFloat(formState.price) || 0
       };
 
       try {
@@ -251,8 +252,11 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
             <textarea value={formState.desc} onChange={e => setFormState(f => ({ ...f, desc: e.target.value }))} rows={3} placeholder="Brief course description..."
               style={{ padding: "10px 14px", borderRadius: 8, border: "1.5px solid #E2E8F0", fontSize: 14, color: "#0F172A", background: "#FAFAFA", resize: "vertical", fontFamily: "'DM Sans',sans-serif", transition: "all 0.2s", outline: "none" }} />
           </div>
-          <Select label="Category" value={formState.category} onChange={e => setFormState(f => ({ ...f, category: e.target.value }))}
-            options={["Web Dev", "Data Science", "Design", "Backend", "Mobile", "Cloud"]} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Select label="Category" value={formState.category} onChange={e => setFormState(f => ({ ...f, category: e.target.value }))}
+              options={["Web Dev", "Data Science", "Design", "Backend", "Mobile", "Cloud"]} />
+            <Input label="Price (LKR) *" type="number" value={formState.price} onChange={e => setFormState(f => ({ ...f, price: e.target.value }))} placeholder="e.g. 5000" />
+          </div>
           {/* File Upload */}
           <div>
             <label style={{ fontSize: 13, fontWeight: 500, color: "#374151", display: "block", marginBottom: 6 }}>Course Thumbnail</label>
@@ -290,5 +294,328 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
       </Modal>
     );
   }
+
+  if (modal?.type === "manageContent") {
+    return <ManageContentModal course={modal.course} onClose={close} />;
+  }
+
   return null;
+}
+
+function ManageContentModal({ course, onClose }) {
+  const [activeTab, setActiveTab] = useState("notices");
+  const [notices, setNotices] = useState([]);
+  const [recordings, setRecordings] = useState([]);
+  const [contents, setContents] = useState([]);
+
+  const [noticeForm, setNoticeForm] = useState({ title: "", message: "" });
+  const [recForm, setRecForm] = useState({ title: "", video_url: "", embed_code: "" });
+  const [pdfForm, setPdfForm] = useState({ title: "", content_url: "" });
+  const [linkForm, setLinkForm] = useState({ title: "", content_url: "" });
+
+  const fetchAll = async () => {
+    try {
+      const nRes = await fetch(`http://localhost:5000/api/courses/${course.id}/notifications`);
+      if (nRes.ok) setNotices(await nRes.json());
+
+      const rRes = await fetch(`http://localhost:5000/api/courses/${course.id}/recordings`);
+      if (rRes.ok) setRecordings(await rRes.json());
+
+      const cRes = await fetch(`http://localhost:5000/api/courses/${course.id}/content`);
+      if (cRes.ok) setContents(await cRes.json());
+    } catch (err) {
+      console.error("Fetch content error:", err);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchAll();
+  }, [course.id]);
+
+  const addNotice = async () => {
+    if (!noticeForm.title || !noticeForm.message) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/courses/${course.id}/notifications`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...noticeForm, created_by: 1 })
+      });
+      if (res.ok) {
+        setNoticeForm({ title: "", message: "" });
+        fetchAll();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const deleteNotice = async (id) => {
+    if (!window.confirm("Are you sure?")) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/courses/notifications/${id}`, { method: "DELETE" });
+      if (res.ok) fetchAll();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const addRecording = async () => {
+    if (!recForm.title || (!recForm.video_url && !recForm.embed_code)) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/courses/${course.id}/recordings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(recForm)
+      });
+      if (res.ok) {
+        setRecForm({ title: "", video_url: "", embed_code: "" });
+        fetchAll();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const deleteRecording = async (id) => {
+    if (!window.confirm("Are you sure?")) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/courses/recordings/${id}`, { method: "DELETE" });
+      if (res.ok) fetchAll();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const addContent = async (type, form, setForm) => {
+    if (!form.title || !form.content_url) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/courses/${course.id}/content`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: form.title, content_url: form.content_url, content_type: type })
+      });
+      if (res.ok) {
+        setForm({ title: "", content_url: "" });
+        fetchAll();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const deleteContent = async (id) => {
+    if (!window.confirm("Are you sure?")) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/courses/content/${id}`, { method: "DELETE" });
+      if (res.ok) fetchAll();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <Modal title="Manage Course Materials" subtitle={`Course: ${course.title}`} onClose={onClose} width={650}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {/* Navigation Tabs */}
+        <div style={{ display: "flex", borderBottom: "2px solid #E2E8F0" }}>
+          {["notices", "recordings", "notes", "links"].map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                flex: 1,
+                padding: "12px 6px",
+                border: "none",
+                background: "none",
+                borderBottom: activeTab === tab ? "3px solid #2563EB" : "3px solid transparent",
+                color: activeTab === tab ? "#2563EB" : "#64748B",
+                fontWeight: activeTab === tab ? 600 : 500,
+                cursor: "pointer",
+                textTransform: "capitalize",
+                fontSize: 14,
+                transition: "all 0.15s"
+              }}
+            >
+              {tab === "notes" ? "Notes / PDFs" : tab === "links" ? "External Links" : tab}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Contents */}
+        <div style={{ maxHeight: "350px", overflowY: "auto", paddingRight: 4, display: "flex", flexDirection: "column", gap: 12 }}>
+          
+          {/* NOTICES TAB */}
+          {activeTab === "notices" && (
+            <>
+              {/* Add form */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12, background: "#F8FAFC", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+                <h4 style={{ margin: 0, fontSize: 13, color: "#1E293B" }}>Create Course Notice</h4>
+                <input
+                  type="text"
+                  placeholder="Notice Title"
+                  value={noticeForm.title}
+                  onChange={e => setNoticeForm(f => ({ ...f, title: e.target.value }))}
+                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                />
+                <textarea
+                  placeholder="Notice Message..."
+                  rows={2}
+                  value={noticeForm.message}
+                  onChange={e => setNoticeForm(f => ({ ...f, message: e.target.value }))}
+                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, fontFamily: "inherit", resize: "vertical", background: "#fff", color: "#000" }}
+                />
+                <button onClick={addNotice} style={{ alignSelf: "flex-end", padding: "6px 16px", borderRadius: 6, background: "#2563EB", color: "#fff", border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Add Notice</button>
+              </div>
+
+              {/* List */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <h4 style={{ margin: "10px 0 0 0", fontSize: 13, color: "#64748B" }}>Existing Notices ({notices.length})</h4>
+                {notices.map(n => (
+                  <div key={n.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: 12, background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 8 }}>
+                    <div style={{ flex: 1, marginRight: 10 }}>
+                      <h5 style={{ margin: "0 0 4px 0", color: "#1E3A8A", fontSize: 13 }}>{n.title}</h5>
+                      <p style={{ margin: 0, fontSize: 12, color: "#1E40AF", lineHeight: 1.4 }}>{n.message}</p>
+                    </div>
+                    <button onClick={() => deleteNotice(n.id)} style={{ padding: "4px 8px", background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", borderRadius: 5, fontSize: 11, cursor: "pointer" }}>Delete</button>
+                  </div>
+                ))}
+                {notices.length === 0 && <p style={{ fontSize: 12, color: "#94A3B8", textAlign: "center", padding: "10px 0" }}>No notices added yet.</p>}
+              </div>
+            </>
+          )}
+
+          {/* RECORDINGS TAB */}
+          {activeTab === "recordings" && (
+            <>
+              {/* Add form */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12, background: "#F8FAFC", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+                <h4 style={{ margin: 0, fontSize: 13, color: "#1E293B" }}>Add Video Recording</h4>
+                <input
+                  type="text"
+                  placeholder="Video Title"
+                  value={recForm.title}
+                  onChange={e => setRecForm(f => ({ ...f, title: e.target.value }))}
+                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                />
+                <input
+                  type="text"
+                  placeholder="Video URL (Direct link to video or mp4)"
+                  value={recForm.video_url}
+                  onChange={e => setRecForm(f => ({ ...f, video_url: e.target.value }))}
+                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                />
+                <textarea
+                  placeholder="Or Embed HTML Code (e.g. YouTube Iframe Embed Code)"
+                  rows={2}
+                  value={recForm.embed_code}
+                  onChange={e => setRecForm(f => ({ ...f, embed_code: e.target.value }))}
+                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, fontFamily: "inherit", resize: "vertical", background: "#fff", color: "#000" }}
+                />
+                <button onClick={addRecording} style={{ alignSelf: "flex-end", padding: "6px 16px", borderRadius: 6, background: "#2563EB", color: "#fff", border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Add Video</button>
+              </div>
+
+              {/* List */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <h4 style={{ margin: "10px 0 0 0", fontSize: 13, color: "#64748B" }}>Existing Recordings ({recordings.length})</h4>
+                {recordings.map(r => (
+                  <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 8 }}>
+                    <div style={{ flex: 1, marginRight: 10 }}>
+                      <h5 style={{ margin: 0, color: "#166534", fontSize: 13 }}>{r.title}</h5>
+                      <span style={{ fontSize: 11, color: "#15803D", wordBreak: "break-all" }}>{r.video_url || "Embed HTML Code"}</span>
+                    </div>
+                    <button onClick={() => deleteRecording(r.id)} style={{ padding: "4px 8px", background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", borderRadius: 5, fontSize: 11, cursor: "pointer" }}>Delete</button>
+                  </div>
+                ))}
+                {recordings.length === 0 && <p style={{ fontSize: 12, color: "#94A3B8", textAlign: "center", padding: "10px 0" }}>No videos added yet.</p>}
+              </div>
+            </>
+          )}
+
+          {/* NOTES/PDF TAB */}
+          {activeTab === "notes" && (
+            <>
+              {/* Add form */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12, background: "#F8FAFC", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+                <h4 style={{ margin: 0, fontSize: 13, color: "#1E293B" }}>Upload Note / PDF Link</h4>
+                <input
+                  type="text"
+                  placeholder="Document Title"
+                  value={pdfForm.title}
+                  onChange={e => setPdfForm(f => ({ ...f, title: e.target.value }))}
+                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                />
+                <input
+                  type="text"
+                  placeholder="Document URL (PDF URL / File Link)"
+                  value={pdfForm.content_url}
+                  onChange={e => setPdfForm(f => ({ ...f, content_url: e.target.value }))}
+                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                />
+                <button onClick={() => addContent("pdf", pdfForm, setPdfForm)} style={{ alignSelf: "flex-end", padding: "6px 16px", borderRadius: 6, background: "#2563EB", color: "#fff", border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Add PDF</button>
+              </div>
+
+              {/* List */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <h4 style={{ margin: "10px 0 0 0", fontSize: 13, color: "#64748B" }}>Existing Notes ({contents.filter(c => c.content_type === "pdf").length})</h4>
+                {contents.filter(c => c.content_type === "pdf").map(c => (
+                  <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, background: "#FEF2F2", border: "1px solid #FEE2E2", borderRadius: 8 }}>
+                    <div style={{ flex: 1, marginRight: 10 }}>
+                      <h5 style={{ margin: 0, color: "#991B1B", fontSize: 13 }}>{c.title}</h5>
+                      <span style={{ fontSize: 11, color: "#B91C1C", wordBreak: "break-all" }}>{c.content_url}</span>
+                    </div>
+                    <button onClick={() => deleteContent(c.id)} style={{ padding: "4px 8px", background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", borderRadius: 5, fontSize: 11, cursor: "pointer" }}>Delete</button>
+                  </div>
+                ))}
+                {contents.filter(c => c.content_type === "pdf").length === 0 && <p style={{ fontSize: 12, color: "#94A3B8", textAlign: "center", padding: "10px 0" }}>No notes added yet.</p>}
+              </div>
+            </>
+          )}
+
+          {/* EXTERNAL LINKS TAB */}
+          {activeTab === "links" && (
+            <>
+              {/* Add form */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12, background: "#F8FAFC", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+                <h4 style={{ margin: 0, fontSize: 13, color: "#1E293B" }}>Add External Material Link</h4>
+                <input
+                  type="text"
+                  placeholder="Material Title"
+                  value={linkForm.title}
+                  onChange={e => setLinkForm(f => ({ ...f, title: e.target.value }))}
+                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                />
+                <input
+                  type="text"
+                  placeholder="Material URL (e.g. Website URL / Video Link)"
+                  value={linkForm.content_url}
+                  onChange={e => setLinkForm(f => ({ ...f, content_url: e.target.value }))}
+                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                />
+                <button onClick={() => addContent("link", linkForm, setLinkForm)} style={{ alignSelf: "flex-end", padding: "6px 16px", borderRadius: 6, background: "#2563EB", color: "#fff", border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Add Link</button>
+              </div>
+
+              {/* List */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <h4 style={{ margin: "10px 0 0 0", fontSize: 13, color: "#64748B" }}>Existing Links ({contents.filter(c => c.content_type === "link").length})</h4>
+                {contents.filter(c => c.content_type === "link").map(c => (
+                  <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, background: "#FAF5FF", border: "1px solid #E9D5FF", borderRadius: 8 }}>
+                    <div style={{ flex: 1, marginRight: 10 }}>
+                      <h5 style={{ margin: 0, color: "#6B21A8", fontSize: 13 }}>{c.title}</h5>
+                      <span style={{ fontSize: 11, color: "#7E22CE", wordBreak: "break-all" }}>{c.content_url}</span>
+                    </div>
+                    <button onClick={() => deleteContent(c.id)} style={{ padding: "4px 8px", background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", borderRadius: 5, fontSize: 11, cursor: "pointer" }}>Delete</button>
+                  </div>
+                ))}
+                {contents.filter(c => c.content_type === "link").length === 0 && <p style={{ fontSize: 12, color: "#94A3B8", textAlign: "center", padding: "10px 0" }}>No external links added yet.</p>}
+              </div>
+            </>
+          )}
+
+        </div>
+
+        {/* Close footer */}
+        <button onClick={onClose} className="btn-primary" style={{ width: "100%", padding: "10px", borderRadius: 9, border: "none", background: "#2563EB", cursor: "pointer", fontWeight: 600, fontSize: 14, color: "#fff", marginTop: 6 }}>Close & Done</button>
+      </div>
+    </Modal>
+  );
 }
