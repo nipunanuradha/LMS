@@ -123,7 +123,6 @@ async function connectDB() {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
-        await pool.execute(`DROP TABLE IF EXISTS enrollments`);
         await pool.execute(`
             CREATE TABLE IF NOT EXISTS enrollments (
                 id INT AUTO_INCREMENT PRIMARY KEY,
