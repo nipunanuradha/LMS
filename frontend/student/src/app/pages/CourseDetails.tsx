@@ -295,7 +295,7 @@ export function CourseDetails() {
                                 onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
                               {/* Bottom bar click blocker overlay */}
-                              <div className="absolute bottom-0 right-0 h-[60px] z-10"
+                              <div className="absolute bottom-0 right-0 w-[350px] h-[60px] z-10"
                                 style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }}
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -317,7 +317,7 @@ export function CourseDetails() {
                             onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
                           {/* Bottom bar click blocker overlay */}
-                          <div className="absolute bottom-0 right-0 h-[60px] z-10"
+                          <div className="absolute bottom-0 right-0 w-[350px] h-[60px] z-10"
                             style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }}
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
