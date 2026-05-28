@@ -1,10 +1,56 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Avatar } from "../ui/Primitives";
 import { Ic } from "../ui/icons";
 
-export default function Header({ sidebarOpen, setSidebarOpen, notifications = [], setNotifications, searchVal, onSearch, setPage, setModal }) {
+export default function Header({ sidebarOpen, setSidebarOpen, notifications = [], setNotifications, searchVal, onSearch, setPage, setModal, students = [], courses = [] }) {
   const [showNotif, setShowNotif] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const searchContainerRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredStudents = searchVal.trim()
+    ? students.filter(s => 
+        (s.full_name || "").toLowerCase().includes(searchVal.toLowerCase()) || 
+        String(s.id).toLowerCase().includes(searchVal.toLowerCase()) ||
+        (s.phone_number || "").includes(searchVal)
+      ).slice(0, 5)
+    : [];
+
+  const filteredCourses = searchVal.trim()
+    ? courses.filter(c =>
+        (c.title || "").toLowerCase().includes(searchVal.toLowerCase()) ||
+        (c.category || "").toLowerCase().includes(searchVal.toLowerCase()) ||
+        (c.description || c.desc || "").toLowerCase().includes(searchVal.toLowerCase())
+      ).slice(0, 5)
+    : [];
+
+  const hasResults = filteredStudents.length > 0 || filteredCourses.length > 0;
+
+  const handleStudentClick = (student) => {
+    if (student.role === "admin") {
+      setPage("admins");
+    } else {
+      setPage("students");
+    }
+    onSearch(student.full_name || student.name);
+    setDropdownOpen(false);
+  };
+
+  const handleCourseClick = (course) => {
+    setPage("courses");
+    onSearch(course.title);
+    setDropdownOpen(false);
+  };
 
   const currentUser = (() => {
     try {
@@ -36,10 +82,121 @@ export default function Header({ sidebarOpen, setSidebarOpen, notifications = []
         {Ic.menu()}
       </button>
       {/* Search */}
-      <div style={{ flex: 1, maxWidth: 400, position: "relative" }}>
+      <div ref={searchContainerRef} style={{ flex: 1, maxWidth: 400, position: "relative" }}>
         <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#94A3B8", display: "flex" }}>{Ic.search()}</span>
-        <input value={searchVal} onChange={e => onSearch(e.target.value)} placeholder="Search students, courses..."
-          style={{ width: "100%", padding: "9px 14px 9px 36px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 14, color: "#0F172A", background: "#F8FAFC", transition: "all 0.2s" }} />
+        <input 
+          value={searchVal} 
+          onChange={e => {
+            onSearch(e.target.value);
+            setDropdownOpen(true);
+          }} 
+          onFocus={() => setDropdownOpen(true)}
+          placeholder="Search students, courses..."
+          style={{ width: "100%", padding: "9px 14px 9px 36px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 14, color: "#0F172A", background: "#F8FAFC", transition: "all 0.2s" }} 
+        />
+
+        {/* Global Search Dropdown */}
+        {dropdownOpen && searchVal.trim() && (
+          <div style={{ 
+            position: "absolute", 
+            left: 0, 
+            right: 0, 
+            top: "calc(100% + 8px)", 
+            background: "#fff", 
+            borderRadius: 12, 
+            boxShadow: "0 10px 30px rgba(0,0,0,0.12)", 
+            border: "1.5px solid #E2E8F0", 
+            zIndex: 300, 
+            maxHeight: 380, 
+            overflowY: "auto", 
+            animation: "fadeIn 0.15s ease",
+            display: "flex",
+            flexDirection: "column"
+          }}>
+            {/* Students Section */}
+            <div style={{ padding: "10px 14px 4px", fontSize: 11, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.5px" }}>Students / Admins</div>
+            {filteredStudents.length === 0 ? (
+              <div style={{ padding: "8px 16px", fontSize: 13, color: "#94A3B8" }}>No users found</div>
+            ) : (
+              filteredStudents.map(s => (
+                <div key={s.id} onClick={() => handleStudentClick(s)} style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "space-between",
+                  padding: "8px 12px", 
+                  cursor: "pointer", 
+                  borderRadius: 8, 
+                  margin: "2px 6px",
+                  transition: "background 0.15s",
+                  background: "transparent"
+                }} className="btn-ghost"
+                onMouseEnter={e => e.currentTarget.style.background = "#F8FAFC"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: s.role === 'admin' ? "#7C3AED" : (s.color || "#2563EB"), color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600 }}>
+                      {s.full_name ? s.full_name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "U"}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: "#0F172A" }}>{s.full_name}</div>
+                      <div style={{ fontSize: 11, color: "#94A3B8" }}>ID: {s.id} · {s.district || "No District"}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 4 }} onClick={e => e.stopPropagation()}>
+                    <button onClick={() => { setModal({ type: "resetPw", student: s }); setDropdownOpen(false); }} 
+                      style={{ border: "1.5px solid #FDE68A", background: "#FFFBEB", color: "#92400E", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: "pointer", transition: "all 0.15s" }}>
+                      PW
+                    </button>
+                    {(!s.role || s.role === "student") && (
+                      <button onClick={() => { setModal({ type: "enroll", student: s }); setDropdownOpen(false); }} 
+                        style={{ border: "1.5px solid #A7F3D0", background: "#F0FDF4", color: "#065F46", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: "pointer", transition: "all 0.15s" }}>
+                        Enroll
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+
+            <div style={{ height: "1.5px", background: "#F1F5F9", margin: "6px 0" }} />
+
+            {/* Courses Section */}
+            <div style={{ padding: "4px 14px 4px", fontSize: 11, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.5px" }}>Courses</div>
+            {filteredCourses.length === 0 ? (
+              <div style={{ padding: "8px 16px", fontSize: 13, color: "#94A3B8" }}>No courses found</div>
+            ) : (
+              filteredCourses.map(c => (
+                <div key={c.id} onClick={() => handleCourseClick(c)} style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "space-between",
+                  padding: "8px 12px", 
+                  cursor: "pointer", 
+                  borderRadius: 8, 
+                  margin: "2px 6px",
+                  transition: "background 0.15s",
+                  background: "transparent"
+                }} className="btn-ghost"
+                onMouseEnter={e => e.currentTarget.style.background = "#F8FAFC"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: "#0F172A" }}>{c.title}</div>
+                    <div style={{ fontSize: 11, color: "#94A3B8" }}>{c.category || "Web Dev"} · {c.students || 0} students</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 4 }} onClick={e => e.stopPropagation()}>
+                    <button onClick={() => { setModal({ type: "manageContent", course: c }); setDropdownOpen(false); }} 
+                      style={{ border: "1.5px solid #E2E8F0", background: "#F8FAFC", color: "#2563EB", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: "pointer", transition: "all 0.15s" }}>
+                      Content
+                    </button>
+                    <button onClick={() => { setModal({ type: "editCourse", course: c }); setDropdownOpen(false); }} 
+                      style={{ border: "1.5px solid #E2E8F0", background: "#F8FAFC", color: "#334155", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: "pointer", transition: "all 0.15s" }}>
+                      Edit
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
       <div style={{ flex: 1 }} />
       {/* Notifications */}

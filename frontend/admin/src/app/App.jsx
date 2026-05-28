@@ -126,6 +126,7 @@ export default function App() {
             notifications={notifications} setNotifications={setNotifications}
             searchVal={globalSearch} onSearch={setGlobalSearch}
             setPage={setPage} setModal={setModal}
+            students={students} courses={courses}
           />
           {/* Breadcrumb */}
           <div style={{ padding: "10px 28px", background: "#fff", borderBottom: "1px solid #F1F5F9", display: "flex", alignItems: "center", gap: 8 }}>
@@ -135,9 +136,9 @@ export default function App() {
           </div>
           <main style={{ flex: 1, overflow: "auto", padding: "24px 28px" }}>
             {page === "dashboard" && <DashboardPage students={students} courses={courses} setModal={setModal} />}
-            {page === "students" && <StudentsPage students={students.filter(s => !s.role || s.role === 'student')} setStudents={setStudents} setModal={setModal} type="student" />}
-            {page === "admins" && <StudentsPage students={students.filter(s => s.role === 'admin')} setStudents={setStudents} setModal={setModal} type="admin" />}
-            {page === "courses" && <CoursesPage courses={courses} setCourses={setCourses} setModal={setModal} />}
+            {page === "students" && <StudentsPage students={students.filter(s => !s.role || s.role === 'student')} setStudents={setStudents} setModal={setModal} type="student" globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} />}
+            {page === "admins" && <StudentsPage students={students.filter(s => s.role === 'admin')} setStudents={setStudents} setModal={setModal} type="admin" globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} />}
+            {page === "courses" && <CoursesPage courses={courses} setCourses={setCourses} setModal={setModal} globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} />}
             {page === "revenue" && <RevenuePage />}
             {page === "settings" && <SettingsPage />}
           </main>

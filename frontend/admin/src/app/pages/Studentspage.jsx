@@ -3,8 +3,11 @@ import { Avatar, StatusBadge } from "../components/ui/Primitives";
 import { Ic } from "../components/ui/icons";
 import { DISTRICTS } from "../data/mockData";
 
-export default function StudentsPage({ students, setStudents, setModal }) {
-  const [search, setSearch] = useState("");
+export default function StudentsPage({ students, setStudents, setModal, globalSearch, setGlobalSearch }) {
+  const [localSearch, setLocalSearch] = useState("");
+  const search = globalSearch !== undefined ? globalSearch : localSearch;
+  const setSearch = setGlobalSearch !== undefined ? setGlobalSearch : setLocalSearch;
+
   const [district, setDistrict] = useState("All Districts");
   const [statusFilter, setStatusFilter] = useState("All");
   const [roleFilter, setRoleFilter] = useState("All Roles");
