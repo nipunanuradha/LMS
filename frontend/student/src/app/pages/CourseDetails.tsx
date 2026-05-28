@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router";
-import { ArrowLeft, Bell, Video, FileText, ExternalLink as ExternalLinkIcon, Download, Check, Eye } from "lucide-react";
+import { ArrowLeft, Bell, Video, FileText, ExternalLink as ExternalLinkIcon, Download, Check, Eye, Maximize, Minimize } from "lucide-react";
 import {
   mockCourses,
   mockRecordings,
@@ -18,7 +18,7 @@ function getYouTubeEmbedUrl(url: string): string | null {
   const match = url.match(regExp);
   if (match && match[2].length === 11) {
     const videoId = match[2];
-    return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3`;
+    return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&fs=0`;
   }
   return null;
 }
@@ -39,6 +39,59 @@ export function CourseDetails() {
   const [activeTab, setActiveTab] = useState<TabType>("notices");
   const [watchedVideos, setWatchedVideos] = useState<Set<string>>(new Set());
   const [currentVideo, setCurrentVideo] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      ));
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+    document.addEventListener("MSFullscreenChange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+      document.removeEventListener("mozfullscreenchange", handleFullscreenChange);
+      document.removeEventListener("MSFullscreenChange", handleFullscreenChange);
+    };
+  }, []);
+
+  const toggleFullscreen = () => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const isCurrentlyFullscreen = !!(
+      document.fullscreenElement ||
+      (document as any).webkitFullscreenElement ||
+      (document as any).mozFullScreenElement ||
+      (document as any).msFullscreenElement
+    );
+
+    if (!isCurrentlyFullscreen) {
+      if (container.requestFullscreen) {
+        container.requestFullscreen();
+      } else if ((container as any).webkitRequestFullscreen) {
+        (container as any).webkitRequestFullscreen();
+      } else if ((container as any).msRequestFullscreen) {
+        (container as any).msRequestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      } else if ((document as any).msExitFullscreen) {
+        (document as any).msExitFullscreen();
+      }
+    }
+  };
 
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -266,16 +319,18 @@ export function CourseDetails() {
 
                   let displayEmbed = activeRec.embedCode;
                   if (hasEmbed && displayEmbed.includes("youtube.com/embed/")) {
+                    // Strip native fullscreen
+                    displayEmbed = displayEmbed.replace(/allowfullscreen(="[^"]*")?/gi, "");
                     // Inject cleaner params into raw YouTube iframe code if not present
                     if (!displayEmbed.includes("?")) {
                       displayEmbed = displayEmbed.replace(
                         /youtube\.com\/embed\/([^"?\s>]+)/g,
-                        "youtube.com/embed/$1?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3"
+                        "youtube.com/embed/$1?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&fs=0"
                       );
                     } else {
                       displayEmbed = displayEmbed.replace(
                         /youtube\.com\/embed\/([^"?\s>]+)\?/g,
-                        "youtube.com/embed/$1?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&"
+                        "youtube.com/embed/$1?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&fs=0&"
                       );
                     }
                   }
@@ -283,28 +338,39 @@ export function CourseDetails() {
                   return (
                     <div className="max-w-2xl mx-auto mb-6">
                       {hasEmbed ? (
-                        <div className="bg-black rounded-lg overflow-hidden aspect-video w-full relative">
+                        <div ref={containerRef} className={`bg-black rounded-lg overflow-hidden relative ${isFullscreen ? "w-screen h-screen flex items-center justify-center" : "aspect-video w-full"}`}>
                           {displayEmbed.includes("youtube.com") && (
                             <>
-                              {/* Top bar click blocker overlay */}
-                              <div className="absolute top-0 left-0 right-0 h-[75px] z-10"
-                                style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }}
+                              <div className="absolute top-0 left-0 right-0 z-10"
+                                style={{ 
+                                  height: isFullscreen ? '100px' : '75px',
+                                  background: 'rgba(0,0,0,0)', 
+                                  cursor: 'default' 
+                                }}
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
-                              {/* Bottom bar click blocker overlay */}
-                              <div className="absolute bottom-0 right-0 w-[350px] h-[60px] z-10"
-                                style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }}
+                              <div className="absolute bottom-0 right-0 z-10"
+                                style={{ 
+                                  width: isFullscreen ? '450px' : '350px',
+                                  height: isFullscreen ? '80px' : '60px',
+                                  background: 'rgba(0,0,0,0)', 
+                                  cursor: 'default' 
+                                }}
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
-                              {/* Bottom-left share/watch-later click blocker overlay */}
-                              <div className="absolute bottom-0 left-0 w-[140px] h-[45px] z-10"
-                                style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }}
+                              <div className="absolute bottom-0 left-0 z-10"
+                                style={{ 
+                                  width: isFullscreen ? '180px' : '140px',
+                                  height: isFullscreen ? '60px' : '45px',
+                                  background: 'rgba(0,0,0,0)', 
+                                  cursor: 'default' 
+                                }}
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -313,28 +379,47 @@ export function CourseDetails() {
                             </>
                           )}
                           <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: displayEmbed }} />
+                          
+                          <button
+                            onClick={toggleFullscreen}
+                            className="absolute bottom-3 right-3 z-20 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all focus:outline-none"
+                            title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                          >
+                            {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                          </button>
                         </div>
                       ) : ytEmbedUrl ? (
-                        <div className="bg-black rounded-lg overflow-hidden aspect-video w-full relative">
-                          {/* Top bar click blocker overlay */}
-                          <div className="absolute top-0 left-0 right-0 h-[75px] z-10"
-                            style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }}
+                        <div ref={containerRef} className={`bg-black rounded-lg overflow-hidden relative ${isFullscreen ? "w-screen h-screen flex items-center justify-center" : "aspect-video w-full"}`}>
+                          <div className="absolute top-0 left-0 right-0 z-10"
+                            style={{ 
+                              height: isFullscreen ? '100px' : '75px',
+                              background: 'rgba(0,0,0,0)', 
+                              cursor: 'default' 
+                            }}
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
-                          {/* Bottom bar click blocker overlay */}
-                          <div className="absolute bottom-0 right-0 w-[350px] h-[60px] z-10"
-                            style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }}
+                          <div className="absolute bottom-0 right-0 z-10"
+                            style={{ 
+                              width: isFullscreen ? '450px' : '350px',
+                              height: isFullscreen ? '80px' : '60px',
+                              background: 'rgba(0,0,0,0)', 
+                              cursor: 'default' 
+                            }}
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
-                          {/* Bottom-left share/watch-later click blocker overlay */}
-                          <div className="absolute bottom-0 left-0 w-[140px] h-[45px] z-10"
-                            style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }}
+                          <div className="absolute bottom-0 left-0 z-10"
+                            style={{ 
+                              width: isFullscreen ? '180px' : '140px',
+                              height: isFullscreen ? '60px' : '45px',
+                              background: 'rgba(0,0,0,0)', 
+                              cursor: 'default' 
+                            }}
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -343,11 +428,18 @@ export function CourseDetails() {
 
                           <iframe
                             src={ytEmbedUrl}
-                            className="w-full h-full aspect-video"
+                            className="w-full h-full"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
                             frameBorder="0"
                           />
+                          
+                          <button
+                            onClick={toggleFullscreen}
+                            className="absolute bottom-3 right-3 z-20 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all focus:outline-none"
+                            title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                          >
+                            {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                          </button>
                         </div>
                       ) : vimeoEmbedUrl ? (
                         <div className="bg-black rounded-lg overflow-hidden aspect-video w-full">
