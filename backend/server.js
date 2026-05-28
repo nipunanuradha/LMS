@@ -511,6 +511,22 @@ app.post('/api/admin/users/:id/reset-password', async (req, res) => {
     }
 });
 
+// Student/User self-change password
+app.post('/api/users/:id/change-password', async (req, res) => {
+    const { password } = req.body;
+    if (!password) {
+        return res.status(400).json({ message: 'Password is required' });
+    }
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await pool.execute('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, req.params.id]);
+        res.json({ message: 'Password updated successfully' });
+        await createNotification(`User ID ${req.params.id} changed their password`, 'info');
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 function saveBase64Image(base64String) {
     if (base64String && base64String.startsWith('data:image/')) {
         const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);

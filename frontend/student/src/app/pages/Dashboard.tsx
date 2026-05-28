@@ -39,19 +39,47 @@ export function Dashboard() {
     navigate("/");
   };
 
-  const handlePasswordUpdate = (e: React.FormEvent) => {
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const users = JSON.parse(localStorage.getItem("lmsUsers") || "[]");
-    const updatedUsers = users.map((u: any) => {
-      if (u.id === user.id) {
-        return { ...u, password: newPassword };
+    if (!newPassword.trim()) return;
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/users/${user.id}/change-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify({ password: newPassword }),
+      });
+
+      if (response.ok) {
+        // Update user state and local storage
+        const updatedUser = { ...user, password: newPassword };
+        localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+        setUser(updatedUser);
+
+        // Update fallback mock storage if it exists
+        const users = JSON.parse(localStorage.getItem("lmsUsers") || "[]");
+        const updatedUsers = users.map((u: any) => {
+          if (u.id === user.id) {
+            return { ...u, password: newPassword };
+          }
+          return u;
+        });
+        localStorage.setItem("lmsUsers", JSON.stringify(updatedUsers));
+
+        alert("Password updated successfully! Please use this new password for your next login.");
+        setShowEditPassword(false);
+        setNewPassword("");
+      } else {
+        const data = await response.json();
+        alert(data.message || "Failed to update password");
       }
-      return u;
-    });
-    localStorage.setItem("lmsUsers", JSON.stringify(updatedUsers));
-    setUser({ ...user, password: newPassword });
-    setShowEditPassword(false);
-    setNewPassword("");
+    } catch (err) {
+      console.error("Password update error:", err);
+      alert("Server connection failed. Could not update password.");
+    }
   };
 
   if (!user) return null;
