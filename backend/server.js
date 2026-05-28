@@ -76,8 +76,6 @@ async function connectDB() {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
-
-        await pool.execute(`DROP TABLE IF EXISTS course_content`);
         await pool.execute(`
             CREATE TABLE IF NOT EXISTS course_content (
                 id INT AUTO_INCREMENT PRIMARY KEY,
