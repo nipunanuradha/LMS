@@ -263,7 +263,7 @@ export function CourseDetails() {
                   const hasEmbed = activeRec.embedCode && activeRec.embedCode.trim() !== "";
                   const ytEmbedUrl = getYouTubeEmbedUrl(activeRec.videoUrl);
                   const vimeoEmbedUrl = getVimeoEmbedUrl(activeRec.videoUrl);
-                  
+
                   let displayEmbed = activeRec.embedCode;
                   if (hasEmbed && displayEmbed.includes("youtube.com/embed/")) {
                     // Inject cleaner params into raw YouTube iframe code if not present
@@ -287,21 +287,21 @@ export function CourseDetails() {
                           {displayEmbed.includes("youtube.com") && (
                             <>
                               {/* Top bar click blocker overlay */}
-                              <div className="absolute top-0 left-0 right-0 h-[75px] z-10" 
-                                   style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }} 
-                                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                   onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                   onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                   onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                   onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
-                              {/* Bottom-right YouTube logo click blocker overlay */}
-                              <div className="absolute bottom-0 right-0 w-[120px] h-[50px] z-10" 
-                                   style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }} 
-                                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                   onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                   onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                   onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                   onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
+                              <div className="absolute top-0 left-0 right-0 h-[75px] z-10"
+                                style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }}
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
+                              {/* Bottom bar click blocker overlay */}
+                              <div className="absolute bottom-0 right-0 w-[350px] h-[60px] z-10"
+                                style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }}
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
                             </>
                           )}
                           <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: displayEmbed }} />
@@ -309,37 +309,37 @@ export function CourseDetails() {
                       ) : ytEmbedUrl ? (
                         <div className="bg-black rounded-lg overflow-hidden aspect-video w-full relative">
                           {/* Top bar click blocker overlay */}
-                          <div className="absolute top-0 left-0 right-0 h-[75px] z-10" 
-                               style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }} 
-                               onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                               onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                               onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                               onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                               onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
-                          {/* Bottom-right YouTube logo click blocker overlay */}
-                          <div className="absolute bottom-0 right-0 w-[120px] h-[50px] z-10" 
-                               style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }} 
-                               onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                               onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                               onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                               onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                               onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
-                          
-                          <iframe 
-                            src={ytEmbedUrl} 
-                            className="w-full h-full aspect-video" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                            allowFullScreen 
+                          <div className="absolute top-0 left-0 right-0 h-[75px] z-10"
+                            style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
+                          {/* Bottom bar click blocker overlay */}
+                          <div className="absolute bottom-0 right-0 w-[350px] h-[60px] z-10"
+                            style={{ background: 'rgba(0,0,0,0)', cursor: 'default' }}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
+
+                          <iframe
+                            src={ytEmbedUrl}
+                            className="w-full h-full aspect-video"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
                             frameBorder="0"
                           />
                         </div>
                       ) : vimeoEmbedUrl ? (
                         <div className="bg-black rounded-lg overflow-hidden aspect-video w-full">
-                          <iframe 
-                            src={vimeoEmbedUrl} 
-                            className="w-full h-full aspect-video" 
-                            allow="autoplay; fullscreen; picture-in-picture" 
-                            allowFullScreen 
+                          <iframe
+                            src={vimeoEmbedUrl}
+                            className="w-full h-full aspect-video"
+                            allow="autoplay; fullscreen; picture-in-picture"
+                            allowFullScreen
                             frameBorder="0"
                           />
                         </div>
