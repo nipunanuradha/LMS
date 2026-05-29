@@ -1,13 +1,60 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "../components/ui/Primitives";
 import { Ic } from "../components/ui/icons";
 
 export default function SettingsPage() {
   const [siteName, setSiteName] = useState("ICT Academy LMS");
   const [email, setEmail] = useState("EMAIL_ADDRESS");
+  const [phone, setPhone] = useState("+94 77 000 0000");
+  const [platformUrl, setPlatformUrl] = useState("[url hosting]");
   const [saved, setSaved] = useState(false);
   const [tog, setTog] = useState({ email: true, sms: false, maintenance: false });
-  const save = () => { setSaved(true); setTimeout(() => setSaved(false), 2500); };
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/admin/settings")
+      .then(res => res.json())
+      .then(data => {
+        if (data.platform_name) setSiteName(data.platform_name);
+        if (data.admin_email) setEmail(data.admin_email);
+        if (data.support_phone) setPhone(data.support_phone);
+        if (data.platform_url) setPlatformUrl(data.platform_url);
+        setTog({
+          email: data.email_notifications === "true",
+          sms: data.sms_alerts === "true",
+          maintenance: data.maintenance_mode === "true"
+        });
+      })
+      .catch(err => console.error("Error fetching settings:", err));
+  }, []);
+
+  const save = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/admin/settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          platform_name: siteName,
+          admin_email: email,
+          support_phone: phone,
+          platform_url: platformUrl,
+          email_notifications: String(tog.email),
+          sms_alerts: String(tog.sms),
+          maintenance_mode: String(tog.maintenance)
+        })
+      });
+      if (response.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
+      } else {
+        console.error("Failed to save settings");
+      }
+    } catch (err) {
+      console.error("Error saving settings:", err);
+    }
+  };
+
   return (
     <div style={{ animation: "fadeIn 0.25s ease", maxWidth: 700 }}>
       <div style={{ marginBottom: 24 }}>
@@ -23,8 +70,8 @@ export default function SettingsPage() {
           <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: 16 }}>
             <Input label="Platform Name" value={siteName} onChange={e => setSiteName(e.target.value)} />
             <Input label="Admin Email" type="email" value={email} onChange={e => setEmail(e.target.value)} />
-            <Input label="Support Phone" placeholder="+94 77 000 0000" />
-            <Input label="Platform URL" placeholder="[url hosting]" />
+            <Input label="Support Phone" placeholder="+94 77 000 0000" value={phone} onChange={e => setPhone(e.target.value)} />
+            <Input label="Platform URL" placeholder="[url hosting]" value={platformUrl} onChange={e => setPlatformUrl(e.target.value)} />
           </div>
         </div>
         {/* Notifications */}

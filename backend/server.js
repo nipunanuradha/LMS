@@ -126,11 +126,28 @@ async function connectDB() {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
                 course_id INT NOT NULL,
+                amount_paid DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+                payment_status ENUM('pending', 'completed', 'failed') NOT NULL DEFAULT 'pending',
                 expiry_date DATE NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                 FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
                 UNIQUE KEY unique_enrollment (user_id, course_id)
+            )
+        `);
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS payments (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                enrollment_id INT,
+                user_id INT NOT NULL,
+                course_id INT NOT NULL,
+                amount DECIMAL(10, 2) NOT NULL,
+                payment_method VARCHAR(50) NOT NULL,
+                transaction_id VARCHAR(100),
+                status ENUM('success', 'pending', 'failed') NOT NULL DEFAULT 'success',
+                paid_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
             )
         `);
         await pool.execute(`
@@ -144,7 +161,16 @@ async function connectDB() {
                 FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
             )
         `);
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS system_settings (
+                setting_key VARCHAR(255) PRIMARY KEY,
+                setting_value TEXT,
+                category VARCHAR(100),
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            )
+        `);
         await seedAdmin();
+        await seedSystemSettings();
     } catch (err) {
         console.error('Database connection or initialization failed:', err.message);
         console.log('Please check your .env credentials and TiDB status.');
@@ -184,6 +210,30 @@ async function seedAdmin() {
     } catch (err) {
         console.error('Database connection or initialization failed:', err.message);
         console.log('Please check your .env credentials and TiDB status.');
+    }
+}
+
+async function seedSystemSettings() {
+    try {
+        const defaults = [
+            { key: 'platform_name', value: 'ICT Academy LMS', category: 'general' },
+            { key: 'admin_email', value: 'EMAIL_ADDRESS', category: 'general' },
+            { key: 'support_phone', value: '+94 77 000 0000', category: 'general' },
+            { key: 'platform_url', value: '[url hosting]', category: 'general' },
+            { key: 'email_notifications', value: 'true', category: 'notifications' },
+            { key: 'sms_alerts', value: 'false', category: 'notifications' },
+            { key: 'maintenance_mode', value: 'false', category: 'notifications' }
+        ];
+
+        for (const item of defaults) {
+            await pool.execute(
+                'INSERT IGNORE INTO system_settings (setting_key, setting_value, category) VALUES (?, ?, ?)',
+                [item.key, item.value, item.category]
+            );
+        }
+        console.log('Default system settings seeded successfully.');
+    } catch (err) {
+        console.error('Failed to seed system settings:', err.message);
     }
 }
 
@@ -590,10 +640,33 @@ app.post('/api/admin/enrollments', async (req, res) => {
         return res.status(400).json({ error: 'Please create a course first and select a course and expiry date.' });
     }
     try {
-        await pool.execute(
-            'INSERT INTO enrollments (user_id, course_id, expiry_date) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE expiry_date = ?',
-            [student_id, course_id, expiry_date, expiry_date]
+        // Get course details for price
+        const [[courseObj]] = await pool.execute('SELECT price FROM courses WHERE id = ?', [course_id]);
+        const price = courseObj ? parseFloat(courseObj.price) : 0.00;
+
+        const [enrollResult] = await pool.execute(
+            'INSERT INTO enrollments (user_id, course_id, amount_paid, payment_status, expiry_date) VALUES (?, ?, ?, "completed", ?) ON DUPLICATE KEY UPDATE expiry_date = ?, amount_paid = ?, payment_status = "completed"',
+            [student_id, course_id, price, expiry_date, expiry_date, price]
         );
+
+        // Fetch enrollment ID
+        let enrollmentId = enrollResult.insertId;
+        if (!enrollmentId) {
+            const [[existing]] = await pool.execute('SELECT id FROM enrollments WHERE user_id = ? AND course_id = ?', [student_id, course_id]);
+            enrollmentId = existing ? existing.id : null;
+        }
+
+        // Add payment record if not already exists for this enrollment
+        if (enrollmentId) {
+            const [existingPay] = await pool.execute('SELECT id FROM payments WHERE enrollment_id = ? AND status = "success"', [enrollmentId]);
+            if (existingPay.length === 0) {
+                const transactionId = `TXN_ADM_${Date.now()}_${Math.floor(Math.random() * 900000 + 100000)}`;
+                await pool.execute(
+                    'INSERT INTO payments (enrollment_id, user_id, course_id, amount, payment_method, transaction_id, status) VALUES (?, ?, ?, ?, "Admin Panel", ?, "success")',
+                    [enrollmentId, student_id, course_id, price, transactionId]
+                );
+            }
+        }
         
         // Fetch student name and course title for notification
         const [[student]] = await pool.execute('SELECT full_name FROM users WHERE id = ?', [student_id]);
@@ -602,6 +675,165 @@ app.post('/api/admin/enrollments', async (req, res) => {
         await createNotification(`Enrolled ${student?.full_name || 'student'} in '${course?.title || 'course'}'`, 'enroll');
         
         res.status(201).json({ message: 'Student enrolled successfully' });
+    } catch (err) {
+        console.error("Enrollment error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get revenue and enrollment statistics
+app.get('/api/admin/revenue-stats', async (req, res) => {
+    if (!pool) {
+        return res.status(500).json({ message: 'Database not connected' });
+    }
+    try {
+        const now = new Date();
+        const months = [];
+        
+        // Generate last 6 months list (from 5 months ago to current month)
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            months.push({
+                month: d.toLocaleString('default', { month: 'short' }),
+                year: String(d.getFullYear()),
+                yearMonth: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+                revenue: 0.0,
+                enrollments: 0
+            });
+        }
+
+        const currentPeriodMonths = months.map(m => m.yearMonth);
+
+        // Generate previous 6 months list (from 11 months ago to 6 months ago) for growth comparison
+        const previousMonths = [];
+        for (let i = 11; i >= 6; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            previousMonths.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+        }
+
+        // Fetch successful payments from the last 12 months
+        const [payments] = await pool.execute(
+            `SELECT amount, paid_at FROM payments 
+             WHERE status = 'success' AND paid_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)`
+        );
+
+        // Fetch all enrollments from the last 12 months
+        const [enrollments] = await pool.execute(
+            `SELECT created_at FROM enrollments 
+             WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)`
+        );
+
+        let currentRevenue = 0;
+        let previousRevenue = 0;
+        let currentEnrollmentsCount = 0;
+        let previousEnrollmentsCount = 0;
+
+        // Group payments
+        for (const p of payments) {
+            const amount = parseFloat(p.amount) || 0;
+            const pDate = new Date(p.paid_at);
+            const pYearMonth = `${pDate.getFullYear()}-${String(pDate.getMonth() + 1).padStart(2, '0')}`;
+            
+            if (currentPeriodMonths.includes(pYearMonth)) {
+                currentRevenue += amount;
+                const mObj = months.find(m => m.yearMonth === pYearMonth);
+                if (mObj) mObj.revenue += amount;
+            } else if (previousMonths.includes(pYearMonth)) {
+                previousRevenue += amount;
+            }
+        }
+
+        // Group enrollments
+        for (const e of enrollments) {
+            const eDate = new Date(e.created_at);
+            const eYearMonth = `${eDate.getFullYear()}-${String(eDate.getMonth() + 1).padStart(2, '0')}`;
+            
+            if (currentPeriodMonths.includes(eYearMonth)) {
+                currentEnrollmentsCount++;
+                const mObj = months.find(m => m.yearMonth === eYearMonth);
+                if (mObj) mObj.enrollments++;
+            } else if (previousMonths.includes(eYearMonth)) {
+                previousEnrollmentsCount++;
+            }
+        }
+
+        // Calculate changes
+        let revenueChange = 0;
+        if (previousRevenue > 0) {
+            revenueChange = ((currentRevenue - previousRevenue) / previousRevenue) * 100;
+        } else {
+            revenueChange = currentRevenue > 0 ? 100 : 0;
+        }
+
+        let enrollmentsChange = 0;
+        if (previousEnrollmentsCount > 0) {
+            enrollmentsChange = ((currentEnrollmentsCount - previousEnrollmentsCount) / previousEnrollmentsCount) * 100;
+        } else {
+            enrollmentsChange = currentEnrollmentsCount > 0 ? 100 : 0;
+        }
+
+        const avgRevenuePerStudent = currentEnrollmentsCount > 0 ? Math.round(currentRevenue / currentEnrollmentsCount) : 0;
+
+        // Remove the internal yearMonth field before returning to keep the payload clean
+        const monthlyData = months.map(m => ({
+            month: m.month,
+            year: m.year,
+            revenue: m.revenue,
+            enrollments: m.enrollments
+        }));
+
+        res.json({
+            summary: {
+                totalRevenue: currentRevenue,
+                revenueChange,
+                totalEnrollments: currentEnrollmentsCount,
+                enrollmentsChange,
+                avgRevenuePerStudent
+            },
+            monthlyData
+        });
+    } catch (err) {
+        console.error("Revenue stats error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get system settings
+app.get('/api/admin/settings', async (req, res) => {
+    if (!pool) {
+        return res.status(500).json({ message: 'Database not connected' });
+    }
+    try {
+        const [rows] = await pool.execute('SELECT setting_key, setting_value FROM system_settings');
+        const settings = {};
+        rows.forEach(row => {
+            settings[row.setting_key] = row.setting_value;
+        });
+        res.json(settings);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update system settings
+app.post('/api/admin/settings', async (req, res) => {
+    if (!pool) {
+        return res.status(500).json({ message: 'Database not connected' });
+    }
+    const settings = req.body;
+    try {
+        for (const [key, value] of Object.entries(settings)) {
+            let category = 'general';
+            if (['email_notifications', 'sms_alerts', 'maintenance_mode'].includes(key)) {
+                category = 'notifications';
+            }
+            await pool.execute(
+                'INSERT INTO system_settings (setting_key, setting_value, category) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
+                [key, String(value), category, String(value)]
+            );
+        }
+        await createNotification('System settings were updated', 'info');
+        res.json({ message: 'Settings saved successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
