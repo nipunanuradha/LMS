@@ -169,6 +169,18 @@ async function connectDB() {
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )
         `);
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS contact_inquiries (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL,
+                phone_number VARCHAR(50) NOT NULL,
+                subject VARCHAR(255) NOT NULL,
+                message TEXT NOT NULL,
+                status VARCHAR(50) DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
         await seedAdmin();
         await seedSystemSettings();
     } catch (err) {
@@ -238,6 +250,25 @@ async function seedSystemSettings() {
 }
 
 connectDB();
+
+// Submit contact inquiry
+app.post('/api/contact', async (req, res) => {
+    const { name, email, phone_number, subject, message } = req.body;
+    if (!name || !email || !phone_number || !subject || !message) {
+        return res.status(400).json({ message: 'All fields are required' });
+    }
+    try {
+        await pool.execute(
+            'INSERT INTO contact_inquiries (name, email, phone_number, subject, message, status) VALUES (?, ?, ?, ?, ?, ?)',
+            [name, email, phone_number, subject, message, 'pending']
+        );
+        res.status(201).json({ message: 'Inquiry submitted successfully' });
+        await createNotification(`New contact inquiry from ${name}: ${subject}`, 'info');
+    } catch (err) {
+        console.error('Contact inquiry error:', err);
+        res.status(500).json({ error: 'Database Error: ' + err.message });
+    }
+});
 
 // ── AUTH ROUTES ──────────────────────────────────────────────────────────────
 
