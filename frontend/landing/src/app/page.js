@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import About from "./components/About";
@@ -12,6 +12,16 @@ import LoginModal from "./components/LoginModal";
 
 export default function Home() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handlePageShow = () => {
+      setIsLoginModalOpen(false);
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen">

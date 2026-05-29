@@ -36,7 +36,8 @@ export function Dashboard() {
 
   const handleLogout = () => {
     localStorage.removeItem("currentUser");
-    navigate("/");
+    localStorage.removeItem("token");
+    window.location.href = "http://localhost:3000";
   };
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {

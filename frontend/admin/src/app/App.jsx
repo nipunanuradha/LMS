@@ -107,7 +107,7 @@ export default function App() {
   const [globalSearch, setGlobalSearch] = useState("");
 
   if (!isLoggedIn) {
-    window.location.href = "http://localhost:5173";
+    window.location.href = "http://localhost:3000";
     return null;
   }
 

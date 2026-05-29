@@ -272,6 +272,7 @@ export default function Header({ sidebarOpen, setSidebarOpen, notifications = []
                   if (window.confirm("Are you sure you want to sign out?")) {
                     localStorage.removeItem("currentUser");
                     localStorage.removeItem("admin_isLoggedIn");
+                    localStorage.removeItem("token");
                     window.location.reload();
                   }
                 }
