@@ -7,6 +7,9 @@ export default function SettingsPage() {
   const [email, setEmail] = useState("EMAIL_ADDRESS");
   const [phone, setPhone] = useState("+94 77 000 0000");
   const [platformUrl, setPlatformUrl] = useState("[url hosting]");
+  const [baseStudentsEnrolled, setBaseStudentsEnrolled] = useState("15000");
+  const [examPassRate, setExamPassRate] = useState("98");
+  const [expertTutors, setExpertTutors] = useState("12");
   const [saved, setSaved] = useState(false);
   const [tog, setTog] = useState({ email: true, sms: false, maintenance: false });
 
@@ -18,6 +21,9 @@ export default function SettingsPage() {
         if (data.admin_email) setEmail(data.admin_email);
         if (data.support_phone) setPhone(data.support_phone);
         if (data.platform_url) setPlatformUrl(data.platform_url);
+        if (data.base_students_enrolled) setBaseStudentsEnrolled(data.base_students_enrolled);
+        if (data.exam_pass_rate) setExamPassRate(data.exam_pass_rate);
+        if (data.expert_tutors) setExpertTutors(data.expert_tutors);
         setTog({
           email: data.email_notifications === "true",
           sms: data.sms_alerts === "true",
@@ -39,6 +45,9 @@ export default function SettingsPage() {
           admin_email: email,
           support_phone: phone,
           platform_url: platformUrl,
+          base_students_enrolled: baseStudentsEnrolled,
+          exam_pass_rate: examPassRate,
+          expert_tutors: expertTutors,
           email_notifications: String(tog.email),
           sms_alerts: String(tog.sms),
           maintenance_mode: String(tog.maintenance)
@@ -72,6 +81,11 @@ export default function SettingsPage() {
             <Input label="Admin Email" type="email" value={email} onChange={e => setEmail(e.target.value)} />
             <Input label="Support Phone" placeholder="+94 77 000 0000" value={phone} onChange={e => setPhone(e.target.value)} />
             <Input label="Platform URL" placeholder="[url hosting]" value={platformUrl} onChange={e => setPlatformUrl(e.target.value)} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+              <Input label="Base Students" type="number" value={baseStudentsEnrolled} onChange={e => setBaseStudentsEnrolled(e.target.value)} />
+              <Input label="Pass Rate (%)" type="number" value={examPassRate} onChange={e => setExamPassRate(e.target.value)} />
+              <Input label="Base Tutors" type="number" value={expertTutors} onChange={e => setExpertTutors(e.target.value)} />
+            </div>
           </div>
         </div>
         {/* Notifications */}

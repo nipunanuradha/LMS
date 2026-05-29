@@ -249,7 +249,10 @@ async function seedSystemSettings() {
             { key: 'platform_url', value: '[url hosting]', category: 'general' },
             { key: 'email_notifications', value: 'true', category: 'notifications' },
             { key: 'sms_alerts', value: 'false', category: 'notifications' },
-            { key: 'maintenance_mode', value: 'false', category: 'notifications' }
+            { key: 'maintenance_mode', value: 'false', category: 'notifications' },
+            { key: 'base_students_enrolled', value: '15000', category: 'general' },
+            { key: 'exam_pass_rate', value: '98', category: 'general' },
+            { key: 'expert_tutors', value: '12', category: 'general' }
         ];
 
         for (const item of defaults) {
@@ -989,6 +992,30 @@ app.post('/api/admin/settings', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// Get public stats for landing page
+app.get('/api/public/stats', async (req, res) => {
+    if (!pool) {
+        return res.status(500).json({ message: 'Database not connected' });
+    }
+    try {
+        // Count unique students enrolled in courses
+        const [[{ enrolled_students }]] = await pool.execute("SELECT COUNT(DISTINCT user_id) as enrolled_students FROM enrollments");
+        
+        // Count courses in the database
+        const [[{ course_count }]] = await pool.execute("SELECT COUNT(*) as course_count FROM courses");
+        
+        res.json({
+            students: enrolled_students,
+            passRate: 98,
+            tutors: course_count
+        });
+    } catch (err) {
+        console.error("Public stats error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 // Get notifications
 app.get('/api/admin/notifications', async (req, res) => {

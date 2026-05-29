@@ -1,8 +1,26 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { ArrowRight, Code, Shield, Network } from "lucide-react";
 
 export default function Hero() {
+  const [stats, setStats] = useState({
+    students: 15000,
+    passRate: 98,
+    tutors: 12
+  });
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/public/stats")
+      .then(res => res.json())
+      .then(data => {
+        if (data && typeof data.students === "number") {
+          setStats(data);
+        }
+      })
+      .catch(err => console.error("Error fetching public stats:", err));
+  }, []);
+
   return (
     <section id="home" className="relative min-h-[90vh] flex items-center overflow-hidden bg-slate-900 text-white pt-16">
       
@@ -53,15 +71,21 @@ export default function Hero() {
             {/* Quick trust metrics */}
             <div className="pt-8 border-t border-slate-800 grid grid-cols-3 gap-4 max-w-lg mx-auto lg:mx-0">
               <div>
-                <p className="text-2xl sm:text-3xl font-extrabold text-blue-400 font-display">15,000+</p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-blue-400 font-display">
+                  {stats.students.toLocaleString()}+
+                </p>
                 <p className="text-xs text-slate-400 mt-1">Students Enrolled</p>
               </div>
               <div className="border-x border-slate-800 px-4">
-                <p className="text-2xl sm:text-3xl font-extrabold text-cyan-400 font-display">98%</p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-cyan-400 font-display">
+                  {stats.passRate}%
+                </p>
                 <p className="text-xs text-slate-400 mt-1">Exam Pass Rate</p>
               </div>
               <div>
-                <p className="text-2xl sm:text-3xl font-extrabold text-indigo-400 font-display">12+</p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-indigo-400 font-display">
+                  {stats.tutors}+
+                </p>
                 <p className="text-xs text-slate-400 mt-1">Expert Tutors</p>
               </div>
             </div>
