@@ -1,8 +1,8 @@
 {
-    "name": "nextera-lms-admin",
+    "name": "ict-academy-admin",
     "version": "1.0.0",
     "private": true,
-    "description": "NEXTERA LMS Admin Dashboard — React + Vite",
+    "description": "ICT Academy Admin Dashboard — React + Vite",
     "scripts": {
         "dev": "vite",
         "build": "vite build",
