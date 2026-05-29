@@ -8,6 +8,7 @@ const path = require('path');
 const http = require('http');
 const { Server } = require('socket.io');
 require('dotenv').config();
+const nodemailer = require('nodemailer');
 
 const app = express();
 const server = http.createServer(app);
@@ -264,6 +265,66 @@ async function seedSystemSettings() {
 }
 
 connectDB();
+
+// Nodemailer SMTP Transporter setup
+const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+    auth: {
+        user: process.env.SMTP_USER || '', // Sender email address
+        pass: process.env.SMTP_PASS || ''  // Sender app-specific password
+    }
+});
+
+// Helper function to send email notification
+async function sendReplyEmail(toEmail, inquirerName, subject, originalMessage, replyMessage) {
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        console.warn('SMTP_USER and SMTP_PASS environment variables are not set. Logging the email reply to console instead:');
+        console.log(`[EMAIL SEND SIMULATION]`);
+        console.log(`To: ${toEmail}`);
+        console.log(`Subject: Re: ${subject}`);
+        console.log(`Body: \nDear ${inquirerName},\n\nIn response to your query:\n"${originalMessage}"\n\nOur reply:\n${replyMessage}\n\nBest regards,\nICT Academy Team`);
+        return;
+    }
+
+    const mailOptions = {
+        from: `"${process.env.PLATFORM_NAME || 'ICT Academy'}" <${process.env.SMTP_USER}>`,
+        to: toEmail,
+        subject: `Re: ${subject} - ICT Academy Inquiry Reply`,
+        text: `Dear ${inquirerName},\n\nThank you for contacting ICT Academy. Here is our reply to your inquiry:\n\n------------------------------\nOriginal Message:\n"${originalMessage}"\n------------------------------\n\nReply:\n${replyMessage}\n\nIf you have any further questions, feel free to reply to this email or call us at +94 77 777 7777.\n\nBest regards,\nICT Academy Team`,
+        html: `
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff; color: #334155;">
+                <h2 style="color: #2563eb; margin-bottom: 20px; font-size: 20px;">ICT Academy Inquiry Reply</h2>
+                <p>Dear <strong>${inquirerName}</strong>,</p>
+                <p>Thank you for reaching out to us. We have reviewed your inquiry regarding <strong>"${subject}"</strong>.</p>
+                
+                <div style="background-color: #f8fafc; padding: 15px; border-left: 4px solid #cbd5e1; margin: 20px 0; border-radius: 4px;">
+                    <p style="margin: 0; font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Original Message:</p>
+                    <p style="margin: 8px 0 0 0; font-style: italic; color: #475569;">"${originalMessage}"</p>
+                </div>
+                
+                <div style="background-color: #eff6ff; padding: 15px; border-left: 4px solid #2563eb; margin: 20px 0; border-radius: 4px;">
+                    <p style="margin: 0; font-size: 11px; color: #1e3a8a; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Our Response:</p>
+                    <p style="margin: 8px 0 0 0; color: #1e293b; line-height: 1.5; white-space: pre-line;">${replyMessage}</p>
+                </div>
+                
+                <p style="margin-top: 30px; font-size: 14px; color: #475569;">If you have any further questions, please let us know by replying directly to this email or by calling our support line at +94 77 777 7777.</p>
+                
+                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
+                <p style="font-size: 11px; color: #94a3b8; margin: 0; text-align: center;">This is an automated notification sent from the ICT Academy LMS Admin Panel.</p>
+            </div>
+        `
+    };
+
+    try {
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`Email sent successfully to ${toEmail}: ${info.messageId}`);
+    } catch (error) {
+        console.error(`Error sending email to ${toEmail}:`, error);
+        throw error;
+    }
+}
 
 // Submit contact inquiry
 app.post('/api/contact', async (req, res) => {
@@ -553,18 +614,27 @@ app.post('/api/admin/inquiries/:id/reply', async (req, res) => {
         return res.status(400).json({ message: 'Reply message is required' });
     }
     try {
+        // Retrieve inquiry details first
+        const [[inquiry]] = await pool.execute('SELECT * FROM contact_inquiries WHERE id = ?', [req.params.id]);
+        if (!inquiry) {
+            return res.status(404).json({ message: 'Inquiry not found' });
+        }
+
+        // Save reply in database
         await pool.execute(
             'UPDATE contact_inquiries SET reply_message = ?, replied_at = NOW(), status = "replied" WHERE id = ?',
             [reply_message, req.params.id]
         );
-        res.json({ message: 'Reply saved and inquiry updated successfully' });
-        
-        // Retrieve inquiry details to notify or log
-        const [[inquiry]] = await pool.execute('SELECT name, subject FROM contact_inquiries WHERE id = ?', [req.params.id]);
-        if (inquiry) {
-            await createNotification(`Replied to contact inquiry from ${inquiry.name}: ${inquiry.subject}`, 'info');
-        }
+
+        // Send email reply to the user's email
+        await sendReplyEmail(inquiry.email, inquiry.name, inquiry.subject, inquiry.message, reply_message);
+
+        // Create internal LMS notification
+        await createNotification(`Replied to contact inquiry from ${inquiry.name}: ${inquiry.subject}`, 'info');
+
+        res.json({ message: 'Reply saved and email sent successfully' });
     } catch (err) {
+        console.error('Error in replying to inquiry:', err);
         res.status(500).json({ error: err.message });
     }
 });
