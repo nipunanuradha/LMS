@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "./components/layout/Sidebar";
 import Header from "./components/layout/Header";
 import DashboardPage from "./pages/Dashboardpage";
-import StudentsPage from "./pages/StudentsPage";
+import StudentsPage from "./pages/Studentspage";
 import CoursesPage from "./pages/CoursesPage";
 import RevenuePage from "./pages/RevenuePage";
 import SettingsPage from "./pages/SettingsPage";
