@@ -6,6 +6,7 @@ import Hero from "./components/Hero";
 import About from "./components/About";
 import CourseGrid from "./components/CourseGrid";
 import Testimonials from "./components/Testimonials";
+import ContactForm from "./components/ContactForm";
 import Footer from "./components/Footer";
 import LoginModal from "./components/LoginModal";
 
@@ -29,6 +30,9 @@ export default function Home() {
 
         {/* Reviews & Social Proof */}
         <Testimonials />
+
+        {/* Contact Form */}
+        <ContactForm />
       </main>
 
       {/* Footer Branding & Contacts */}
