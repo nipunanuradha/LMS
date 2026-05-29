@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router";
 import { GraduationCap, Eye, EyeOff } from "lucide-react";
 
@@ -8,6 +8,17 @@ export function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    const userParam = params.get("user");
+    if (token && userParam) {
+      localStorage.setItem("token", token);
+      localStorage.setItem("currentUser", decodeURIComponent(userParam));
+      navigate("/dashboard");
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
