@@ -6,6 +6,7 @@ import StudentsPage from "./pages/Studentspage";
 import CoursesPage from "./pages/CoursesPage";
 import RevenuePage from "./pages/RevenuePage";
 import SettingsPage from "./pages/SettingsPage";
+import InquiriesPage from "./pages/InquiriesPage";
 import ModalManager from "./components/modals/ModalManager";
 import AdminChatWidget from "./components/AdminChatWidget";
 import { STUDENTS_INIT, COURSES_INIT } from "./data/mockData";
@@ -111,7 +112,7 @@ export default function App() {
     return null;
   }
 
-  const pageNames = { dashboard: "Dashboard", students: "Student Management", admins: "Admin Management", courses: "Course Management", revenue: "Revenue & Enrollments", settings: "Settings" };
+  const pageNames = { dashboard: "Dashboard", students: "Student Management", admins: "Admin Management", courses: "Course Management", revenue: "Revenue & Enrollments", inquiries: "Contact Inquiries", settings: "Settings" };
 
   return (
     <>
@@ -140,6 +141,7 @@ export default function App() {
             {page === "admins" && <StudentsPage students={students.filter(s => s.role === 'admin')} setStudents={setStudents} setModal={setModal} type="admin" globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} />}
             {page === "courses" && <CoursesPage courses={courses} setCourses={setCourses} setModal={setModal} globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} />}
             {page === "revenue" && <RevenuePage />}
+            {page === "inquiries" && <InquiriesPage />}
             {page === "settings" && <SettingsPage />}
           </main>
         </div>

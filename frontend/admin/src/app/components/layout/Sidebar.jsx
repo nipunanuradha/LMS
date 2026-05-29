@@ -8,6 +8,7 @@ const NAV = [
   { id: "admins", label: "Admins", icon: Ic.users },
   { id: "courses", label: "Courses", icon: Ic.book },
   { id: "revenue", label: "Revenue", icon: Ic.dollar },
+  { id: "inquiries", label: "Inquiries", icon: Ic.mail },
   { id: "settings", label: "Settings", icon: Ic.cog },
 ];
 

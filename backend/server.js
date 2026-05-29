@@ -178,9 +178,23 @@ async function connectDB() {
                 subject VARCHAR(255) NOT NULL,
                 message TEXT NOT NULL,
                 status VARCHAR(50) DEFAULT 'pending',
+                reply_message TEXT DEFAULT NULL,
+                replied_at TIMESTAMP NULL DEFAULT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
+
+        // Migration for existing tables: add columns if they don't exist
+        try {
+            await pool.execute(`ALTER TABLE contact_inquiries ADD COLUMN reply_message TEXT DEFAULT NULL`);
+        } catch (e) {
+            // Ignore error if column already exists
+        }
+        try {
+            await pool.execute(`ALTER TABLE contact_inquiries ADD COLUMN replied_at TIMESTAMP NULL DEFAULT NULL`);
+        } catch (e) {
+            // Ignore error if column already exists
+        }
         await seedAdmin();
         await seedSystemSettings();
     } catch (err) {
@@ -518,6 +532,42 @@ app.get('/api/admins', async (req, res) => {
 });
 
 // ── ADMIN ROUTES (Simple middleware could be added here) ─────────────────────
+
+// Get all contact inquiries
+app.get('/api/admin/inquiries', async (req, res) => {
+    if (!pool) {
+        return res.status(500).json({ message: 'Database not connected' });
+    }
+    try {
+        const [inquiries] = await pool.execute('SELECT * FROM contact_inquiries ORDER BY created_at DESC');
+        res.json(inquiries);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Reply to a contact inquiry
+app.post('/api/admin/inquiries/:id/reply', async (req, res) => {
+    const { reply_message } = req.body;
+    if (!reply_message) {
+        return res.status(400).json({ message: 'Reply message is required' });
+    }
+    try {
+        await pool.execute(
+            'UPDATE contact_inquiries SET reply_message = ?, replied_at = NOW(), status = "replied" WHERE id = ?',
+            [reply_message, req.params.id]
+        );
+        res.json({ message: 'Reply saved and inquiry updated successfully' });
+        
+        // Retrieve inquiry details to notify or log
+        const [[inquiry]] = await pool.execute('SELECT name, subject FROM contact_inquiries WHERE id = ?', [req.params.id]);
+        if (inquiry) {
+            await createNotification(`Replied to contact inquiry from ${inquiry.name}: ${inquiry.subject}`, 'info');
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // Get all users (students and admins)
 app.get('/api/admin/students', async (req, res) => {
