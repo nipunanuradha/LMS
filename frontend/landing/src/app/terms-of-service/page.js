@@ -29,7 +29,7 @@ export default function TermsOfService() {
 
         {/* Content Section */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 sm:p-12 space-y-10 text-slate-600">
-          
+
           <section className="space-y-4">
             <h2 className="font-display font-bold text-xl text-slate-900 flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-blue-500" />
@@ -66,7 +66,7 @@ export default function TermsOfService() {
               3. Intellectual Property Rights
             </h2>
             <p className="leading-relaxed">
-              All learning materials, including but not limited to videos, slides, source code, quizzes, assignments, textbooks, and documentation hosted on the ICT Academy landing site and LMS portal, are the intellectual property of ICT Academy. 
+              All learning materials, including but not limited to videos, slides, source code, quizzes, assignments, textbooks, and documentation hosted on the ICT Academy landing site and LMS portal, are the intellectual property of ICT Academy.
             </p>
             <p className="leading-relaxed">
               You are granted a limited, personal, non-transferable license to view and download these materials solely for your own educational purposes. You may not distribute, reproduce, sell, resell, or publicly display any of the course content without written consent from our management.
@@ -111,7 +111,7 @@ export default function TermsOfService() {
               For any questions concerning the Terms of Service, please contact us:
             </p>
             <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 space-y-2 text-sm text-slate-700">
-              <p><strong>Email:</strong> support@ictacademy.lk</p>
+              <p><strong>Email:</strong> academyict3@gmail.com</p>
               <p><strong>Hotline:</strong> +94 705688895 / +94 781066642</p>
               <p><strong>Address:</strong> 98 High Level Rd, Nawagamuwa, Kaduwela, Sri Lanka</p>
             </div>

@@ -29,7 +29,7 @@ export default function PrivacyPolicy() {
 
         {/* Content Section */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 sm:p-12 space-y-10 text-slate-600">
-          
+
           <section className="space-y-4">
             <h2 className="font-display font-bold text-xl text-slate-900 flex items-center gap-2">
               <Eye className="w-5 h-5 text-blue-500" />
@@ -89,7 +89,7 @@ export default function PrivacyPolicy() {
               4. Data Security & Retention
             </h2>
             <p className="leading-relaxed">
-              We employ industry-standard encryption and security measures to protect your personal information against unauthorized access, loss, or alteration. 
+              We employ industry-standard encryption and security measures to protect your personal information against unauthorized access, loss, or alteration.
             </p>
             <p className="leading-relaxed">
               Your account credentials and student records are stored on secure cloud servers. We retain your personal data for as long as your student account is active or as needed to provide you services and maintain official academic registry archives.
@@ -106,7 +106,7 @@ export default function PrivacyPolicy() {
               If you have any questions, concerns, or requests regarding this Privacy Policy, please reach out to our administration:
             </p>
             <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 space-y-2 text-sm text-slate-700">
-              <p><strong>Email:</strong> support@ictacademy.lk</p>
+              <p><strong>Email:</strong> academyict3@gmail.com</p>
               <p><strong>Hotline:</strong> +94 705688895 / +94 781066642</p>
               <p><strong>Address:</strong> 98 High Level Rd, Nawagamuwa, Kaduwela, Sri Lanka</p>
             </div>
