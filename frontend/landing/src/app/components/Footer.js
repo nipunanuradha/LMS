@@ -9,7 +9,7 @@ export default function Footer() {
     <footer id="contact" className="bg-slate-950 text-slate-400 py-16 border-t border-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
-          
+
           {/* Logo & About */}
           <div className="space-y-4">
             <a href="#home" className="flex items-center gap-2 group">
@@ -25,13 +25,13 @@ export default function Footer() {
             </p>
             {/* Social Icons */}
             <div className="flex gap-4">
-              <a href="#" className="p-2 rounded-lg bg-slate-900 hover:bg-blue-600 hover:text-white transition-all">
+              <a href="https://www.facebook.com/share/18k2vc3S6s/" className="p-2 rounded-lg bg-slate-900 hover:bg-blue-600 hover:text-white transition-all">
                 <Facebook className="w-4 h-4" />
               </a>
-              <a href="#" className="p-2 rounded-lg bg-slate-900 hover:bg-blue-600 hover:text-white transition-all">
+              <a href="https://www.youtube.com/@athukoralanipun" className="p-2 rounded-lg bg-slate-900 hover:bg-blue-600 hover:text-white transition-all">
                 <Youtube className="w-4 h-4" />
               </a>
-              <a href="#" className="p-2 rounded-lg bg-slate-900 hover:bg-blue-600 hover:text-white transition-all">
+              <a href="https://www.linkedin.com/in/anuradha-athukorala/" className="p-2 rounded-lg bg-slate-900 hover:bg-blue-600 hover:text-white transition-all">
                 <Linkedin className="w-4 h-4" />
               </a>
               <a href="#" className="p-2 rounded-lg bg-slate-900 hover:bg-blue-600 hover:text-white transition-all">
@@ -57,7 +57,8 @@ export default function Footer() {
             <ul className="space-y-3.5 text-sm">
               <li className="flex items-start gap-2.5">
                 <Phone className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                <span>+94 77 777 7777</span>
+                <span>+94 705688895</span>
+                <span>+94 781066642</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <Mail className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
@@ -65,7 +66,7 @@ export default function Footer() {
               </li>
               <li className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                <span>120 High Level Rd, Colombo 06, Sri Lanka</span>
+                <span>98 High Level Rd, Nawagamuwa, Kaduwela, Sri Lanka</span>
               </li>
             </ul>
           </div>
