@@ -269,7 +269,7 @@ async function seedSystemSettings() {
 
 connectDB();
 
-// Nodemailer SMTP Transporter setup
+// Nodemailer SMTP Transporter setup (Triggered reload for new .env settings)
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT || '587'),
