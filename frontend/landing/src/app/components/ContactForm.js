@@ -48,7 +48,7 @@ export default function ContactForm() {
     <section id="contact" className="py-24 bg-white relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-12 gap-12 items-center">
-          
+
           {/* Text and context */}
           <div className="lg:col-span-5 space-y-6">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold uppercase tracking-wider">
@@ -72,7 +72,7 @@ export default function ContactForm() {
                 </div>
                 <div>
                   <h4 className="font-bold text-slate-900 text-sm">Call Center</h4>
-                  <p className="text-sm text-slate-600">+94 77 777 7777</p>
+                  <p className="text-sm text-slate-600">+94 705688895</p>
                 </div>
               </div>
             </div>
@@ -110,7 +110,7 @@ export default function ContactForm() {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="e.g. Anuradha Athukorala"
+                      placeholder="e.g. Saman Perera"
                     />
                   </div>
 

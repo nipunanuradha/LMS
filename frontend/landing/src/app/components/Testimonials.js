@@ -5,23 +5,23 @@ import { Star, MessageSquare } from "lucide-react";
 export default function Testimonials() {
   const reviews = [
     {
-      name: "Kasun Jayasinghe",
-      role: "Associate Software Engineer",
-      company: "Sysco Labs",
+      name: "Nethum Hemesha",
+      role: "Student",
+      company: "Ict Academy",
       rating: 5,
       content: "The Hands-on Labs and practical coding tasks made a huge difference. I transitioned from zero coding knowledge to landing an engineering job in Sri Lanka's top tech firm in just 8 months!",
     },
     {
-      name: "Dilini Perera",
-      role: "Network Administrator",
-      company: "Dialog Axiata",
+      name: "Bashitha",
+      role: "Student",
+      company: "Ict Academy",
       rating: 5,
       content: "Preparing for CCNA here was an amazing experience. The instructor explained very complex networking topics in an incredibly simple way. The exam preparation tools helped me clear my test on my first attempt.",
     },
     {
-      name: "Nimshan Fernando",
-      role: "CS Student",
-      company: "University of Moratuwa",
+      name: "Sahan Sathsara",
+      role: "Student",
+      company: "Ict Academy",
       rating: 5,
       content: "The LMS portal is extremely responsive. Having immediate access to video recordings, notes, and PDF study guides is a massive advantage when revising for academy assessments.",
     },
@@ -30,7 +30,7 @@ export default function Testimonials() {
   return (
     <section id="faculty" className="py-24 bg-white relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-800 text-xs font-semibold uppercase tracking-wider">

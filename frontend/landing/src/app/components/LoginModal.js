@@ -5,12 +5,12 @@ import { GraduationCap, Eye, EyeOff, X, ArrowLeft } from "lucide-react";
 
 export default function LoginModal({ isOpen, onClose }) {
   const [isLogin, setIsLogin] = useState(true);
-  
+
   // Login form state
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  
+
   // Signup form state
   const [signupData, setSignupData] = useState({
     name: "",
@@ -41,7 +41,7 @@ export default function LoginModal({ isOpen, onClose }) {
 
       if (response.ok) {
         const userStr = encodeURIComponent(JSON.stringify(data.user));
-        
+
         if (data.user.role === "admin") {
           window.location.href = `http://localhost:5174/?token=${data.token}&admin_isLoggedIn=true&user=${userStr}`;
         } else {
@@ -105,7 +105,7 @@ export default function LoginModal({ isOpen, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
       <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden transform transition-all duration-300 scale-100">
-        
+
         {/* Close Button */}
         <button
           onClick={resetModal}
@@ -116,7 +116,7 @@ export default function LoginModal({ isOpen, onClose }) {
 
         {/* Modal Content */}
         <div className="p-8">
-          
+
           {/* Header */}
           <div className="text-center mb-6">
             <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-2xl shadow-lg shadow-blue-500/20 mb-4">
@@ -126,10 +126,10 @@ export default function LoginModal({ isOpen, onClose }) {
               {generatedPassword ? "Registration Successful!" : isLogin ? "LMS Portal Login" : "Student Registration"}
             </h3>
             <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-              {generatedPassword 
-                ? "Please remember & save your credentials" 
-                : isLogin 
-                  ? "Access your lessons, recordings, and course material" 
+              {generatedPassword
+                ? "Please remember & save your credentials"
+                : isLogin
+                  ? "Access your lessons, recordings, and course material"
                   : "Create an account to start your learning journey"}
             </p>
           </div>
@@ -331,7 +331,7 @@ export default function LoginModal({ isOpen, onClose }) {
 
           <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
             <p className="text-xs text-slate-400">
-              Demo logins: Admin (0777777777 / admin123) or Student (077xxxx67 / demo123)
+              Demo logins: Admin (077xxxxx77 / demo123) or Student (077xxxx67 / demo123)
             </p>
           </div>
         </div>
