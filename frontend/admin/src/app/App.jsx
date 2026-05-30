@@ -10,6 +10,7 @@ import InquiriesPage from "./pages/InquiriesPage";
 import ModalManager from "./components/modals/ModalManager";
 import AdminChatWidget from "./components/AdminChatWidget";
 import { STUDENTS_INIT, COURSES_INIT } from "./data/mockData";
+import { API_URL, LANDING_URL } from "./config";
 
 // ── Font & Global Styles ──────────────────────────────────────────────────────
 function GlobalStyles() {
@@ -79,8 +80,8 @@ export default function App() {
     if (isLoggedIn) {
       const fetchData = async () => {
         try {
-          const sRes = await fetch("http://localhost:5000/api/admin/students");
-          const cRes = await fetch("http://localhost:5000/api/courses");
+          const sRes = await fetch(`${API_URL}/api/admin/students`);
+          const cRes = await fetch(`${API_URL}/api/courses`);
           if (sRes.ok) setStudents(await sRes.json());
           if (cRes.ok) setCourses(await cRes.json());
         } catch (err) {
@@ -90,7 +91,7 @@ export default function App() {
 
       const fetchNotifications = async () => {
         try {
-          const nRes = await fetch("http://localhost:5000/api/admin/notifications");
+          const nRes = await fetch(`${API_URL}/api/admin/notifications`);
           if (nRes.ok) setNotifications(await nRes.json());
         } catch (err) {
           console.error("Notifications fetch failed:", err);
@@ -108,7 +109,7 @@ export default function App() {
   const [globalSearch, setGlobalSearch] = useState("");
 
   if (!isLoggedIn) {
-    window.location.href = "http://localhost:3000";
+    window.location.href = LANDING_URL;
     return null;
   }
 

@@ -3,6 +3,7 @@ import Modal from "./Modal";
 import { Input, Select } from "../ui/Primitives";
 import { Ic } from "../ui/icons";
 import { DISTRICTS } from "../../data/mockData";
+import { API_URL } from "../config";
 
 export default function ModalManager({ modal, setModal, students, setStudents, courses, setCourses }) {
   const [pw, setPw] = useState({ pass: "", confirm: "" });
@@ -45,7 +46,7 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
         return;
       }
       try {
-        const res = await fetch("http://localhost:5000/api/admin/users", {
+        const res = await fetch(`${API_URL}/api/admin/users`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -91,7 +92,7 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
     const reset = async () => {
       if (pw.pass && pw.pass === pw.confirm) {
         try {
-          const res = await fetch(`http://localhost:5000/api/admin/users/${modal.student.id}/reset-password`, {
+          const res = await fetch(`${API_URL}/api/admin/users/${modal.student.id}/reset-password`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ password: pw.pass })
@@ -133,7 +134,7 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
     const confirm = async () => {
       if (enroll.courseId && enroll.expiry) {
         try {
-          const res = await fetch("http://localhost:5000/api/admin/enrollments", {
+          const res = await fetch(`${API_URL}/api/admin/enrollments`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -216,13 +217,13 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
       try {
         let res;
         if (isEdit) {
-          res = await fetch(`http://localhost:5000/api/admin/courses/${modal.course.id}`, {
+          res = await fetch(`${API_URL}/api/admin/courses/${modal.course.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
           });
         } else {
-          res = await fetch("http://localhost:5000/api/admin/courses", {
+          res = await fetch(`${API_URL}/api/admin/courses`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
@@ -230,7 +231,7 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
         }
 
         if (res.ok) {
-          const cRes = await fetch("http://localhost:5000/api/courses");
+          const cRes = await fetch(`${API_URL}/api/courses`);
           if (cRes.ok) {
             setCourses(await cRes.json());
           }
@@ -315,13 +316,13 @@ function ManageContentModal({ course, onClose }) {
 
   const fetchAll = async () => {
     try {
-      const nRes = await fetch(`http://localhost:5000/api/courses/${course.id}/notifications`);
+      const nRes = await fetch(`${API_URL}/api/courses/${course.id}/notifications`);
       if (nRes.ok) setNotices(await nRes.json());
 
-      const rRes = await fetch(`http://localhost:5000/api/courses/${course.id}/recordings`);
+      const rRes = await fetch(`${API_URL}/api/courses/${course.id}/recordings`);
       if (rRes.ok) setRecordings(await rRes.json());
 
-      const cRes = await fetch(`http://localhost:5000/api/courses/${course.id}/content`);
+      const cRes = await fetch(`${API_URL}/api/courses/${course.id}/content`);
       if (cRes.ok) setContents(await cRes.json());
     } catch (err) {
       console.error("Fetch content error:", err);
@@ -335,7 +336,7 @@ function ManageContentModal({ course, onClose }) {
   const addNotice = async () => {
     if (!noticeForm.title || !noticeForm.message) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/courses/${course.id}/notifications`, {
+      const res = await fetch(`${API_URL}/api/courses/${course.id}/notifications`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...noticeForm, created_by: 1 })
@@ -352,7 +353,7 @@ function ManageContentModal({ course, onClose }) {
   const deleteNotice = async (id) => {
     if (!window.confirm("Are you sure?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/courses/notifications/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_URL}/api/courses/notifications/${id}`, { method: "DELETE" });
       if (res.ok) fetchAll();
     } catch (err) {
       console.error(err);
@@ -362,7 +363,7 @@ function ManageContentModal({ course, onClose }) {
   const addRecording = async () => {
     if (!recForm.title || (!recForm.video_url && !recForm.embed_code)) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/courses/${course.id}/recordings`, {
+      const res = await fetch(`${API_URL}/api/courses/${course.id}/recordings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(recForm)
@@ -379,7 +380,7 @@ function ManageContentModal({ course, onClose }) {
   const deleteRecording = async (id) => {
     if (!window.confirm("Are you sure?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/courses/recordings/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_URL}/api/courses/recordings/${id}`, { method: "DELETE" });
       if (res.ok) fetchAll();
     } catch (err) {
       console.error(err);
@@ -389,7 +390,7 @@ function ManageContentModal({ course, onClose }) {
   const addContent = async (type, form, setForm) => {
     if (!form.title || !form.content_url) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/courses/${course.id}/content`, {
+      const res = await fetch(`${API_URL}/api/courses/${course.id}/content`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: form.title, content_url: form.content_url, content_type: type })
@@ -406,7 +407,7 @@ function ManageContentModal({ course, onClose }) {
   const deleteContent = async (id) => {
     if (!window.confirm("Are you sure?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/courses/content/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_URL}/api/courses/content/${id}`, { method: "DELETE" });
       if (res.ok) fetchAll();
     } catch (err) {
       console.error(err);

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { BookOpen, User, DollarSign } from "lucide-react";
+import { API_URL } from "../config";
 
 export default function CourseGrid({ onEnrollClick }) {
   const [courses, setCourses] = useState([]);
@@ -39,7 +40,7 @@ export default function CourseGrid({ onEnrollClick }) {
   useEffect(() => {
     async function fetchCourses() {
       try {
-        const res = await fetch("http://localhost:5000/api/courses");
+        const res = await fetch(`${API_URL}/api/courses`);
         if (res.ok) {
           const data = await res.json();
           if (data && data.length > 0) {

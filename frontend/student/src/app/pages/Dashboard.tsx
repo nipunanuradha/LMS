@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { GraduationCap, LogOut, User, Clock } from "lucide-react";
-import { mockCourses, getDaysRemaining } from "../utils/mockData";
+import { getDaysRemaining } from "../utils/mockData";
+import { API_URL, LANDING_URL } from "../config";
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ export function Dashboard() {
 
     const fetchCourses = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/student/${loggedInUser.id}/courses`);
+        const response = await fetch(`${API_URL}/api/student/${loggedInUser.id}/courses`);
         const data = await response.json();
         if (response.ok) {
           setCourses(data);
@@ -37,7 +38,7 @@ export function Dashboard() {
   const handleLogout = () => {
     localStorage.removeItem("currentUser");
     localStorage.removeItem("token");
-    window.location.href = "http://localhost:3000";
+    window.location.href = LANDING_URL;
   };
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {
@@ -45,7 +46,7 @@ export function Dashboard() {
     if (!newPassword.trim()) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/users/${user.id}/change-password`, {
+      const response = await fetch(`${API_URL}/api/users/${user.id}/change-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

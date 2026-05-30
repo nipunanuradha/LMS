@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Send, CheckCircle, AlertCircle, PhoneCall } from "lucide-react";
+import { API_URL } from "../config";
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -23,7 +24,7 @@ export default function ContactForm() {
     setSuccess(false);
 
     try {
-      const res = await fetch("http://localhost:5000/api/contact", {
+      const res = await fetch(`${API_URL}/api/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

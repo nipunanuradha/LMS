@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Ic } from "../components/ui/icons";
+import { API_URL } from "../config";
 
 export default function InquiriesPage() {
   const [inquiries, setInquiries] = useState([]);
@@ -14,7 +15,7 @@ export default function InquiriesPage() {
   const fetchInquiries = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/inquiries");
+      const res = await fetch(`${API_URL}/api/admin/inquiries`);
       if (res.ok) {
         const data = await res.json();
         setInquiries(data);
@@ -36,7 +37,7 @@ export default function InquiriesPage() {
     setSubmittingReply(true);
     setSuccessMsg("");
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/inquiries/${selectedInquiry.id}/reply`, {
+      const res = await fetch(`${API_URL}/api/admin/inquiries/${selectedInquiry.id}/reply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reply_message: replyMessage }),
@@ -45,7 +46,7 @@ export default function InquiriesPage() {
         setSuccessMsg("Reply successfully submitted!");
         setReplyMessage("");
         // Reload list and update selected
-        const updatedRes = await fetch("http://localhost:5000/api/admin/inquiries");
+        const updatedRes = await fetch(`${API_URL}/api/admin/inquiries`);
         if (updatedRes.ok) {
           const data = await updatedRes.json();
           setInquiries(data);

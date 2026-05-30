@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Avatar } from "../ui/Primitives";
 import { Ic } from "../ui/icons";
+import { API_URL } from "../../config";
 
 export default function Header({ sidebarOpen, setSidebarOpen, notifications = [], setNotifications, searchVal, onSearch, setPage, setModal, students = [], courses = [] }) {
   const [showNotif, setShowNotif] = useState(false);
@@ -64,7 +65,7 @@ export default function Header({ sidebarOpen, setSidebarOpen, notifications = []
 
   const clearAllNotifications = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/admin/notifications/clear", {
+      const res = await fetch(`${API_URL}/api/admin/notifications/clear`, {
         method: "POST"
       });
       if (res.ok) {

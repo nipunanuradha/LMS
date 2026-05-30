@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router";
 import { GraduationCap, Eye, EyeOff } from "lucide-react";
 
+import { API_URL, ADMIN_URL } from "../config";
+
 export function Login() {
   const navigate = useNavigate();
   const [phone, setPhone] = useState("");
@@ -25,7 +27,7 @@ export function Login() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone_number: phone, password }),
@@ -40,7 +42,7 @@ export function Login() {
         if (data.user.role === "admin") {
           localStorage.setItem("admin_isLoggedIn", "true");
           const userStr = encodeURIComponent(JSON.stringify(data.user));
-          window.location.href = `http://localhost:5174/?token=${data.token}&admin_isLoggedIn=true&user=${userStr}`; // Redirect to Admin App
+          window.location.href = `${ADMIN_URL}/?token=${data.token}&admin_isLoggedIn=true&user=${userStr}`; // Redirect to Admin App
         } else {
           navigate("/dashboard");
         }

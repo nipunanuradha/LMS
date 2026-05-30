@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ArrowRight, Code, Shield, Network } from "lucide-react";
+import { API_URL } from "../config";
 
 export default function Hero() {
   const [stats, setStats] = useState({
@@ -11,7 +12,7 @@ export default function Hero() {
   });
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/public/stats")
+    fetch(`${API_URL}/api/public/stats`)
       .then(res => res.json())
       .then(data => {
         if (data && typeof data.students === "number") {

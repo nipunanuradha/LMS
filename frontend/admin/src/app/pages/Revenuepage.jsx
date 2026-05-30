@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_URL } from "../config";
 
 export default function RevenuePage() {
   const [data, setData] = useState(null);
@@ -8,7 +9,7 @@ export default function RevenuePage() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/admin/revenue-stats");
+        const response = await fetch(`${API_URL}/api/admin/revenue-stats`);
         if (response.ok) {
           const resData = await response.json();
           setData(resData);

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Avatar, StatusBadge } from "../components/ui/Primitives";
 import { Ic } from "../components/ui/icons";
 import { DISTRICTS } from "../data/mockData";
+import { API_URL } from "../config";
 
 export default function StudentsPage({ students, setStudents, setModal, globalSearch, setGlobalSearch }) {
   const [localSearch, setLocalSearch] = useState("");
@@ -23,7 +24,7 @@ export default function StudentsPage({ students, setStudents, setModal, globalSe
   const deleteStudent = async id => {
     if (window.confirm("Are you sure you want to delete this user?")) {
       try {
-        const res = await fetch(`http://localhost:5000/api/admin/users/${id}`, {
+        const res = await fetch(`${API_URL}/api/admin/users/${id}`, {
           method: "DELETE"
         });
         if (res.ok) {

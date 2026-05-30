@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { GraduationCap } from "lucide-react";
 
+import { API_URL } from "../config";
+
 export function Registration() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -20,7 +22,7 @@ export function Registration() {
     const passwordToSet = Math.random().toString(36).slice(-8);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/register", {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

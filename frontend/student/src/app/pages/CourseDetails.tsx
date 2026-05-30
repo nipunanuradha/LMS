@@ -9,6 +9,7 @@ import {
   mockExternalLinks,
   getDaysRemaining,
 } from "../utils/mockData";
+import { API_URL } from "../config";
 
 type TabType = "notices" | "recordings" | "notes" | "links";
 
@@ -114,11 +115,11 @@ export function CourseDetails() {
 
     const fetchCourseDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/courses/${courseId}`);
+        const response = await fetch(`${API_URL}/api/courses/${courseId}`);
         if (response.ok) {
           const data = await response.json();
           const userObj = JSON.parse(currentUser);
-          const enrollResponse = await fetch(`http://localhost:5000/api/student/${userObj.id}/courses`);
+          const enrollResponse = await fetch(`${API_URL}/api/student/${userObj.id}/courses`);
           let expiry = null;
           if (enrollResponse.ok) {
             const enrolledCourses = await enrollResponse.json();
@@ -133,7 +134,7 @@ export function CourseDetails() {
           });
 
           // Fetch content
-          const contentResponse = await fetch(`http://localhost:5000/api/courses/${courseId}/content`);
+          const contentResponse = await fetch(`${API_URL}/api/courses/${courseId}/content`);
           if (contentResponse.ok) {
             const contents = await contentResponse.json();
             const notes = contents.filter((c: any) => c.content_type === 'pdf').map((c: any) => ({
@@ -153,7 +154,7 @@ export function CourseDetails() {
           }
 
           // Fetch video recordings
-          const recordingsResponse = await fetch(`http://localhost:5000/api/courses/${courseId}/recordings`);
+          const recordingsResponse = await fetch(`${API_URL}/api/courses/${courseId}/recordings`);
           if (recordingsResponse.ok) {
             const recs = (await recordingsResponse.json()).map((c: any) => ({
               id: String(c.id),
@@ -167,7 +168,7 @@ export function CourseDetails() {
           }
 
           // Fetch course notifications (Notices)
-          const notificationsResponse = await fetch(`http://localhost:5000/api/courses/${courseId}/notifications`);
+          const notificationsResponse = await fetch(`${API_URL}/api/courses/${courseId}/notifications`);
           if (notificationsResponse.ok) {
             const nots = (await notificationsResponse.json()).map((c: any) => ({
               id: String(c.id),

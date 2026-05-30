@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
+import { API_URL } from '../config';
 
 export default function AdminChatWidget({ students = [] }) {
   const [open, setOpen] = useState(false);
@@ -8,7 +9,7 @@ export default function AdminChatWidget({ students = [] }) {
   const [text, setText] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
   const socketRef = useRef(null);
-  const apiUrl = 'http://localhost:5000';
+  const apiUrl = API_URL;
 
   const onlyStudents = students.filter(s => !s.role || s.role === 'student');
 

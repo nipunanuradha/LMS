@@ -740,7 +740,8 @@ function saveBase64Image(base64String) {
             const filename = `thumbnail_${Date.now()}_${Math.round(Math.random() * 1E9)}.${ext}`;
             const filepath = path.join(uploadsDir, filename);
             fs.writeFileSync(filepath, data);
-            return `http://localhost:5000/uploads/${filename}`;
+            const baseUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+            return `${baseUrl}/uploads/${filename}`;
         }
     }
     return base64String;

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { GraduationCap, Eye, EyeOff, X, ArrowLeft } from "lucide-react";
+import { API_URL, ADMIN_URL, STUDENT_URL } from "../config";
 
 export default function LoginModal({ isOpen, onClose }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -31,7 +32,7 @@ export default function LoginModal({ isOpen, onClose }) {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone_number: phone, password }),
@@ -43,9 +44,9 @@ export default function LoginModal({ isOpen, onClose }) {
         const userStr = encodeURIComponent(JSON.stringify(data.user));
 
         if (data.user.role === "admin") {
-          window.location.href = `http://localhost:5174/?token=${data.token}&admin_isLoggedIn=true&user=${userStr}`;
+          window.location.href = `${ADMIN_URL}/?token=${data.token}&admin_isLoggedIn=true&user=${userStr}`;
         } else {
-          window.location.href = `http://localhost:5173/?token=${data.token}&user=${userStr}`;
+          window.location.href = `${STUDENT_URL}/?token=${data.token}&user=${userStr}`;
         }
       } else {
         setError(data.message || "Invalid login credentials. Please check and try again.");
@@ -65,7 +66,7 @@ export default function LoginModal({ isOpen, onClose }) {
     const passwordToSet = Math.random().toString(36).slice(-8);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/register", {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

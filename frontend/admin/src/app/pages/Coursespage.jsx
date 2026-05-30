@@ -1,6 +1,7 @@
 import React from "react";
 import { CategoryBadge } from "../components/ui/Primitives";
 import { Ic } from "../components/ui/icons";
+import { API_URL } from "../config";
 
 // ── Course Thumbnail ──────────────────────────────────────────────────────────
 function CourseThumbnail({ course }) {
@@ -46,7 +47,7 @@ export default function CoursesPage({ courses, setCourses, setModal, globalSearc
   const deleteCourse = async (courseId) => {
     if (window.confirm("Are you sure you want to delete this course?")) {
       try {
-        const res = await fetch(`http://localhost:5000/api/admin/courses/${courseId}`, {
+        const res = await fetch(`${API_URL}/api/admin/courses/${courseId}`, {
           method: "DELETE"
         });
         if (res.ok) {

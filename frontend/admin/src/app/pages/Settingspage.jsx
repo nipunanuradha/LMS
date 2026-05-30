@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Input } from "../components/ui/Primitives";
 import { Ic } from "../components/ui/icons";
+import { API_URL } from "../config";
 
 export default function SettingsPage() {
   const [siteName, setSiteName] = useState("ICT Academy LMS");
@@ -14,7 +15,7 @@ export default function SettingsPage() {
   const [tog, setTog] = useState({ email: true, sms: false, maintenance: false });
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/admin/settings")
+    fetch(`${API_URL}/api/admin/settings`)
       .then(res => res.json())
       .then(data => {
         if (data.platform_name) setSiteName(data.platform_name);
@@ -35,7 +36,7 @@ export default function SettingsPage() {
 
   const save = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/admin/settings", {
+      const response = await fetch(`${API_URL}/api/admin/settings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
