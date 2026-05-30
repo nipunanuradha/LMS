@@ -43,3 +43,6 @@ next-env.d.ts
 *.njsproj
 *.sln
 *.sw?
+
+node_modules
+.env
