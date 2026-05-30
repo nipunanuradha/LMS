@@ -12,7 +12,7 @@ export default function Footer() {
 
           {/* Logo & About */}
           <div className="space-y-4">
-            <a href="#home" className="flex items-center gap-2 group">
+            <a href="/#home" className="flex items-center gap-2 group">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-tr from-blue-600 to-cyan-400">
                 <GraduationCap className="h-4.5 w-4.5 text-white" />
               </div>
@@ -44,10 +44,10 @@ export default function Footer() {
           <div className="space-y-4">
             <h4 className="text-white font-semibold text-sm uppercase tracking-wider">Quick Links</h4>
             <ul className="space-y-2.5 text-sm">
-              <li><a href="#home" className="hover:text-white transition-colors">Home</a></li>
-              <li><a href="#about" className="hover:text-white transition-colors">About Us</a></li>
-              <li><a href="#courses" className="hover:text-white transition-colors">All Courses</a></li>
-              <li><a href="#faculty" className="hover:text-white transition-colors">Testimonials</a></li>
+              <li><a href="/#home" className="hover:text-white transition-colors">Home</a></li>
+              <li><a href="/#about" className="hover:text-white transition-colors">About Us</a></li>
+              <li><a href="/#courses" className="hover:text-white transition-colors">All Courses</a></li>
+              <li><a href="/#faculty" className="hover:text-white transition-colors">Testimonials</a></li>
             </ul>
           </div>
 
@@ -62,7 +62,7 @@ export default function Footer() {
               </li>
               <li className="flex items-start gap-2.5">
                 <Mail className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                <span>support@ictacademy.lk</span>
+                <span>academyict3@gmail.com</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
@@ -87,9 +87,9 @@ export default function Footer() {
         <div className="mt-12 pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-600">
           <p>&copy; {currentYear} ICT Academy. All rights reserved.</p>
           <div className="flex gap-4">
-            <a href="#" className="hover:text-slate-400">Privacy Policy</a>
+            <a href="/privacy-policy" className="hover:text-slate-400">Privacy Policy</a>
             <span>•</span>
-            <a href="#" className="hover:text-slate-400">Terms of Service</a>
+            <a href="/terms-of-service" className="hover:text-slate-400">Terms of Service</a>
           </div>
         </div>
       </div>

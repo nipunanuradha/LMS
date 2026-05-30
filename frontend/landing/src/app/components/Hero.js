@@ -5,9 +5,9 @@ import { ArrowRight, Code, Shield, Network } from "lucide-react";
 
 export default function Hero() {
   const [stats, setStats] = useState({
-    students: 15000,
+    students: 0,
     passRate: 98,
-    tutors: 12
+    tutors: 0
   });
 
   useEffect(() => {
@@ -23,17 +23,17 @@ export default function Hero() {
 
   return (
     <section id="home" className="relative min-h-[90vh] flex items-center overflow-hidden bg-slate-900 text-white pt-16">
-      
+
       {/* Background Gradients */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.15),transparent_45%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(6,182,212,0.1),transparent_50%)]" />
-      
+
       {/* Decorative Grid Lines */}
       <div className="absolute inset-0 opacity-10 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem]" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-20 lg:py-32">
         <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-          
+
           {/* Hero Content */}
           <div className="lg:col-span-7 space-y-8 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
@@ -94,7 +94,7 @@ export default function Hero() {
           {/* Hero Visual Card / Presentation */}
           <div className="lg:col-span-5 relative flex justify-center lg:justify-end">
             <div className="relative w-full max-w-[420px] aspect-[4/5] rounded-3xl overflow-hidden glassmorphism p-6 flex flex-col justify-between shadow-2xl shadow-blue-900/30 border border-slate-800">
-              
+
               {/* Header inside visual card */}
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">

@@ -7,11 +7,11 @@ export default function Navbar({ onLoginClick }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const links = [
-    { name: "Home", href: "#home" },
-    { name: "About", href: "#about" },
-    { name: "Courses", href: "#courses" },
-    { name: "Faculty", href: "#faculty" },
-    { name: "Contact", href: "#contact" },
+    { name: "Home", href: "/#home" },
+    { name: "About", href: "/#about" },
+    { name: "Courses", href: "/#courses" },
+    { name: "Faculty", href: "/#faculty" },
+    { name: "Contact", href: "/#contact" },
   ];
 
   return (
@@ -20,7 +20,7 @@ export default function Navbar({ onLoginClick }) {
         <div className="flex h-20 items-center justify-between">
           
           {/* Logo */}
-          <a href="#home" className="flex items-center gap-2.5 group">
+          <a href="/#home" className="flex items-center gap-2.5 group">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
               <GraduationCap className="h-5 w-5 text-white" />
             </div>
