@@ -3,7 +3,7 @@ import Modal from "./Modal";
 import { Input, Select } from "../ui/Primitives";
 import { Ic } from "../ui/icons";
 import { DISTRICTS } from "../../data/mockData";
-import { API_URL } from "../config";
+import { API_URL } from "../../config";
 
 export default function ModalManager({ modal, setModal, students, setStudents, courses, setCourses }) {
   const [pw, setPw] = useState({ pass: "", confirm: "" });
