@@ -1,14 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
+import { API_URL } from '../config';
 
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
-  const [admins, setAdmins] = useState([]);
-  const [selectedAdmin, setSelectedAdmin] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [admins, setAdmins] = useState<any[]>([]);
+  const [selectedAdmin, setSelectedAdmin] = useState<any>(null);
+  const [messages, setMessages] = useState<any[]>([]);
   const [text, setText] = useState('');
-  const socketRef = useRef(null);
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const socketRef = useRef<any>(null);
+  const apiUrl = API_URL;
 
   useEffect(() => {
     // load admins
@@ -16,7 +17,7 @@ export default function ChatWidget() {
       .then((r) => r.json())
       .then(setAdmins)
       .catch(() => setAdmins([]));
-  }, []);
+  }, [apiUrl]);
 
   useEffect(() => {
     if (!selectedAdmin) return;
@@ -24,9 +25,11 @@ export default function ChatWidget() {
     if (!token) return;
     socketRef.current = io(apiUrl, { auth: { token } });
 
-    socketRef.current.on('private_message', (msg) => {
+    socketRef.current.on('private_message', (msg: any) => {
       // Only accept messages relevant to this conversation
-      if ((msg.sender_id === selectedAdmin.id && msg.receiver_id === Number(localStorage.getItem('currentUser') ? JSON.parse(localStorage.getItem('currentUser')).id : 0)) || (msg.sender_id === Number(localStorage.getItem('currentUser') ? JSON.parse(localStorage.getItem('currentUser')).id : 0) && msg.receiver_id === selectedAdmin.id)) {
+      const currentUserStr = localStorage.getItem('currentUser');
+      const currentUserId = currentUserStr ? JSON.parse(currentUserStr).id : 0;
+      if ((msg.sender_id === selectedAdmin.id && msg.receiver_id === Number(currentUserId)) || (msg.sender_id === Number(currentUserId) && msg.receiver_id === selectedAdmin.id)) {
         setMessages((m) => [...m, msg]);
       }
     });
@@ -43,7 +46,7 @@ export default function ChatWidget() {
       socketRef.current?.disconnect();
       socketRef.current = null;
     };
-  }, [selectedAdmin]);
+  }, [selectedAdmin, apiUrl]);
 
   const send = () => {
     if (!text.trim() || !selectedAdmin) return;
