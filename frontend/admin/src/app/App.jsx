@@ -3,7 +3,7 @@ import Sidebar from "./components/layout/Sidebar";
 import Header from "./components/layout/Header";
 import DashboardPage from "./pages/Dashboardpage";
 import StudentsPage from "./pages/Studentspage";
-import CoursesPage from "./pages/CoursesPage";
+import CoursesPage from "./pages/Coursespage";
 import RevenuePage from "./pages/Revenuepage";
 import SettingsPage from "./pages/Settingspage";
 import InquiriesPage from "./pages/InquiriesPage";
