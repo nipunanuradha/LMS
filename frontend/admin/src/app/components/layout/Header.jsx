@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Avatar } from "../ui/Primitives";
 import { Ic } from "../ui/icons";
-import { API_URL } from "../../config";
+import { API_URL, LANDING_URL } from "../../config";
 
 export default function Header({ sidebarOpen, setSidebarOpen, notifications = [], setNotifications, searchVal, onSearch, setPage, setModal, students = [], courses = [] }) {
   const [showNotif, setShowNotif] = useState(false);
@@ -274,7 +274,7 @@ export default function Header({ sidebarOpen, setSidebarOpen, notifications = []
                     localStorage.removeItem("currentUser");
                     localStorage.removeItem("admin_isLoggedIn");
                     localStorage.removeItem("token");
-                    window.location.reload();
+                    window.location.href = LANDING_URL;
                   }
                 }
               },
