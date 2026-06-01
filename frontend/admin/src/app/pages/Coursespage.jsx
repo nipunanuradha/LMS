@@ -1,7 +1,7 @@
 import React from "react";
 import { CategoryBadge } from "../components/ui/Primitives";
 import { Ic } from "../components/ui/icons";
-import { API_URL } from "../config";
+import { API_URL, getImageUrl } from "../config";
 
 // ── Course Thumbnail ──────────────────────────────────────────────────────────
 function CourseThumbnail({ course }) {
@@ -12,7 +12,7 @@ function CourseThumbnail({ course }) {
   if (course.thumbnail_url || course.thumbnail) {
     return (
       <div style={{ width: "100%", aspectRatio: "16/9", borderRadius: "10px 10px 0 0", overflow: "hidden", position: "relative", flexShrink: 0 }}>
-        <img src={course.thumbnail_url || course.thumbnail} alt={course.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <img src={getImageUrl(course.thumbnail_url || course.thumbnail)} alt={course.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         <div style={{ position: "absolute", top: 10, left: 10 }}>
           <CategoryBadge cat={category} accent={accent} />
         </div>

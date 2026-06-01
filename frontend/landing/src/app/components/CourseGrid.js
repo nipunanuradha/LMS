@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { BookOpen, User, DollarSign } from "lucide-react";
-import { API_URL } from "../config";
+import { API_URL, getImageUrl } from "../config";
 
 export default function CourseGrid({ onEnrollClick }) {
   const [courses, setCourses] = useState([]);
@@ -120,7 +120,7 @@ export default function CourseGrid({ onEnrollClick }) {
                   <div className="w-full h-48 relative shrink-0 overflow-hidden bg-slate-100">
                     {course.thumbnail_url ? (
                       <img
-                        src={course.thumbnail_url}
+                        src={getImageUrl(course.thumbnail_url)}
                         alt={course.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />

@@ -3,7 +3,7 @@ import Modal from "./Modal";
 import { Input, Select } from "../ui/Primitives";
 import { Ic } from "../ui/icons";
 import { DISTRICTS } from "../../data/mockData";
-import { API_URL } from "../../config";
+import { API_URL, getImageUrl } from "../../config";
 
 export default function ModalManager({ modal, setModal, students, setStudents, courses, setCourses }) {
   const [pw, setPw] = useState({ pass: "", confirm: "" });
@@ -265,7 +265,7 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
               style={{ border: `2px dashed ${dragOver ? "#2563EB" : "#CBD5E1"}`, borderRadius: 12, padding: "28px 20px", textAlign: "center", background: dragOver ? "#EFF6FF" : "#F8FAFC", transition: "all 0.2s", cursor: "pointer", position: "relative", overflow: "hidden" }}>
               {formState.thumbnail ? (
                 <div style={{ position: "absolute", inset: 0 }}>
-                  <img src={formState.thumbnail} alt="Thumbnail" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src={getImageUrl(formState.thumbnail)} alt="Thumbnail" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", opacity: dragOver ? 1 : 0, transition: "opacity 0.2s" }}>
                     <span style={{ color: "white", fontWeight: 500 }}>Drop to replace</span>
                   </div>

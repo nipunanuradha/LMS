@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { GraduationCap, LogOut, User, Clock } from "lucide-react";
 import { getDaysRemaining } from "../utils/mockData";
-import { API_URL, LANDING_URL } from "../config";
+import { API_URL, LANDING_URL, getImageUrl } from "../config";
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -157,7 +157,7 @@ export function Dashboard() {
               const accents = ["#2563EB", "#059669", "#7C3AED", "#D97706", "#DC2626", "#0891B2"];
               const accent = course.accent || accents[course.id % accents.length] || "#2563EB";
               const category = course.category || "Web Dev";
-              const thumbnail = course.thumbnail_url || course.thumbnail;
+              const thumbnail = getImageUrl(course.thumbnail_url || course.thumbnail);
 
               return (
                 <Link

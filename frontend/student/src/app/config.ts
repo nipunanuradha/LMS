@@ -17,3 +17,18 @@ const getLandingUrl = () => {
 
 export const LANDING_URL = getLandingUrl();
 
+export const getImageUrl = (url: string | null | undefined): string => {
+  if (!url) return '';
+  if (url.startsWith('data:')) return url;
+  if (url.includes('localhost:5000')) {
+    return url.replace(/https?:\/\/localhost:5000/g, API_URL);
+  }
+  if (url.startsWith('/uploads')) {
+    return `${API_URL}${url}`;
+  }
+  if (url.startsWith('uploads/')) {
+    return `${API_URL}/${url}`;
+  }
+  return url;
+};
+
