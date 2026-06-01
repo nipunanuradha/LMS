@@ -18,6 +18,18 @@ export default function Home() {
       setIsLoginModalOpen(false);
     };
     window.addEventListener("pageshow", handlePageShow);
+
+    // Check if ?login=true query param is present
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("login") === "true") {
+        setIsLoginModalOpen(true);
+        // Clean up the URL parameter from browser history/address bar
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+      }
+    }
+
     return () => {
       window.removeEventListener("pageshow", handlePageShow);
     };

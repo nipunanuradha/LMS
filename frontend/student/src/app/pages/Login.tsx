@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router";
 import { GraduationCap, Eye, EyeOff } from "lucide-react";
 
-import { API_URL, ADMIN_URL } from "../config";
+import { API_URL, ADMIN_URL, LANDING_URL } from "../config";
 
 export function Login() {
   const navigate = useNavigate();
@@ -15,10 +15,19 @@ export function Login() {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     const userParam = params.get("user");
+    
     if (token && userParam) {
       localStorage.setItem("token", token);
       localStorage.setItem("currentUser", decodeURIComponent(userParam));
       navigate("/dashboard");
+    } else {
+      const currentUser = localStorage.getItem("currentUser");
+      if (currentUser) {
+        navigate("/dashboard");
+      } else {
+        // Redirect to the landing page with query parameter to auto-open login modal
+        window.location.href = `${LANDING_URL}/?login=true`;
+      }
     }
   }, [navigate]);
 
