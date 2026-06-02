@@ -31,3 +31,5 @@ This directory contains the backend for the LMS system, configured for hosting o
    - `SMTP_USER`
    - `SMTP_PASS`
    - `PLATFORM_NAME`
+   - `RESEND_API_KEY` (Optional: Set this API key from resend.com to use Resend's REST API for email replies instead of SMTP)
+   - `RESEND_FROM_EMAIL` (Optional: The sender email verified in resend.com, e.g. `onboarding@resend.dev` or your custom domain email)

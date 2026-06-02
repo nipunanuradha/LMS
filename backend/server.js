@@ -291,65 +291,100 @@ async function seedSystemSettings() {
 connectDB().catch(err => console.error('Initial DB connection failed:', err.message));
 
 // Helper function to send email notification
+// Helper function to send email notification
 async function sendReplyEmail(toEmail, inquirerName, subject, originalMessage, replyMessage) {
-    const smtpHost = (process.env.SMTP_HOST || 'smtp.gmail.com').replace(/['"]/g, '');
-    const smtpPort = parseInt((process.env.SMTP_PORT || '587').replace(/['"]/g, ''));
-    const smtpSecure = (process.env.SMTP_SECURE || '').replace(/['"]/g, '') === 'true';
-    const smtpUser = (process.env.SMTP_USER || '').replace(/['"]/g, '');
-    const smtpPass = (process.env.SMTP_PASS || '').replace(/['"]/g, '');
-
-    if (!smtpUser || !smtpPass) {
-        throw new Error('SMTP_USER or SMTP_PASS environment variables are not configured in your hosting settings (Hugging Face / Vercel).');
-    }
-
-    const transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port: smtpPort,
-        secure: smtpSecure,
-        auth: {
-            user: smtpUser,
-            pass: smtpPass
-        },
-        tls: {
-            rejectUnauthorized: false
-        }
-    });
-
-    const mailOptions = {
-        from: `"${(process.env.PLATFORM_NAME || 'ICT Academy').replace(/['"]/g, '')}" <${smtpUser}>`,
-        to: toEmail,
-        subject: `Re: ${subject} - ICT Academy Inquiry Reply`,
-        text: `Dear ${inquirerName},\n\nThank you for contacting ICT Academy. Here is our reply to your inquiry:\n\n------------------------------\nOriginal Message:\n"${originalMessage}"\n------------------------------\n\nReply:\n${replyMessage}\n\nIf you have any further questions, feel free to reply to this email or call us at +94 77 777 7777.\n\nBest regards,\nICT Academy Team`,
-        html: `
-            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff; color: #334155;">
-                <h2 style="color: #2563eb; margin-bottom: 20px; font-size: 20px;">ICT Academy Inquiry Reply</h2>
-                <p>Dear <strong>${inquirerName}</strong>,</p>
-                <p>Thank you for reaching out to us. We have reviewed your inquiry regarding <strong>"${subject}"</strong>.</p>
-                
-                <div style="background-color: #f8fafc; padding: 15px; border-left: 4px solid #cbd5e1; margin: 20px 0; border-radius: 4px;">
-                    <p style="margin: 0; font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Original Message:</p>
-                    <p style="margin: 8px 0 0 0; font-style: italic; color: #475569;">"${originalMessage}"</p>
-                </div>
-                
-                <div style="background-color: #eff6ff; padding: 15px; border-left: 4px solid #2563eb; margin: 20px 0; border-radius: 4px;">
-                    <p style="margin: 0; font-size: 11px; color: #1e3a8a; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Our Response:</p>
-                    <p style="margin: 8px 0 0 0; color: #1e293b; line-height: 1.5; white-space: pre-line;">${replyMessage}</p>
-                </div>
-                
-                <p style="margin-top: 30px; font-size: 14px; color: #475569;">If you have any further questions, please let us know by replying directly to this email or by calling our support line at +94 77 777 7777.</p>
-                
-                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
-                <p style="font-size: 11px; color: #94a3b8; margin: 0; text-align: center;">This is an automated notification sent from the ICT Academy LMS Admin Panel.</p>
+    const resendApiKey = (process.env.RESEND_API_KEY || '').replace(/['"]/g, '').trim();
+    const platformName = (process.env.PLATFORM_NAME || 'ICT Academy').replace(/['"]/g, '');
+    
+    const emailSubject = `Re: ${subject} - ${platformName} Inquiry Reply`;
+    const textContent = `Dear ${inquirerName},\n\nThank you for contacting ${platformName}. Here is our reply to your inquiry:\n\n------------------------------\nOriginal Message:\n"${originalMessage}"\n------------------------------\n\nReply:\n${replyMessage}\n\nIf you have any further questions, feel free to reply to this email.\n\nBest regards,\n${platformName} Team`;
+    const htmlContent = `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff; color: #334155;">
+            <h2 style="color: #2563eb; margin-bottom: 20px; font-size: 20px;">${platformName} Inquiry Reply</h2>
+            <p>Dear <strong>${inquirerName}</strong>,</p>
+            <p>Thank you for reaching out to us. We have reviewed your inquiry regarding <strong>"${subject}"</strong>.</p>
+            
+            <div style="background-color: #f8fafc; padding: 15px; border-left: 4px solid #cbd5e1; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 0; font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Original Message:</p>
+                <p style="margin: 8px 0 0 0; font-style: italic; color: #475569;">"${originalMessage}"</p>
             </div>
-        `
-    };
+            
+            <div style="background-color: #eff6ff; padding: 15px; border-left: 4px solid #2563eb; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 0; font-size: 11px; color: #1e3a8a; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Our Response:</p>
+                <p style="margin: 8px 0 0 0; color: #1e293b; line-height: 1.5; white-space: pre-line;">${replyMessage}</p>
+            </div>
+            
+            <p style="margin-top: 30px; font-size: 14px; color: #475569;">If you have any further questions, please let us know by replying directly to this email.</p>
+            
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
+            <p style="font-size: 11px; color: #94a3b8; margin: 0; text-align: center;">This is an automated notification sent from the ${platformName} LMS Admin Panel.</p>
+        </div>
+    `;
 
-    try {
+    if (resendApiKey) {
+        const resendFrom = (process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev').replace(/['"]/g, '').trim();
+        const fromHeader = `${platformName} <${resendFrom}>`;
+        
+        console.log(`Attempting to send email via Resend API to: ${toEmail} from: ${fromHeader}`);
+        
+        const response = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${resendApiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                from: fromHeader,
+                to: [toEmail],
+                subject: emailSubject,
+                text: textContent,
+                html: htmlContent
+            })
+        });
+        
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(`Resend API Error: ${response.status} ${response.statusText} - ${JSON.stringify(errData)}`);
+        }
+        
+        const result = await response.json();
+        console.log('Email sent successfully via Resend API. Response:', result);
+        return result;
+    } else {
+        const smtpHost = (process.env.SMTP_HOST || 'smtp.gmail.com').replace(/['"]/g, '');
+        const smtpPort = parseInt((process.env.SMTP_PORT || '587').replace(/['"]/g, ''));
+        const smtpSecure = (process.env.SMTP_SECURE || '').replace(/['"]/g, '') === 'true';
+        const smtpUser = (process.env.SMTP_USER || '').replace(/['"]/g, '');
+        const smtpPass = (process.env.SMTP_PASS || '').replace(/['"]/g, '');
+
+        if (!smtpUser || !smtpPass) {
+            throw new Error('Neither RESEND_API_KEY nor SMTP environment variables are configured.');
+        }
+
+        const transporter = nodemailer.createTransport({
+            host: smtpHost,
+            port: smtpPort,
+            secure: smtpSecure,
+            auth: {
+                user: smtpUser,
+                pass: smtpPass
+            },
+            tls: {
+                rejectUnauthorized: false
+            }
+        });
+
+        const mailOptions = {
+            from: `${platformName} <${smtpUser}>`,
+            to: toEmail,
+            subject: emailSubject,
+            text: textContent,
+            html: htmlContent
+        };
+
         const info = await transporter.sendMail(mailOptions);
-        console.log(`Email sent successfully to ${toEmail}: ${info.messageId}`);
-    } catch (error) {
-        console.error(`Error sending email to ${toEmail}:`, error);
-        throw error;
+        console.log(`Email sent successfully via SMTP to ${toEmail}: ${info.messageId}`);
+        return info;
     }
 }
 
