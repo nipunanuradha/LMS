@@ -23,6 +23,16 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
+// Database connection middleware to ensure DB is connected before processing requests
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        res.status(500).json({ error: 'Database connection failed: ' + err.message });
+    }
+});
+
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir);
@@ -45,13 +55,18 @@ const dbConfig = {
 };
 
 let pool;
+let dbPromise = null;
 
 async function connectDB() {
-    try {
-        pool = await mysql.createPool(dbConfig);
-        // Test connection
-        const [rows] = await pool.execute('SELECT 1');
-        console.log('Connected to TiDB successfully. Connection test passed.');
+    if (pool) return pool;
+    if (dbPromise) return dbPromise;
+
+    dbPromise = (async () => {
+        try {
+            pool = await mysql.createPool(dbConfig);
+            // Test connection
+            const [rows] = await pool.execute('SELECT 1');
+            console.log('Connected to TiDB successfully. Connection test passed.');
 
         // Initialize database tables
         await pool.execute(`
@@ -198,10 +213,15 @@ async function connectDB() {
         }
         await seedAdmin();
         await seedSystemSettings();
-    } catch (err) {
-        console.error('Database connection or initialization failed:', err.message);
-        console.log('Please check your .env credentials and TiDB status.');
-    }
+            return pool;
+        } catch (err) {
+            console.error('Database connection or initialization failed:', err.message);
+            console.log('Please check your .env credentials and TiDB status.');
+            dbPromise = null;
+            throw err;
+        }
+    })();
+    return dbPromise;
 }
 
 async function createNotification(message, type = 'info') {
@@ -267,22 +287,25 @@ async function seedSystemSettings() {
     }
 }
 
-connectDB();
+// Trigger initial connection (still runs in background, but middleware guarantees it for requests)
+connectDB().catch(err => console.error('Initial DB connection failed:', err.message));
 
 // Nodemailer SMTP Transporter setup (Triggered reload for new .env settings)
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+    host: (process.env.SMTP_HOST || 'smtp.gmail.com').replace(/['"]/g, ''),
+    port: parseInt((process.env.SMTP_PORT || '587').replace(/['"]/g, '')),
+    secure: (process.env.SMTP_SECURE || '').replace(/['"]/g, '') === 'true', // true for 465, false for other ports
     auth: {
-        user: process.env.SMTP_USER || '', // Sender email address
-        pass: process.env.SMTP_PASS || ''  // Sender app-specific password
+        user: (process.env.SMTP_USER || '').replace(/['"]/g, ''), // Sender email address
+        pass: (process.env.SMTP_PASS || '').replace(/['"]/g, '')  // Sender app-specific password
     }
 });
 
 // Helper function to send email notification
 async function sendReplyEmail(toEmail, inquirerName, subject, originalMessage, replyMessage) {
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    const smtpUser = (process.env.SMTP_USER || '').replace(/['"]/g, '');
+    const smtpPass = (process.env.SMTP_PASS || '').replace(/['"]/g, '');
+    if (!smtpUser || !smtpPass) {
         console.warn('SMTP_USER and SMTP_PASS environment variables are not set. Logging the email reply to console instead:');
         console.log(`[EMAIL SEND SIMULATION]`);
         console.log(`To: ${toEmail}`);
@@ -292,7 +315,7 @@ async function sendReplyEmail(toEmail, inquirerName, subject, originalMessage, r
     }
 
     const mailOptions = {
-        from: `"${process.env.PLATFORM_NAME || 'ICT Academy'}" <${process.env.SMTP_USER}>`,
+        from: `"${(process.env.PLATFORM_NAME || 'ICT Academy').replace(/['"]/g, '')}" <${smtpUser}>`,
         to: toEmail,
         subject: `Re: ${subject} - ICT Academy Inquiry Reply`,
         text: `Dear ${inquirerName},\n\nThank you for contacting ICT Academy. Here is our reply to your inquiry:\n\n------------------------------\nOriginal Message:\n"${originalMessage}"\n------------------------------\n\nReply:\n${replyMessage}\n\nIf you have any further questions, feel free to reply to this email or call us at +94 77 777 7777.\n\nBest regards,\nICT Academy Team`,
