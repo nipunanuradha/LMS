@@ -323,7 +323,9 @@ async function sendReplyEmail(toEmail, inquirerName, subject, originalMessage, r
 
     if (resendApiKey) {
         const resendFrom = (process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev').replace(/['"]/g, '').trim();
-        const fromHeader = `${platformName} <${resendFrom}>`;
+        const fromHeader = (resendFrom.includes('<') && resendFrom.includes('>')) 
+            ? resendFrom 
+            : `${platformName} <${resendFrom}>`;
         
         console.log(`Attempting to send email via Resend API to: ${toEmail} from: ${fromHeader}`);
         
@@ -374,8 +376,12 @@ async function sendReplyEmail(toEmail, inquirerName, subject, originalMessage, r
             }
         });
 
+        const smtpFromHeader = (smtpUser.includes('<') && smtpUser.includes('>')) 
+            ? smtpUser 
+            : `${platformName} <${smtpUser}>`;
+
         const mailOptions = {
-            from: `${platformName} <${smtpUser}>`,
+            from: smtpFromHeader,
             to: toEmail,
             subject: emailSubject,
             text: textContent,
