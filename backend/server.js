@@ -299,12 +299,7 @@ async function sendReplyEmail(toEmail, inquirerName, subject, originalMessage, r
     const smtpPass = (process.env.SMTP_PASS || '').replace(/['"]/g, '');
 
     if (!smtpUser || !smtpPass) {
-        console.warn('SMTP_USER and SMTP_PASS environment variables are not set. Logging the email reply to console instead:');
-        console.log(`[EMAIL SEND SIMULATION]`);
-        console.log(`To: ${toEmail}`);
-        console.log(`Subject: Re: ${subject}`);
-        console.log(`Body: \nDear ${inquirerName},\n\nIn response to your query:\n"${originalMessage}"\n\nOur reply:\n${replyMessage}\n\nBest regards,\nICT Academy Team`);
-        return;
+        throw new Error('SMTP_USER or SMTP_PASS environment variables are not configured in your hosting settings (Hugging Face / Vercel).');
     }
 
     const transporter = nodemailer.createTransport({
