@@ -658,13 +658,31 @@ app.post('/api/admin/inquiries/:id/reply', async (req, res) => {
             [reply_message, req.params.id]
         );
 
-        // Send email reply to the user's email
-        await sendReplyEmail(inquiry.email, inquiry.name, inquiry.subject, inquiry.message, reply_message);
+        let emailSent = false;
+        let emailError = null;
+
+        try {
+            // Send email reply to the user's email
+            await sendReplyEmail(inquiry.email, inquiry.name, inquiry.subject, inquiry.message, reply_message);
+            emailSent = true;
+        } catch (mailErr) {
+            console.error('Failed to send email:', mailErr);
+            emailError = mailErr.message;
+        }
 
         // Create internal LMS notification
         await createNotification(`Replied to contact inquiry from ${inquiry.name}: ${inquiry.subject}`, 'info');
 
-        res.json({ message: 'Reply saved and email sent successfully' });
+        if (emailSent) {
+            res.json({ message: 'Reply saved and email sent successfully', emailSent: true });
+        } else {
+            // Return status 200 so the frontend list refreshes and displays the specific warning
+            res.json({
+                message: `Reply saved, but email failed: ${emailError || 'Unknown Error'}. Please check your SMTP settings on Hugging Face / Vercel.`,
+                emailSent: false,
+                emailError: emailError
+            });
+        }
     } catch (err) {
         console.error('Error in replying to inquiry:', err);
         res.status(500).json({ error: err.message });

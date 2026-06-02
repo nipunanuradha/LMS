@@ -42,21 +42,25 @@ export default function InquiriesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reply_message: replyMessage }),
       });
+      const data = await res.json();
       if (res.ok) {
-        setSuccessMsg("Reply successfully submitted!");
+        setSuccessMsg(data.message || "Reply successfully submitted!");
         setReplyMessage("");
         // Reload list and update selected
         const updatedRes = await fetch(`${API_URL}/api/admin/inquiries`);
         if (updatedRes.ok) {
-          const data = await updatedRes.json();
-          setInquiries(data);
-          const fresh = data.find(item => item.id === selectedInquiry.id);
+          const inquiriesData = await updatedRes.json();
+          setInquiries(inquiriesData);
+          const fresh = inquiriesData.find(item => item.id === selectedInquiry.id);
           if (fresh) setSelectedInquiry(fresh);
         }
-        setTimeout(() => setSuccessMsg(""), 3000);
+        setTimeout(() => setSuccessMsg(""), data.emailSent ? 3000 : 10000);
+      } else {
+        setSuccessMsg(data.error || data.message || "Failed to submit reply.");
       }
     } catch (err) {
       console.error("Failed to reply:", err);
+      setSuccessMsg("Network connection error. Failed to reply.");
     } finally {
       setSubmittingReply(false);
     }
@@ -256,7 +260,16 @@ export default function InquiriesPage() {
               <form onSubmit={handleReplySubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", textTransform: "uppercase" }}>Write Reply</label>
                 {successMsg && (
-                  <div style={{ padding: "8px 12px", background: "#DEF7EC", color: "#03543F", borderRadius: 8, fontSize: 13, fontWeight: 500 }}>
+                  <div style={{
+                    padding: "10px 14px",
+                    background: successMsg.toLowerCase().includes("fail") || successMsg.toLowerCase().includes("error") ? "#FEE2E2" : "#DEF7EC",
+                    color: successMsg.toLowerCase().includes("fail") || successMsg.toLowerCase().includes("error") ? "#991B1B" : "#03543F",
+                    borderRadius: 8,
+                    fontSize: 13,
+                    fontWeight: 500,
+                    border: "1px solid " + (successMsg.toLowerCase().includes("fail") || successMsg.toLowerCase().includes("error") ? "#FCA5A5" : "#A7F3D0"),
+                    lineHeight: 1.4
+                  }}>
                     {successMsg}
                   </div>
                 )}
