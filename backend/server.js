@@ -290,21 +290,14 @@ async function seedSystemSettings() {
 // Trigger initial connection (still runs in background, but middleware guarantees it for requests)
 connectDB().catch(err => console.error('Initial DB connection failed:', err.message));
 
-// Nodemailer SMTP Transporter setup (Triggered reload for new .env settings)
-const transporter = nodemailer.createTransport({
-    host: (process.env.SMTP_HOST || 'smtp.gmail.com').replace(/['"]/g, ''),
-    port: parseInt((process.env.SMTP_PORT || '587').replace(/['"]/g, '')),
-    secure: (process.env.SMTP_SECURE || '').replace(/['"]/g, '') === 'true', // true for 465, false for other ports
-    auth: {
-        user: (process.env.SMTP_USER || '').replace(/['"]/g, ''), // Sender email address
-        pass: (process.env.SMTP_PASS || '').replace(/['"]/g, '')  // Sender app-specific password
-    }
-});
-
 // Helper function to send email notification
 async function sendReplyEmail(toEmail, inquirerName, subject, originalMessage, replyMessage) {
+    const smtpHost = (process.env.SMTP_HOST || 'smtp.gmail.com').replace(/['"]/g, '');
+    const smtpPort = parseInt((process.env.SMTP_PORT || '587').replace(/['"]/g, ''));
+    const smtpSecure = (process.env.SMTP_SECURE || '').replace(/['"]/g, '') === 'true';
     const smtpUser = (process.env.SMTP_USER || '').replace(/['"]/g, '');
     const smtpPass = (process.env.SMTP_PASS || '').replace(/['"]/g, '');
+
     if (!smtpUser || !smtpPass) {
         console.warn('SMTP_USER and SMTP_PASS environment variables are not set. Logging the email reply to console instead:');
         console.log(`[EMAIL SEND SIMULATION]`);
@@ -313,6 +306,19 @@ async function sendReplyEmail(toEmail, inquirerName, subject, originalMessage, r
         console.log(`Body: \nDear ${inquirerName},\n\nIn response to your query:\n"${originalMessage}"\n\nOur reply:\n${replyMessage}\n\nBest regards,\nICT Academy Team`);
         return;
     }
+
+    const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpSecure,
+        auth: {
+            user: smtpUser,
+            pass: smtpPass
+        },
+        tls: {
+            rejectUnauthorized: false
+        }
+    });
 
     const mailOptions = {
         from: `"${(process.env.PLATFORM_NAME || 'ICT Academy').replace(/['"]/g, '')}" <${smtpUser}>`,
