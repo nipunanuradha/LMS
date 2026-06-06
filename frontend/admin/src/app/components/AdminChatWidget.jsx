@@ -8,10 +8,20 @@ export default function AdminChatWidget({ students = [] }) {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadStudentIds, setUnreadStudentIds] = useState([]);
   const socketRef = useRef(null);
   const apiUrl = API_URL;
 
   const onlyStudents = students.filter(s => !s.role || s.role === 'student');
+
+  // Sort students: those with unread messages first, then others
+  const sortedStudents = [...onlyStudents].sort((a, b) => {
+    const aUnread = unreadStudentIds.includes(a.id);
+    const bUnread = unreadStudentIds.includes(b.id);
+    if (aUnread && !bUnread) return -1;
+    if (!aUnread && bUnread) return 1;
+    return 0;
+  });
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -30,6 +40,15 @@ export default function AdminChatWidget({ students = [] }) {
       } else {
         // If chat is closed or we are chatting with someone else, increment unread count
         setUnreadCount((c) => c + 1);
+        
+        // Track which student has unread messages
+        const studentId = msg.sender_id;
+        setUnreadStudentIds((prev) => {
+          if (!prev.includes(studentId)) {
+            return [...prev, studentId];
+          }
+          return prev;
+        });
       }
     });
 
@@ -112,22 +131,70 @@ export default function AdminChatWidget({ students = [] }) {
               {onlyStudents.length === 0 ? (
                 <div style={{ padding: 12, fontSize: 12, color: '#94a3b8', textAlign: 'center' }}>No students found</div>
               ) : (
-                onlyStudents.map((s) => (
-                  <div
-                    key={s.id}
-                    onClick={() => setSelectedStudent(s)}
-                    style={{
-                      padding: '10px 12px',
-                      cursor: 'pointer',
-                      background: selectedStudent?.id === s.id ? '#EFF6FF' : 'transparent',
-                      borderBottom: '1px solid #f1f5f9',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    <div style={{ fontWeight: 600, fontSize: 13, color: selectedStudent?.id === s.id ? '#1e40af' : '#1e293b' }}>{s.full_name || s.name}</div>
-                    <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{s.phone_number}</div>
-                  </div>
-                ))
+                sortedStudents.map((s) => {
+                  const isSelected = selectedStudent?.id === s.id;
+                  const isUnread = unreadStudentIds.includes(s.id);
+                  return (
+                    <div
+                      key={s.id}
+                      onClick={() => {
+                        setSelectedStudent(s);
+                        setUnreadStudentIds((prev) => prev.filter((id) => id !== s.id));
+                      }}
+                      style={{
+                        padding: '10px 12px',
+                        cursor: 'pointer',
+                        background: isSelected 
+                          ? '#EFF6FF' 
+                          : isUnread 
+                            ? '#FFFBEB' 
+                            : 'transparent',
+                        borderLeft: isSelected 
+                          ? '4.5px solid #2563eb' 
+                          : isUnread 
+                            ? '4.5px solid #eab308' 
+                            : '4.5px solid transparent',
+                        borderBottom: '1px solid #f1f5f9',
+                        transition: 'all 0.15s',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ 
+                          fontWeight: (isSelected || isUnread) ? 700 : 500, 
+                          fontSize: 13, 
+                          color: isSelected 
+                            ? '#1e40af' 
+                            : isUnread 
+                              ? '#b45309' 
+                              : '#1e293b',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {s.full_name || s.name}
+                        </div>
+                        <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{s.phone_number}</div>
+                      </div>
+                      {isUnread && (
+                        <span style={{ 
+                          background: '#ef4444', 
+                          color: '#fff', 
+                          fontSize: 9, 
+                          fontWeight: 700, 
+                          padding: '2px 6px', 
+                          borderRadius: 10,
+                          marginLeft: 6,
+                          flexShrink: 0
+                        }}>
+                          NEW
+                        </span>
+                      )}
+                    </div>
+                  );
+                })
               )}
             </div>
 
