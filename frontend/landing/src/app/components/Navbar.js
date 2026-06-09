@@ -10,7 +10,7 @@ export default function Navbar({ onLoginClick }) {
     { name: "Home", href: "/#home" },
     { name: "About", href: "/#about" },
     { name: "Courses", href: "/#courses" },
-    { name: "Faculty", href: "/#faculty" },
+    { name: "Stories", href: "/#Stories" },
     { name: "Contact", href: "/#contact" },
   ];
 
@@ -18,7 +18,7 @@ export default function Navbar({ onLoginClick }) {
     <header className="sticky top-0 z-40 w-full glassmorphism-light border-b border-slate-200/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between">
-          
+
           {/* Logo */}
           <a href="/#home" className="flex items-center gap-2.5 group">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
