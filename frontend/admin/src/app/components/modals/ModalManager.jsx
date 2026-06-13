@@ -188,7 +188,7 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
     const [formState, setFormState] = useState({
       title: isEdit ? modal.course.title : "",
       desc: isEdit ? (modal.course.description || modal.course.desc || "") : "",
-      category: isEdit ? (modal.course.category || "Web Dev") : "Web Dev",
+      category: isEdit ? (modal.course.category || modal.course.course_category || "Web Dev") : "Web Dev",
       thumbnail: isEdit ? (modal.course.thumbnail_url || modal.course.thumbnail || "") : "",
       price: isEdit ? (modal.course.price || "") : "",
     });
@@ -211,7 +211,8 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
         title: formState.title,
         description: formState.desc,
         thumbnail_url: formState.thumbnail,
-        price: parseFloat(formState.price) || 0
+        price: parseFloat(formState.price) || 0,
+        course_category: formState.category
       };
 
       try {

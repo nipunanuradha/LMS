@@ -89,6 +89,7 @@ async function connectDB() {
                 description TEXT,
                 thumbnail_url VARCHAR(255),
                 price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+                course_category VARCHAR(255) DEFAULT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
@@ -201,6 +202,11 @@ async function connectDB() {
         `);
 
         // Migration for existing tables: add columns if they don't exist
+        try {
+            await pool.execute(`ALTER TABLE courses ADD COLUMN course_category VARCHAR(255) DEFAULT NULL`);
+        } catch (e) {
+            // Ignore error if column already exists
+        }
         try {
             await pool.execute(`ALTER TABLE contact_inquiries ADD COLUMN reply_message TEXT DEFAULT NULL`);
         } catch (e) {
@@ -505,7 +511,7 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/courses', async (req, res) => {
     try {
         const [courses] = await pool.execute(`
-            SELECT c.*, 
+            SELECT c.*, c.course_category AS category,
                    (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = c.id AND e.expiry_date >= CURDATE()) as students
             FROM courses c 
             ORDER BY c.created_at DESC
@@ -520,7 +526,7 @@ app.get('/api/courses', async (req, res) => {
 app.get('/api/student/:userId/courses', async (req, res) => {
     try {
         const [courses] = await pool.execute(`
-            SELECT c.*, e.expiry_date
+            SELECT c.*, c.course_category AS category, e.expiry_date
             FROM courses c
             JOIN enrollments e ON c.id = e.course_id
             WHERE e.user_id = ? AND e.expiry_date >= CURDATE()
@@ -637,7 +643,7 @@ app.delete('/api/courses/notifications/:notificationId', async (req, res) => {
 // Get specific course details
 app.get('/api/courses/:id', async (req, res) => {
     try {
-        const [courses] = await pool.execute('SELECT * FROM courses WHERE id = ?', [req.params.id]);
+        const [courses] = await pool.execute('SELECT *, course_category AS category FROM courses WHERE id = ?', [req.params.id]);
         if (courses.length === 0) {
             return res.status(404).json({ message: 'Course not found' });
         }
@@ -832,12 +838,13 @@ function saveBase64Image(base64String) {
 
 // Add new course
 app.post('/api/admin/courses', async (req, res) => {
-    const { title, description, thumbnail_url, price } = req.body;
+    const { title, description, thumbnail_url, price, course_category } = req.body;
     try {
         const savedUrl = saveBase64Image(thumbnail_url);
+        const categoryVal = course_category || req.body.category || null;
         const [result] = await pool.execute(
-            'INSERT INTO courses (title, description, thumbnail_url, price) VALUES (?, ?, ?, ?)',
-            [title, description, savedUrl || '', price || 0]
+            'INSERT INTO courses (title, description, thumbnail_url, price, course_category) VALUES (?, ?, ?, ?, ?)',
+            [title, description, savedUrl || '', price || 0, categoryVal]
         );
         res.status(201).json({ id: result.insertId, message: 'Course created', thumbnail_url: savedUrl });
         await createNotification(`Course '${title}' created successfully`, 'course');
@@ -848,12 +855,13 @@ app.post('/api/admin/courses', async (req, res) => {
 
 // Update course
 app.put('/api/admin/courses/:id', async (req, res) => {
-    const { title, description, thumbnail_url, price } = req.body;
+    const { title, description, thumbnail_url, price, course_category } = req.body;
     try {
         const savedUrl = saveBase64Image(thumbnail_url);
+        const categoryVal = course_category || req.body.category || null;
         await pool.execute(
-            'UPDATE courses SET title = ?, description = ?, thumbnail_url = ?, price = ? WHERE id = ?',
-            [title, description, savedUrl || '', price || 0, req.params.id]
+            'UPDATE courses SET title = ?, description = ?, thumbnail_url = ?, price = ?, course_category = ? WHERE id = ?',
+            [title, description, savedUrl || '', price || 0, categoryVal, req.params.id]
         );
         res.json({ message: 'Course updated successfully', thumbnail_url: savedUrl });
     } catch (err) {
