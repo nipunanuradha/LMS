@@ -255,7 +255,7 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <Select label="Category" value={formState.category} onChange={e => setFormState(f => ({ ...f, category: e.target.value }))}
-              options={["Web Dev", "Data Science", "Design", "Backend", "Mobile", "Cloud"]} />
+              options={["Web Dev", "Data Science", "Design", "Backend", "Mobile", "Cloud", "O/L", "A/L"]} />
             <Input label="Price (LKR) *" type="number" value={formState.price} onChange={e => setFormState(f => ({ ...f, price: e.target.value }))} placeholder="e.g. 5000" />
           </div>
           {/* File Upload */}
@@ -444,7 +444,7 @@ function ManageContentModal({ course, onClose }) {
 
         {/* Tab Contents */}
         <div style={{ maxHeight: "350px", overflowY: "auto", paddingRight: 4, display: "flex", flexDirection: "column", gap: 12 }}>
-          
+
           {/* NOTICES TAB */}
           {activeTab === "notices" && (
             <>
