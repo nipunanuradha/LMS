@@ -87,7 +87,7 @@ async function connectDB() {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 title VARCHAR(255) NOT NULL,
                 description TEXT,
-                thumbnail_url VARCHAR(255),
+                thumbnail_url TEXT,
                 price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
                 course_category VARCHAR(255) DEFAULT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -204,6 +204,11 @@ async function connectDB() {
         // Migration for existing tables: add columns if they don't exist
         try {
             await pool.execute(`ALTER TABLE courses ADD COLUMN course_category VARCHAR(255) DEFAULT NULL`);
+        } catch (e) {
+            // Ignore error if column already exists
+        }
+        try {
+            await pool.execute(`ALTER TABLE courses MODIFY COLUMN thumbnail_url TEXT DEFAULT NULL`);
         } catch (e) {
             // Ignore error if column already exists
         }

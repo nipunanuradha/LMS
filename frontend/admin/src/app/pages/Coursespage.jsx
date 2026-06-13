@@ -8,17 +8,7 @@ function CourseThumbnail({ course }) {
   const accents = ["#2563EB", "#059669", "#7C3AED", "#D97706", "#DC2626", "#0891B2"];
   const accent = course.accent || accents[course.id % accents.length] || "#2563EB";
   const category = course.category || "Web Dev";
-
-  if (course.thumbnail_url || course.thumbnail) {
-    return (
-      <div style={{ width: "100%", aspectRatio: "16/9", borderRadius: "10px 10px 0 0", overflow: "hidden", position: "relative", flexShrink: 0 }}>
-        <img src={getImageUrl(course.thumbnail_url || course.thumbnail)} alt={course.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        <div style={{ position: "absolute", top: 10, left: 10 }}>
-          <CategoryBadge cat={category} accent={accent} />
-        </div>
-      </div>
-    );
-  }
+  const [imgError, setImgError] = React.useState(false);
 
   const patterns = {
     "#2563EB": <><circle cx="140" cy="50" r="60" fill="rgba(255,255,255,0.06)"/><circle cx="40" cy="90" r="40" fill="rgba(255,255,255,0.04)"/><rect x="160" y="10" width="80" height="80" rx="8" fill="rgba(255,255,255,0.05)" transform="rotate(20 200 50)"/></>,
@@ -29,7 +19,7 @@ function CourseThumbnail({ course }) {
     "#0891B2": <><circle cx="200" cy="90" r="55" fill="rgba(255,255,255,0.06)"/><circle cx="40" cy="10" r="30" fill="rgba(255,255,255,0.05)"/></>,
   };
 
-  return (
+  const renderPattern = () => (
     <div style={{ width: "100%", aspectRatio: "16/9", borderRadius: "10px 10px 0 0", overflow: "hidden", background: accent, position: "relative", flexShrink: 0 }}>
       <svg width="100%" height="100%" viewBox="0 0 240 135" preserveAspectRatio="xMidYMid slice">
         <rect width="240" height="135" fill={accent} />
@@ -41,6 +31,24 @@ function CourseThumbnail({ course }) {
       </div>
     </div>
   );
+
+  if ((course.thumbnail_url || course.thumbnail) && !imgError) {
+    return (
+      <div style={{ width: "100%", aspectRatio: "16/9", borderRadius: "10px 10px 0 0", overflow: "hidden", position: "relative", flexShrink: 0 }}>
+        <img 
+          src={getImageUrl(course.thumbnail_url || course.thumbnail)} 
+          alt={course.title} 
+          onError={() => setImgError(true)}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+        />
+        <div style={{ position: "absolute", top: 10, left: 10 }}>
+          <CategoryBadge cat={category} accent={accent} />
+        </div>
+      </div>
+    );
+  }
+
+  return renderPattern();
 }
 
 export default function CoursesPage({ courses, setCourses, setModal, globalSearch, setGlobalSearch }) {

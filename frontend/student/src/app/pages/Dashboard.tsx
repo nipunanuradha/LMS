@@ -4,6 +4,18 @@ import { GraduationCap, LogOut, User, Clock } from "lucide-react";
 import { getDaysRemaining } from "../utils/mockData";
 import { API_URL, LANDING_URL, getImageUrl } from "../config";
 
+function CourseCardImage({ src, title, accent, category }: { src: string; title: string; accent: string; category: string }) {
+  const [error, setError] = useState(false);
+  if (src && !error) {
+    return <img src={src} alt={title} onError={() => setError(true)} className="w-full h-full object-cover" />;
+  }
+  return (
+    <div className="w-full h-full flex items-center justify-center text-white font-bold text-2xl" style={{ backgroundColor: accent }}>
+      {category}
+    </div>
+  );
+}
+
 export function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
@@ -167,13 +179,7 @@ export function Dashboard() {
                 >
                   {/* Thumbnail Section */}
                   <div className="w-full h-40 bg-gray-100 rounded-md mb-4 overflow-hidden relative shrink-0">
-                    {thumbnail ? (
-                      <img src={thumbnail} alt={course.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white font-bold text-2xl" style={{ backgroundColor: accent }}>
-                        {category}
-                      </div>
-                    )}
+                    <CourseCardImage src={thumbnail} title={course.title} accent={accent} category={category} />
                   </div>
 
                   {/* Card Content Section */}

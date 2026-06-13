@@ -4,6 +4,25 @@ import { useEffect, useState } from "react";
 import { BookOpen, User, DollarSign } from "lucide-react";
 import { API_URL, getImageUrl } from "../config";
 
+function CourseCardImage({ src, title, gradient }) {
+  const [error, setError] = useState(false);
+  if (src && !error) {
+    return (
+      <img
+        src={src}
+        alt={title}
+        onError={() => setError(true)}
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+      />
+    );
+  }
+  return (
+    <div className={`w-full h-full bg-gradient-to-tr ${gradient} flex items-center justify-center text-white font-bold text-xl px-6 text-center`}>
+      {title.split(" ").slice(0, 3).join(" ")}
+    </div>
+  );
+}
+
 export default function CourseGrid({ onEnrollClick }) {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -118,17 +137,7 @@ export default function CourseGrid({ onEnrollClick }) {
                 >
                   {/* Thumbnail / Accent Image */}
                   <div className="w-full h-48 relative shrink-0 overflow-hidden bg-slate-100">
-                    {course.thumbnail_url ? (
-                      <img
-                        src={getImageUrl(course.thumbnail_url)}
-                        alt={course.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className={`w-full h-full bg-gradient-to-tr ${randomGradient} flex items-center justify-center text-white font-bold text-xl px-6 text-center`}>
-                        {course.title.split(" ").slice(0, 3).join(" ")}
-                      </div>
-                    )}
+                    <CourseCardImage src={getImageUrl(course.thumbnail_url)} title={course.title} gradient={randomGradient} />
 
                     {/* Price Tag Overlay */}
                     <div className="absolute top-4 right-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur px-3.5 py-1.5 rounded-full font-bold text-sm text-blue-600 dark:text-blue-400 shadow-md">
