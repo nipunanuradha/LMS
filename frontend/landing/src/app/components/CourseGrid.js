@@ -139,6 +139,9 @@ export default function CourseGrid({ onEnrollClick }) {
                   {/* Card Content */}
                   <div className="p-6 flex-1 flex flex-col justify-between">
                     <div>
+                      <span className="inline-block text-xs font-semibold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md mb-3">
+                        {course.category || "Web Dev"}
+                      </span>
                       <h3 className="text-lg font-bold text-slate-900 line-clamp-2 group-hover:text-blue-600 transition-colors mb-2">
                         {course.title}
                       </h3>
