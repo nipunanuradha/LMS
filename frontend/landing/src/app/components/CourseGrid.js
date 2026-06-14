@@ -121,8 +121,9 @@ export default function CourseGrid({ onEnrollClick }) {
             ))}
           </div>
         ) : (
-          <div className="grid md:grid-cols-3 gap-8">
-            {courses.map((course) => {
+          <div className={courses.length > 6 ? "max-h-[1050px] overflow-y-auto custom-scrollbar px-4 py-3 -mx-4 -my-3" : ""}>
+            <div className="grid md:grid-cols-3 gap-8 p-1">
+              {courses.map((course) => {
               const colors = [
                 "from-blue-600 to-indigo-600",
                 "from-cyan-500 to-blue-600",
@@ -183,7 +184,8 @@ export default function CourseGrid({ onEnrollClick }) {
               );
             })}
           </div>
-        )}
+        </div>
+      )}
 
       </div>
     </section>
