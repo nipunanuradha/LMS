@@ -4,14 +4,14 @@ import { useEffect, useState } from "react";
 import { BookOpen, User, DollarSign } from "lucide-react";
 import { API_URL, getImageUrl } from "../config";
 
-function CourseCardImage({ src, title, gradient }) {
-  const [error, setError] = useState(false);
-  if (src && !error) {
+function CourseThumbnail({ thumbnail, title, gradient }) {
+  const [imgError, setImgError] = useState(false);
+  if (thumbnail && !imgError) {
     return (
       <img
-        src={src}
+        src={getImageUrl(thumbnail)}
         alt={title}
-        onError={() => setError(true)}
+        onError={() => setImgError(true)}
         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
       />
     );
@@ -137,7 +137,11 @@ export default function CourseGrid({ onEnrollClick }) {
                 >
                   {/* Thumbnail / Accent Image */}
                   <div className="w-full h-48 relative shrink-0 overflow-hidden bg-slate-100">
-                    <CourseCardImage src={getImageUrl(course.thumbnail_url)} title={course.title} gradient={randomGradient} />
+                    <CourseThumbnail
+                      thumbnail={course.thumbnail_url}
+                      title={course.title}
+                      gradient={randomGradient}
+                    />
 
                     {/* Price Tag Overlay */}
                     <div className="absolute top-4 right-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur px-3.5 py-1.5 rounded-full font-bold text-sm text-blue-600 dark:text-blue-400 shadow-md">

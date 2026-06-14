@@ -37,26 +37,6 @@ const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir);
 }
-
-// Fallback middleware to handle .jpg / .jpeg mismatches
-app.use('/uploads', (req, res, next) => {
-    const filePath = path.join(uploadsDir, decodeURIComponent(req.path));
-    if (!fs.existsSync(filePath)) {
-        const ext = path.extname(filePath);
-        let altPath = null;
-        if (ext.toLowerCase() === '.jpg') {
-            altPath = filePath.substring(0, filePath.length - 4) + '.jpeg';
-        } else if (ext.toLowerCase() === '.jpeg') {
-            altPath = filePath.substring(0, filePath.length - 5) + '.jpg';
-        }
-        
-        if (altPath && fs.existsSync(altPath)) {
-            return res.sendFile(altPath);
-        }
-    }
-    next();
-});
-
 app.use('/uploads', express.static(uploadsDir));
 
 const dbConfig = {
@@ -67,7 +47,7 @@ const dbConfig = {
     database: (process.env.DB_DATABASE || '').replace(/['"]/g, ''),
     ssl: {
         // Change to false if you are having SSL certificate issues
-        rejectUnauthorized: false
+        rejectUnauthorized: false 
     },
     waitForConnections: true,
     connectionLimit: 10,
@@ -88,8 +68,8 @@ async function connectDB() {
             const [rows] = await pool.execute('SELECT 1');
             console.log('Connected to TiDB successfully. Connection test passed.');
 
-            // Initialize database tables
-            await pool.execute(`
+        // Initialize database tables
+        await pool.execute(`
             CREATE TABLE IF NOT EXISTS users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 full_name VARCHAR(255) NOT NULL,
@@ -102,18 +82,18 @@ async function connectDB() {
             )
         `);
 
-            await pool.execute(`
+        await pool.execute(`
             CREATE TABLE IF NOT EXISTS courses (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 title VARCHAR(255) NOT NULL,
                 description TEXT,
-                thumbnail_url TEXT,
+                thumbnail_url VARCHAR(255),
                 price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
                 course_category VARCHAR(255) DEFAULT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
-            await pool.execute(`
+        await pool.execute(`
             CREATE TABLE IF NOT EXISTS course_content (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 course_id INT NOT NULL,
@@ -126,7 +106,7 @@ async function connectDB() {
             )
         `);
 
-            await pool.execute(`
+        await pool.execute(`
             CREATE TABLE IF NOT EXISTS video_recordings (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 course_id INT NOT NULL,
@@ -138,7 +118,7 @@ async function connectDB() {
             )
         `);
 
-            await pool.execute(`
+        await pool.execute(`
             CREATE TABLE IF NOT EXISTS course_notifications (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 course_id INT NOT NULL,
@@ -150,7 +130,7 @@ async function connectDB() {
             )
         `);
 
-            await pool.execute(`
+        await pool.execute(`
             CREATE TABLE IF NOT EXISTS notifications (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 message VARCHAR(255) NOT NULL,
@@ -158,7 +138,7 @@ async function connectDB() {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
-            await pool.execute(`
+        await pool.execute(`
             CREATE TABLE IF NOT EXISTS enrollments (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
@@ -172,7 +152,7 @@ async function connectDB() {
                 UNIQUE KEY unique_enrollment (user_id, course_id)
             )
         `);
-            await pool.execute(`
+        await pool.execute(`
             CREATE TABLE IF NOT EXISTS payments (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 enrollment_id INT,
@@ -187,7 +167,7 @@ async function connectDB() {
                 FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
             )
         `);
-            await pool.execute(`
+        await pool.execute(`
             CREATE TABLE IF NOT EXISTS messages (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 sender_id INT NOT NULL,
@@ -198,7 +178,7 @@ async function connectDB() {
                 FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
             )
         `);
-            await pool.execute(`
+        await pool.execute(`
             CREATE TABLE IF NOT EXISTS system_settings (
                 setting_key VARCHAR(255) PRIMARY KEY,
                 setting_value TEXT,
@@ -206,7 +186,7 @@ async function connectDB() {
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )
         `);
-            await pool.execute(`
+        await pool.execute(`
             CREATE TABLE IF NOT EXISTS contact_inquiries (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
@@ -221,29 +201,24 @@ async function connectDB() {
             )
         `);
 
-            // Migration for existing tables: add columns if they don't exist
-            try {
-                await pool.execute(`ALTER TABLE courses ADD COLUMN course_category VARCHAR(255) DEFAULT NULL`);
-            } catch (e) {
-                // Ignore error if column already exists
-            }
-            try {
-                await pool.execute(`ALTER TABLE courses MODIFY COLUMN thumbnail_url TEXT DEFAULT NULL`);
-            } catch (e) {
-                // Ignore error if column already exists
-            }
-            try {
-                await pool.execute(`ALTER TABLE contact_inquiries ADD COLUMN reply_message TEXT DEFAULT NULL`);
-            } catch (e) {
-                // Ignore error if column already exists
-            }
-            try {
-                await pool.execute(`ALTER TABLE contact_inquiries ADD COLUMN replied_at TIMESTAMP NULL DEFAULT NULL`);
-            } catch (e) {
-                // Ignore error if column already exists
-            }
-            await seedAdmin();
-            await seedSystemSettings();
+        // Migration for existing tables: add columns if they don't exist
+        try {
+            await pool.execute(`ALTER TABLE courses ADD COLUMN course_category VARCHAR(255) DEFAULT NULL`);
+        } catch (e) {
+            // Ignore error if column already exists
+        }
+        try {
+            await pool.execute(`ALTER TABLE contact_inquiries ADD COLUMN reply_message TEXT DEFAULT NULL`);
+        } catch (e) {
+            // Ignore error if column already exists
+        }
+        try {
+            await pool.execute(`ALTER TABLE contact_inquiries ADD COLUMN replied_at TIMESTAMP NULL DEFAULT NULL`);
+        } catch (e) {
+            // Ignore error if column already exists
+        }
+        await seedAdmin();
+        await seedSystemSettings();
             return pool;
         } catch (err) {
             console.error('Database connection or initialization failed:', err.message);
@@ -326,7 +301,7 @@ connectDB().catch(err => console.error('Initial DB connection failed:', err.mess
 async function sendReplyEmail(toEmail, inquirerName, subject, originalMessage, replyMessage) {
     const resendApiKey = (process.env.RESEND_API_KEY || '').replace(/['"]/g, '').trim();
     const platformName = (process.env.PLATFORM_NAME || 'ICT Academy').replace(/['"]/g, '');
-
+    
     const emailSubject = `Re: ${subject} - ${platformName} Inquiry Reply`;
     const textContent = `Dear ${inquirerName},\n\nThank you for contacting ${platformName}. Here is our reply to your inquiry:\n\n------------------------------\nOriginal Message:\n"${originalMessage}"\n------------------------------\n\nReply:\n${replyMessage}\n\nIf you have any further questions, feel free to reply to this email.\n\nBest regards,\n${platformName} Team`;
     const htmlContent = `
@@ -354,12 +329,12 @@ async function sendReplyEmail(toEmail, inquirerName, subject, originalMessage, r
 
     if (resendApiKey) {
         const resendFrom = (process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev').replace(/['"]/g, '').trim();
-        const fromHeader = (resendFrom.includes('<') && resendFrom.includes('>'))
-            ? resendFrom
+        const fromHeader = (resendFrom.includes('<') && resendFrom.includes('>')) 
+            ? resendFrom 
             : `${platformName} <${resendFrom}>`;
-
+        
         console.log(`Attempting to send email via Resend API to: ${toEmail} from: ${fromHeader}`);
-
+        
         const response = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
@@ -374,12 +349,12 @@ async function sendReplyEmail(toEmail, inquirerName, subject, originalMessage, r
                 html: htmlContent
             })
         });
-
+        
         if (!response.ok) {
             const errData = await response.json().catch(() => ({}));
             throw new Error(`Resend API Error: ${response.status} ${response.statusText} - ${JSON.stringify(errData)}`);
         }
-
+        
         const result = await response.json();
         console.log('Email sent successfully via Resend API. Response:', result);
         return result;
@@ -407,8 +382,8 @@ async function sendReplyEmail(toEmail, inquirerName, subject, originalMessage, r
             }
         });
 
-        const smtpFromHeader = (smtpUser.includes('<') && smtpUser.includes('>'))
-            ? smtpUser
+        const smtpFromHeader = (smtpUser.includes('<') && smtpUser.includes('>')) 
+            ? smtpUser 
             : `${platformName} <${smtpUser}>`;
 
         const mailOptions = {
@@ -449,7 +424,7 @@ app.post('/api/contact', async (req, res) => {
 // Register Student
 app.post('/api/auth/register', async (req, res) => {
     const { full_name, phone_number, district, province, password: plainPassword } = req.body;
-
+    
     if (!pool) {
         return res.status(500).json({ message: 'Database not connected' });
     }
@@ -466,8 +441,8 @@ app.post('/api/auth/register', async (req, res) => {
             [full_name, phone_number, district, province, hashedPassword, 'student']
         );
 
-        res.status(201).json({
-            message: 'Registration successful',
+        res.status(201).json({ 
+            message: 'Registration successful', 
             userId: result.insertId,
             generatedPassword: plainPassword // Return the plain password for display
         });
@@ -484,14 +459,14 @@ app.post('/api/auth/login', async (req, res) => {
     try {
         // Find user by phone number or username (for admin)
         const [users] = await pool.execute('SELECT * FROM users WHERE phone_number = ?', [phone_number]);
-
+        
         if (users.length === 0) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
         const user = users[0];
         let isMatch = await bcrypt.compare(password, user.password);
-
+        
         // Fallback for plain text password comparison in database
         if (!isMatch && password === user.password) {
             isMatch = true;
@@ -503,7 +478,7 @@ app.post('/api/auth/login', async (req, res) => {
                 console.error('Error auto-hashing password:', hashErr);
             }
         }
-
+        
         if (!isMatch) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
@@ -849,8 +824,7 @@ function saveBase64Image(base64String) {
     if (base64String && base64String.startsWith('data:image/')) {
         const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
         if (matches && matches.length === 3) {
-            let ext = matches[1].split('/')[1] || 'png';
-            if (ext.toLowerCase() === 'jpeg') ext = 'jpg';
+            const ext = matches[1].split('/')[1] || 'png';
             const data = Buffer.from(matches[2], 'base64');
             const filename = `thumbnail_${Date.now()}_${Math.round(Math.random() * 1E9)}.${ext}`;
             const filepath = path.join(uploadsDir, filename);
@@ -939,13 +913,13 @@ app.post('/api/admin/enrollments', async (req, res) => {
                 );
             }
         }
-
+        
         // Fetch student name and course title for notification
         const [[student]] = await pool.execute('SELECT full_name FROM users WHERE id = ?', [student_id]);
         const [[course]] = await pool.execute('SELECT title FROM courses WHERE id = ?', [course_id]);
-
+        
         await createNotification(`Enrolled ${student?.full_name || 'student'} in '${course?.title || 'course'}'`, 'enroll');
-
+        
         res.status(201).json({ message: 'Student enrolled successfully' });
     } catch (err) {
         console.error("Enrollment error:", err);
@@ -961,7 +935,7 @@ app.get('/api/admin/revenue-stats', async (req, res) => {
     try {
         const now = new Date();
         const months = [];
-
+        
         // Generate last 6 months list (from 5 months ago to current month)
         for (let i = 5; i >= 0; i--) {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -1005,7 +979,7 @@ app.get('/api/admin/revenue-stats', async (req, res) => {
             const amount = parseFloat(p.amount) || 0;
             const pDate = new Date(p.paid_at);
             const pYearMonth = `${pDate.getFullYear()}-${String(pDate.getMonth() + 1).padStart(2, '0')}`;
-
+            
             if (currentPeriodMonths.includes(pYearMonth)) {
                 currentRevenue += amount;
                 const mObj = months.find(m => m.yearMonth === pYearMonth);
@@ -1019,7 +993,7 @@ app.get('/api/admin/revenue-stats', async (req, res) => {
         for (const e of enrollments) {
             const eDate = new Date(e.created_at);
             const eYearMonth = `${eDate.getFullYear()}-${String(eDate.getMonth() + 1).padStart(2, '0')}`;
-
+            
             if (currentPeriodMonths.includes(eYearMonth)) {
                 currentEnrollmentsCount++;
                 const mObj = months.find(m => m.yearMonth === eYearMonth);
@@ -1119,10 +1093,10 @@ app.get('/api/public/stats', async (req, res) => {
     try {
         // Count unique students enrolled in courses
         const [[{ enrolled_students }]] = await pool.execute("SELECT COUNT(DISTINCT user_id) as enrolled_students FROM enrollments");
-
+        
         // Count courses in the database
         const [[{ course_count }]] = await pool.execute("SELECT COUNT(*) as course_count FROM courses");
-
+        
         res.json({
             students: enrolled_students,
             passRate: 98,
@@ -1166,7 +1140,7 @@ app.get('/api/admin/messages/:other_user_id', async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const currentUserId = decoded.id;
         const otherUserId = req.params.other_user_id;
-
+        
         const [messages] = await pool.execute(
             `SELECT * FROM messages 
              WHERE (sender_id = ? AND receiver_id = ?) 
@@ -1174,7 +1148,7 @@ app.get('/api/admin/messages/:other_user_id', async (req, res) => {
              ORDER BY created_at ASC`,
             [currentUserId, otherUserId, otherUserId, currentUserId]
         );
-
+        
         res.json(messages);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -1190,7 +1164,7 @@ io.on('connection', (socket) => {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             const userId = decoded.id;
             userSockets.set(userId, socket.id);
-
+            
             socket.on('private_message', async (data) => {
                 const { to, message } = data;
                 try {
@@ -1198,21 +1172,21 @@ io.on('connection', (socket) => {
                         'INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)',
                         [userId, to, message]
                     );
-
+                    
                     const msgPayload = {
                         sender_id: userId,
                         receiver_id: to,
                         message,
                         created_at: new Date().toISOString()
                     };
-
+                    
                     const receiverSocketId = userSockets.get(to);
                     if (receiverSocketId) {
                         io.to(receiverSocketId).emit('private_message', msgPayload);
                     }
-
+                    
                     socket.emit('private_message', msgPayload);
-
+                    
                     const [[receiver]] = await pool.execute('SELECT role, full_name FROM users WHERE id = ?', [to]);
                     if (receiver && receiver.role === 'admin') {
                         const [[sender]] = await pool.execute('SELECT full_name FROM users WHERE id = ?', [userId]);
@@ -1223,7 +1197,7 @@ io.on('connection', (socket) => {
                     console.error('Error handling private message:', err);
                 }
             });
-
+            
             socket.on('disconnect', () => {
                 userSockets.delete(userId);
             });
