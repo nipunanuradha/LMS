@@ -932,6 +932,111 @@ app.post('/api/admin/enrollments', async (req, res) => {
     }
 });
 
+// Get all student enrollments
+app.get('/api/admin/enrollments', async (req, res) => {
+    if (!pool) {
+        return res.status(500).json({ message: 'Database not connected' });
+    }
+    try {
+        const [rows] = await pool.execute(`
+            SELECT e.id as enrollment_id, e.user_id, e.course_id, e.expiry_date, e.payment_status, e.created_at,
+                   u.full_name as student_name, u.phone_number as student_phone,
+                   c.title as course_title, c.price as course_price
+            FROM enrollments e
+            JOIN users u ON e.user_id = u.id
+            JOIN courses c ON e.course_id = c.id
+            ORDER BY e.created_at DESC
+        `);
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get recent transactions log
+app.get('/api/admin/payments', async (req, res) => {
+    if (!pool) {
+        return res.status(500).json({ message: 'Database not connected' });
+    }
+    try {
+        const [rows] = await pool.execute(`
+            SELECT p.*, u.full_name as student_name, c.title as course_title
+            FROM payments p
+            JOIN users u ON p.user_id = u.id
+            JOIN courses c ON p.course_id = c.id
+            ORDER BY p.paid_at DESC
+            LIMIT 100
+        `);
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Record a monthly/course payment for a student
+app.post('/api/admin/payments', async (req, res) => {
+    if (!pool) {
+        return res.status(500).json({ message: 'Database not connected' });
+    }
+    const { student_id, course_id, amount, payment_method, month, transaction_id } = req.body;
+    if (!student_id || !course_id || !month) {
+        return res.status(400).json({ error: 'student_id, course_id and month are required' });
+    }
+    try {
+        // Find corresponding enrollment
+        const [[enrollment]] = await pool.execute(
+            'SELECT id, amount_paid FROM enrollments WHERE user_id = ? AND course_id = ?',
+            [student_id, course_id]
+        );
+        if (!enrollment) {
+            return res.status(400).json({ error: 'No active enrollment found for this student and course' });
+        }
+
+        // Fetch course and student names
+        const [[student]] = await pool.execute('SELECT full_name FROM users WHERE id = ?', [student_id]);
+        const [[course]] = await pool.execute('SELECT title, price FROM courses WHERE id = ?', [course_id]);
+
+        const payAmount = amount !== undefined ? parseFloat(amount) : (course ? parseFloat(course.price) : 0);
+        const method = payment_method || 'Admin Panel';
+        const txnId = transaction_id || `TXN_MAN_${Date.now()}_${Math.floor(Math.random() * 900000 + 100000)}`;
+
+        // Calculate paid_at timestamp
+        let paid_at = new Date();
+        const parts = month.split('-'); // YYYY-MM
+        const year = parseInt(parts[0]);
+        const monthIndex = parseInt(parts[1]) - 1;
+        const today = new Date();
+        if (today.getFullYear() === year && today.getMonth() === monthIndex) {
+            paid_at = today;
+        } else {
+            // Put it on 15th of the specified month at noon
+            paid_at = new Date(year, monthIndex, 15, 12, 0, 0);
+        }
+
+        // Insert payment record
+        await pool.execute(
+            'INSERT INTO payments (enrollment_id, user_id, course_id, amount, payment_method, transaction_id, status, paid_at) VALUES (?, ?, ?, ?, ?, ?, "success", ?)',
+            [enrollment.id, student_id, course_id, payAmount, method, txnId, paid_at]
+        );
+
+        // Update enrollment status to completed or update amount paid
+        await pool.execute(
+            'UPDATE enrollments SET amount_paid = amount_paid + ?, payment_status = "completed" WHERE id = ?',
+            [payAmount, enrollment.id]
+        );
+
+        await createNotification(
+            `Payment of LKR ${payAmount.toLocaleString()} recorded for ${student?.full_name || 'Student'} in '${course?.title || 'Course'}' for ${month}`,
+            'info'
+        );
+
+        res.status(201).json({ message: 'Payment recorded successfully', transaction_id: txnId });
+    } catch (err) {
+        console.error("Record payment error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Get revenue and enrollment statistics
 app.get('/api/admin/revenue-stats', async (req, res) => {
     if (!pool) {
