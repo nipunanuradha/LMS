@@ -37,6 +37,26 @@ const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir);
 }
+
+// Fallback middleware to handle .jpg / .jpeg mismatches
+app.use('/uploads', (req, res, next) => {
+    const filePath = path.join(uploadsDir, decodeURIComponent(req.path));
+    if (!fs.existsSync(filePath)) {
+        const ext = path.extname(filePath);
+        let altPath = null;
+        if (ext.toLowerCase() === '.jpg') {
+            altPath = filePath.substring(0, filePath.length - 4) + '.jpeg';
+        } else if (ext.toLowerCase() === '.jpeg') {
+            altPath = filePath.substring(0, filePath.length - 5) + '.jpg';
+        }
+        
+        if (altPath && fs.existsSync(altPath)) {
+            return res.sendFile(altPath);
+        }
+    }
+    next();
+});
+
 app.use('/uploads', express.static(uploadsDir));
 
 const dbConfig = {
@@ -829,7 +849,8 @@ function saveBase64Image(base64String) {
     if (base64String && base64String.startsWith('data:image/')) {
         const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
         if (matches && matches.length === 3) {
-            const ext = matches[1].split('/')[1] || 'png';
+            let ext = matches[1].split('/')[1] || 'png';
+            if (ext.toLowerCase() === 'jpeg') ext = 'jpg';
             const data = Buffer.from(matches[2], 'base64');
             const filename = `thumbnail_${Date.now()}_${Math.round(Math.random() * 1E9)}.${ext}`;
             const filepath = path.join(uploadsDir, filename);
