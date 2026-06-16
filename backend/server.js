@@ -87,7 +87,7 @@ async function connectDB() {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 title VARCHAR(255) NOT NULL,
                 description TEXT,
-                thumbnail_url VARCHAR(255),
+                thumbnail_url LONGTEXT,
                 price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
                 course_category VARCHAR(255) DEFAULT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -206,6 +206,11 @@ async function connectDB() {
             await pool.execute(`ALTER TABLE courses ADD COLUMN course_category VARCHAR(255) DEFAULT NULL`);
         } catch (e) {
             // Ignore error if column already exists
+        }
+        try {
+            await pool.execute(`ALTER TABLE courses MODIFY COLUMN thumbnail_url LONGTEXT`);
+        } catch (e) {
+            // Ignore error
         }
         try {
             await pool.execute(`ALTER TABLE contact_inquiries ADD COLUMN reply_message TEXT DEFAULT NULL`);
@@ -821,18 +826,8 @@ app.post('/api/users/:id/change-password', async (req, res) => {
 });
 
 function saveBase64Image(base64String) {
-    if (base64String && base64String.startsWith('data:image/')) {
-        const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-        if (matches && matches.length === 3) {
-            const ext = matches[1].split('/')[1] || 'png';
-            const data = Buffer.from(matches[2], 'base64');
-            const filename = `thumbnail_${Date.now()}_${Math.round(Math.random() * 1E9)}.${ext}`;
-            const filepath = path.join(uploadsDir, filename);
-            fs.writeFileSync(filepath, data);
-            const baseUrl = process.env.BACKEND_URL || 'http://localhost:5000';
-            return `${baseUrl}/uploads/${filename}`;
-        }
-    }
+    // Return the base64 string directly to store in the persistent TiDB database,
+    // avoiding Hugging Face Spaces ephemeral uploads folder reset.
     return base64String;
 }
 
