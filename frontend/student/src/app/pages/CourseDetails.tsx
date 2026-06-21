@@ -471,11 +471,11 @@ export function CourseDetails() {
                 {recordings.length === 0 ? (
                   <p className="text-gray-500 text-center py-8">No recordings available</p>
                 ) : (
-                  <div className="flex flex-row sm:flex-col overflow-x-auto sm:overflow-x-visible gap-3 sm:gap-0 sm:space-y-3 pb-3 sm:pb-0">
+                  <div className="flex flex-col overflow-y-auto overflow-x-auto max-h-[480px] gap-3 pb-3 pr-1">
                     {recordings.map((recording) => (
                       <div
                         key={recording.id}
-                        className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors shrink-0 w-[280px] sm:w-auto"
+                        className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors shrink-0 min-w-[500px] sm:min-w-0 w-full"
                       >
                         <button
                           onClick={() => setCurrentVideo(recording.id)}

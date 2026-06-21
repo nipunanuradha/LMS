@@ -101,26 +101,22 @@ export default function AdminChatWidget({ students = [] }) {
             flex-direction: column !important;
           }
           .admin-chat-sidebar {
+            display: ${selectedStudent ? 'none' : 'block'} !important;
             width: 100% !important;
-            height: 70px !important;
-            border-right: none !important;
-            border-bottom: 1px solid #eef2f6 !important;
-            display: flex !important;
-            flex-direction: row !important;
-            overflow-x: auto !important;
-            overflow-y: hidden !important;
-          }
-          .admin-chat-student-item {
-            flex-shrink: 0 !important;
-            padding: 8px 12px !important;
-            border-left: none !important;
-            border-bottom: none !important;
-            border-right: 1px solid #eef2f6 !important;
-            width: 140px !important;
             height: 100% !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
+            border-right: none !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+          }
+          .admin-chat-area {
+            display: ${selectedStudent ? 'flex' : 'none'} !important;
+            width: 100% !important;
+            height: 100% !important;
+          }
+          .mobile-back-btn {
+            display: inline-flex !important;
+            align-items: center;
+            gap: 4px;
           }
         }
       `}</style>
@@ -236,13 +232,33 @@ export default function AdminChatWidget({ students = [] }) {
             </div>
 
             {/* Chat Area */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff' }}>
+            <div className="admin-chat-area" style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff' }}>
               {selectedStudent ? (
                 <>
                   {/* Active Chat Header */}
-                  <div style={{ padding: '8px 14px', borderBottom: '1px solid #eef2f6', background: '#fff' }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{selectedStudent.full_name || selectedStudent.name}</div>
-                    <div style={{ fontSize: 11, color: '#10b981' }}>Student</div>
+                  <div style={{ padding: '8px 14px', borderBottom: '1px solid #eef2f6', background: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button 
+                      onClick={() => setSelectedStudent(null)}
+                      className="mobile-back-btn"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#2563eb',
+                        cursor: 'pointer',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        marginRight: 8,
+                        display: 'none',
+                        padding: '4px 8px',
+                        borderRadius: 4
+                      }}
+                    >
+                      ← Back
+                    </button>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{selectedStudent.full_name || selectedStudent.name}</div>
+                      <div style={{ fontSize: 11, color: '#10b981' }}>Student</div>
+                    </div>
                   </div>
 
                   {/* Messages list */}
