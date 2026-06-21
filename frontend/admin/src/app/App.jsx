@@ -44,6 +44,50 @@ function GlobalStyles() {
       input:focus, select:focus, textarea:focus { border-color: #2563EB !important; box-shadow: 0 0 0 3px rgba(37,99,235,0.12) !important; }
       .kpi-card:hover { transform: translateY(-2px); }
       .action-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,99,235,0.3) !important; }
+
+      /* Responsive rules for tables */
+      .responsive-table-container {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .responsive-table-container table {
+        min-width: 800px;
+      }
+
+      /* Mobile responsiveness media queries */
+      @media (max-width: 768px) {
+        .admin-sidebar {
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          bottom: 0 !important;
+          width: 240px !important;
+          min-width: 240px !important;
+          transform: translateX(-100%);
+          z-index: 2000 !important;
+        }
+        .admin-sidebar.open {
+          transform: translateX(0) !important;
+        }
+        .sidebar-overlay {
+          display: block !important;
+        }
+        
+        /* Main dashboard container padding */
+        main {
+          padding: 16px 14px !important;
+        }
+        .breadcrumb-container {
+          padding: 8px 14px !important;
+        }
+        .dashboard-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .inquiry-grid {
+          grid-template-columns: 1fr !important;
+        }
+      }
     `;
     document.head.appendChild(style);
     return () => { document.head.removeChild(link); document.head.removeChild(style); };
@@ -131,7 +175,7 @@ export default function App() {
             students={students} courses={courses}
           />
           {/* Breadcrumb */}
-          <div style={{ padding: "10px 28px", background: "#fff", borderBottom: "1px solid #F1F5F9", display: "flex", alignItems: "center", gap: 8 }}>
+          <div className="breadcrumb-container" style={{ padding: "10px 28px", background: "#fff", borderBottom: "1px solid #F1F5F9", display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 12, color: "#94A3B8" }}>ICT With Anuradha Nipun</span>
             <span style={{ fontSize: 12, color: "#CBD5E1" }}>/</span>
             <span style={{ fontSize: 12, color: "#2563EB", fontWeight: 500 }}>{pageNames[page]}</span>

@@ -37,8 +37,8 @@ export default function DashboardPage({ students, courses, setModal }) {
   return (
     <div style={{ animation:"fadeIn 0.25s ease", display:"flex", flexDirection:"column", gap:24 }}>
       {/* KPIs */}
-      <div style={{ display:"flex", gap:16 }}>
-        <div className="card kpi-card" style={{ background:"#fff", borderRadius:14, padding:"22px 24px", border:"1.5px solid #F1F5F9", boxShadow:"0 1px 4px rgba(0,0,0,0.05)", transition:"all 0.25s", flex:1 }}>
+      <div style={{ display:"flex", flexWrap:"wrap", gap:16 }}>
+        <div className="card kpi-card" style={{ background:"#fff", borderRadius:14, padding:"22px 24px", border:"1.5px solid #F1F5F9", boxShadow:"0 1px 4px rgba(0,0,0,0.05)", transition:"all 0.25s", flex:"1 1 240px" }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize:13, color:"#64748B", fontWeight:500, marginBottom:10 }}>Total Registered Accounts</div>
@@ -71,7 +71,7 @@ export default function DashboardPage({ students, courses, setModal }) {
         <KPICard label="Live Enrollments"  target={totalEnrollments} accent="#7C3AED" icon={<svg style={{width:24,height:24}} viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>} />
       </div>
       {/* Quick Actions */}
-      <div style={{ display:"flex", gap:12 }}>
+      <div style={{ display:"flex", flexWrap:"wrap", gap:12 }}>
         <button onClick={() => setModal("addStudent")} className="action-btn btn-primary"
           style={{ display:"flex", alignItems:"center", gap:8, padding:"12px 22px", borderRadius:12, background:"#2563EB", color:"#fff", border:"none", cursor:"pointer", fontWeight:600, fontSize:14, boxShadow:"0 4px 12px rgba(37,99,235,0.25)", transition:"all 0.2s" }}>
           <span>{Ic.plus(16)}</span> Add New Student
@@ -82,7 +82,7 @@ export default function DashboardPage({ students, courses, setModal }) {
         </button>
       </div>
       {/* Main grid */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 340px", gap:20 }}>
+      <div className="dashboard-grid" style={{ display:"grid", gridTemplateColumns:"1fr 340px", gap:20 }}>
         {/* Recent Enrollments */}
         <div className="card" style={{ background:"#fff", borderRadius:14, border:"1.5px solid #F1F5F9", boxShadow:"0 1px 4px rgba(0,0,0,0.05)", overflow:"hidden", transition:"all 0.25s" }}>
           <div style={{ padding:"20px 24px", borderBottom:"1.5px solid #F8FAFC", display:"flex", justifyContent:"space-between", alignItems:"center" }}>

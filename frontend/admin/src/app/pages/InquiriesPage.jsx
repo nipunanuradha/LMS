@@ -124,7 +124,7 @@ export default function InquiriesPage() {
       </div>
 
       {/* Main Body Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: selectedInquiry ? "1.2fr 1fr" : "1fr", gap: 24, transition: "all 0.3s ease" }}>
+      <div className="inquiry-grid" style={{ display: "grid", gridTemplateColumns: selectedInquiry ? "1.2fr 1fr" : "1fr", gap: 24, transition: "all 0.3s ease" }}>
         
         {/* Table/List Panel */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -140,12 +140,12 @@ export default function InquiriesPage() {
               {["All", "Pending", "Replied"].map(s => <option key={s}>{s}</option>)}
             </select>
             <button onClick={fetchInquiries} style={{ padding: "9px 14px", borderRadius: 9, border: "1.5px solid #E2E8F0", fontSize: 13, color: "#334155", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-              Reload
+               Reload
             </button>
           </div>
-
+ 
           {/* Table */}
-          <div style={{ background: "#fff", borderRadius: 14, border: "1.5px solid #F1F5F9", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", overflow: "hidden" }}>
+          <div className="responsive-table-container" style={{ background: "#fff", borderRadius: 14, border: "1.5px solid #F1F5F9", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", overflow: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#F8FAFC" }}>

@@ -88,6 +88,42 @@ export default function AdminChatWidget({ students = [] }) {
 
   return (
     <div style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 1000, fontFamily: "'DM Sans', sans-serif" }}>
+      <style>{`
+        @media (max-width: 640px) {
+          .admin-chat-popup {
+            width: calc(100vw - 32px) !important;
+            height: 75vh !important;
+            max-height: 500px !important;
+            right: 16px !important;
+            bottom: 20px !important;
+          }
+          .admin-chat-layout {
+            flex-direction: column !important;
+          }
+          .admin-chat-sidebar {
+            width: 100% !important;
+            height: 70px !important;
+            border-right: none !important;
+            border-bottom: 1px solid #eef2f6 !important;
+            display: flex !important;
+            flex-direction: row !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+          }
+          .admin-chat-student-item {
+            flex-shrink: 0 !important;
+            padding: 8px 12px !important;
+            border-left: none !important;
+            border-bottom: none !important;
+            border-right: 1px solid #eef2f6 !important;
+            width: 140px !important;
+            height: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+          }
+        }
+      `}</style>
       <div>
         <button
           onClick={handleOpenToggle}
@@ -118,16 +154,16 @@ export default function AdminChatWidget({ students = [] }) {
       </div>
 
       {open && (
-        <div style={{ width: 500, height: 450, background: '#fff', boxShadow: '0 10px 40px rgba(0,0,0,0.15)', borderRadius: 14, overflow: 'hidden', marginTop: 10, display: 'flex', flexDirection: 'column', border: '1px solid #e2e8f0', animation: 'fadeIn 0.2s ease' }}>
+        <div className="admin-chat-popup" style={{ width: 500, height: 450, background: '#fff', boxShadow: '0 10px 40px rgba(0,0,0,0.15)', borderRadius: 14, overflow: 'hidden', marginTop: 10, display: 'flex', flexDirection: 'column', border: '1px solid #e2e8f0', animation: 'fadeIn 0.2s ease' }}>
           {/* Header */}
           <div style={{ padding: '12px 16px', background: '#0F172A', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontWeight: 600, fontSize: 14 }}>Student Messages</span>
             <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: 18 }}>×</button>
           </div>
 
-          <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+          <div className="admin-chat-layout" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
             {/* Sidebar list of students */}
-            <div style={{ width: 180, borderRight: '1px solid #eef2f6', overflowY: 'auto', background: '#f8fafc' }}>
+            <div className="admin-chat-sidebar" style={{ width: 180, borderRight: '1px solid #eef2f6', overflowY: 'auto', background: '#f8fafc' }}>
               {onlyStudents.length === 0 ? (
                 <div style={{ padding: 12, fontSize: 12, color: '#94a3b8', textAlign: 'center' }}>No students found</div>
               ) : (
@@ -137,6 +173,7 @@ export default function AdminChatWidget({ students = [] }) {
                   return (
                     <div
                       key={s.id}
+                      className="admin-chat-student-item"
                       onClick={() => {
                         setSelectedStudent(s);
                         setUnreadStudentIds((prev) => prev.filter((id) => id !== s.id));

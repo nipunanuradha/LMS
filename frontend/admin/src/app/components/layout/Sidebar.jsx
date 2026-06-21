@@ -25,8 +25,7 @@ export default function Sidebar({ page, setPage, open, onClose }) {
 
   return (
     <>
-      {!open && null}
-      <div style={{ width: open ? 240 : 0, minWidth: open ? 240 : 0, height: "100vh", background: "#0F172A", display: "flex", flexDirection: "column", overflow: "hidden", transition: "all 0.25s cubic-bezier(0.4,0,0.2,1)", flexShrink: 0, position: "relative", zIndex: 50 }}>
+      <div className={`admin-sidebar ${open ? "open" : ""}`} style={{ width: open ? 240 : 0, minWidth: open ? 240 : 0, height: "100vh", background: "#0F172A", display: "flex", flexDirection: "column", overflow: "hidden", transition: "all 0.25s cubic-bezier(0.4,0,0.2,1)", flexShrink: 0, position: "relative", zIndex: 50 }}>
         {/* Logo */}
         <div style={{ padding: "24px 20px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -45,7 +44,7 @@ export default function Sidebar({ page, setPage, open, onClose }) {
           {NAV.map(({ id, label, icon }) => {
             const active = page === id;
             return (
-              <button key={id} onClick={() => setPage(id)}
+              <button key={id} onClick={() => { setPage(id); onClose(); }}
                 className={`nav-item ${active ? "active" : ""}`}
                 style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: active ? "rgba(37,99,235,0.2)" : "transparent", color: active ? "#93C5FD" : "#94A3B8", fontWeight: active ? 600 : 400, fontSize: 14, width: "100%", textAlign: "left", transition: "all 0.15s", whiteSpace: "nowrap" }}>
                 <span style={{ color: active ? "#60A5FA" : "#64748B", flexShrink: 0 }}>{icon()}</span>
@@ -67,7 +66,23 @@ export default function Sidebar({ page, setPage, open, onClose }) {
         </div>
       </div>
       {/* Mobile overlay */}
-      {open && <div onClick={onClose} style={{ display: "none" }} />}
+      {open && (
+        <div 
+          onClick={onClose} 
+          className="sidebar-overlay" 
+          style={{ 
+            position: "fixed", 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            background: "rgba(15, 23, 42, 0.4)", 
+            backdropFilter: "blur(4px)",
+            zIndex: 1999, 
+            display: "none" 
+          }} 
+        />
+      )}
     </>
   );
 }

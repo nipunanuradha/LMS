@@ -60,7 +60,7 @@ export default function RevenuePage() {
         <h2 style={{ fontSize: 20, fontWeight: 700, color: "#0F172A" }}>Revenue & Enrollments</h2>
         <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 3 }}>Financial overview — last 6 months</p>
       </div>
-      <div style={{ display: "flex", gap: 16 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
         {[
           {
             label: "Total Revenue",
@@ -84,7 +84,7 @@ export default function RevenuePage() {
             isPositive: true
           },
         ].map(card => (
-          <div key={card.label} className="card" style={{ flex: 1, background: "#fff", borderRadius: 14, padding: "20px 22px", border: "1.5px solid #F1F5F9", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", transition: "all 0.25s" }}>
+          <div key={card.label} className="card" style={{ flex: "1 1 240px", background: "#fff", borderRadius: 14, padding: "20px 22px", border: "1.5px solid #F1F5F9", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", transition: "all 0.25s" }}>
             <div style={{ fontSize: 12, color: "#94A3B8", fontWeight: 500, marginBottom: 8 }}>{card.label}</div>
             <div style={{ fontSize: 26, fontWeight: 700, color: "#0F172A", letterSpacing: "-0.5px" }}>{card.val}</div>
             <div style={{ fontSize: 12, color: card.sub === "Per enrollment" ? "#64748B" : (card.isPositive ? "#10B981" : "#EF4444"), marginTop: 6, fontWeight: 500 }}>{card.sub}</div>
@@ -92,7 +92,7 @@ export default function RevenuePage() {
         ))}
       </div>
       {/* Charts */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+      <div className="dashboard-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         {/* Revenue Bar */}
         <div style={{ background: "#fff", borderRadius: 14, padding: "22px 24px", border: "1.5px solid #F1F5F9", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
           <h3 style={{ fontSize: 14, fontWeight: 600, color: "#0F172A", marginBottom: 20 }}>Monthly Revenue (LKR)</h3>
@@ -137,7 +137,7 @@ export default function RevenuePage() {
         </div>
       </div>
       {/* Table */}
-      <div style={{ background: "#fff", borderRadius: 14, border: "1.5px solid #F1F5F9", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", overflow: "hidden" }}>
+      <div className="responsive-table-container" style={{ background: "#fff", borderRadius: 14, border: "1.5px solid #F1F5F9", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", overflow: "auto" }}>
         <div style={{ padding: "18px 22px", borderBottom: "1.5px solid #F8FAFC" }}>
           <h3 style={{ fontSize: 14, fontWeight: 600, color: "#0F172A" }}>Monthly Breakdown</h3>
         </div>

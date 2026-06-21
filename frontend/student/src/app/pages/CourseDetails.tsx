@@ -471,15 +471,15 @@ export function CourseDetails() {
                 {recordings.length === 0 ? (
                   <p className="text-gray-500 text-center py-8">No recordings available</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="flex flex-row sm:flex-col overflow-x-auto sm:overflow-x-visible gap-3 sm:gap-0 sm:space-y-3 pb-3 sm:pb-0">
                     {recordings.map((recording) => (
                       <div
                         key={recording.id}
-                        className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                        className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors shrink-0 w-[280px] sm:w-auto"
                       >
                         <button
                           onClick={() => setCurrentVideo(recording.id)}
-                          className="flex-1 flex items-center gap-3 text-left"
+                          className="flex-1 flex items-center gap-3 text-left min-w-0"
                         >
                           <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-green-400 rounded-full flex items-center justify-center flex-shrink-0">
                             <Video className="w-5 h-5 text-white" />
@@ -492,7 +492,7 @@ export function CourseDetails() {
 
                         <button
                           onClick={() => toggleWatched(recording.id)}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${watchedVideos.has(recording.id)
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors shrink-0 ${watchedVideos.has(recording.id)
                             ? "bg-green-100 text-green-700 hover:bg-green-200"
                             : "bg-white text-gray-600 hover:bg-gray-200 border border-gray-300"
                             }`}

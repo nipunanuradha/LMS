@@ -14,7 +14,7 @@ export default function KPICard({ label, target, icon, accent, suffix="", prefix
     return () => clearInterval(timer);
   }, [target]);
   return (
-    <div className="card kpi-card" style={{ background:"#fff", borderRadius:14, padding:"22px 24px", border:"1.5px solid #F1F5F9", boxShadow:"0 1px 4px rgba(0,0,0,0.05)", transition:"all 0.25s", flex:1 }}>
+    <div className="card kpi-card" style={{ background:"#fff", borderRadius:14, padding:"22px 24px", border:"1.5px solid #F1F5F9", boxShadow:"0 1px 4px rgba(0,0,0,0.05)", transition:"all 0.25s", flex:"1 1 240px" }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
         <div>
           <div style={{ fontSize:13, color:"#64748B", fontWeight:500, marginBottom:10 }}>{label}</div>

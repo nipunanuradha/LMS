@@ -321,7 +321,7 @@ export default function ChatWidget() {
 
       {/* SUPPORT CHAT WIDGET BOX */}
       {open && (
-        <div className="fixed bottom-24 right-5 w-[420px] h-[540px] bg-white border border-slate-200/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-chat-in z-[1001] font-sans">
+        <div className="fixed bottom-20 right-4 w-[calc(100vw-32px)] sm:w-[420px] h-[75vh] sm:h-[540px] max-h-[540px] bg-white border border-slate-200/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-chat-in z-[1001] font-sans">
           {/* Header */}
           <div className="px-4 py-3.5 bg-slate-900 text-white flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2.5">
@@ -360,11 +360,11 @@ export default function ChatWidget() {
           </div>
 
           {/* Main Content Area */}
-          <div className="flex flex-1 overflow-hidden">
+          <div className="flex flex-col sm:flex-row flex-1 overflow-hidden">
             
             {/* Left Sidebar - Admins list */}
-            <div className="w-32 border-r border-slate-100 overflow-y-auto bg-slate-50 flex flex-col">
-              <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+            <div className="w-full sm:w-32 h-[60px] sm:h-auto border-b sm:border-b-0 sm:border-r border-slate-100 overflow-x-auto sm:overflow-x-hidden overflow-y-hidden sm:overflow-y-auto bg-slate-50 flex flex-row sm:flex-col shrink-0">
+              <div className="hidden sm:block px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
                 Admins
               </div>
               
@@ -380,11 +380,11 @@ export default function ChatWidget() {
                     <button
                       key={a.id}
                       onClick={() => setSelectedAdmin(a)}
-                      className={`w-full text-left p-3 border-b border-slate-100 transition-all duration-200 flex flex-col gap-1 relative ${
+                      className={`w-32 sm:w-full shrink-0 text-left p-2 sm:p-3 border-r sm:border-r-0 border-b border-slate-100 transition-all duration-200 flex flex-col gap-0.5 relative ${
                         isSelected 
-                          ? 'bg-blue-50/70 border-l-4 border-l-blue-600 text-blue-900' 
+                          ? 'bg-blue-50/70 border-l-0 sm:border-l-4 border-l-blue-600 text-blue-900' 
                           : unreadCount > 0
-                            ? 'bg-amber-50/40 border-l-4 border-l-amber-500 hover:bg-slate-100'
+                            ? 'bg-amber-50/40 border-l-0 sm:border-l-4 border-l-amber-500 hover:bg-slate-100'
                             : 'hover:bg-slate-100 text-slate-700'
                       }`}
                     >
