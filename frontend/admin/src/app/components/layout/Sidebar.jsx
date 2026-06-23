@@ -44,7 +44,7 @@ export default function Sidebar({ page, setPage, open, onClose }) {
           {NAV.map(({ id, label, icon }) => {
             const active = page === id;
             return (
-              <button key={id} onClick={() => { setPage(id); onClose(); }}
+              <button key={id} onClick={() => { setPage(id); if (window.innerWidth <= 768) onClose(); }}
                 className={`nav-item ${active ? "active" : ""}`}
                 style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: active ? "rgba(37,99,235,0.2)" : "transparent", color: active ? "#93C5FD" : "#94A3B8", fontWeight: active ? 600 : 400, fontSize: 14, width: "100%", textAlign: "left", transition: "all 0.15s", whiteSpace: "nowrap" }}>
                 <span style={{ color: active ? "#60A5FA" : "#64748B", flexShrink: 0 }}>{icon()}</span>
