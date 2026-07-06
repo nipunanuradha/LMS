@@ -343,10 +343,10 @@ export function CourseDetails() {
                           {displayEmbed.includes("youtube.com") && (
                             <>
                               <div className="absolute top-0 left-0 right-0 z-10"
-                                style={{ 
+                                style={{
                                   height: isFullscreen ? '100px' : '75px',
-                                  background: 'rgba(0,0,0,0)', 
-                                  cursor: 'default' 
+                                  background: 'rgba(0,0,0,0)',
+                                  cursor: 'default'
                                 }}
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -354,11 +354,11 @@ export function CourseDetails() {
                                 onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
                               <div className="absolute bottom-0 right-0 z-10"
-                                style={{ 
-                                  width: isFullscreen ? '450px' : '350px',
-                                  height: isFullscreen ? '80px' : '60px',
-                                  background: 'rgba(0,0,0,0)', 
-                                  cursor: 'default' 
+                                style={{
+                                  width: isFullscreen ? '500px' : '400px',
+                                  height: isFullscreen ? '100px' : '80px',
+                                  background: 'rgba(0,0,0,0)',
+                                  cursor: 'default'
                                 }}
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -366,11 +366,11 @@ export function CourseDetails() {
                                 onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
                               <div className="absolute bottom-0 left-0 z-10"
-                                style={{ 
-                                  width: isFullscreen ? '180px' : '140px',
-                                  height: isFullscreen ? '60px' : '45px',
-                                  background: 'rgba(0,0,0,0)', 
-                                  cursor: 'default' 
+                                style={{
+                                  width: isFullscreen ? '220px' : '180px',
+                                  height: isFullscreen ? '80px' : '65px',
+                                  background: 'rgba(0,0,0,0)',
+                                  cursor: 'default'
                                 }}
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -380,7 +380,7 @@ export function CourseDetails() {
                             </>
                           )}
                           <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: displayEmbed }} />
-                          
+
                           <button
                             onClick={toggleFullscreen}
                             className="absolute bottom-3 right-3 z-20 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all focus:outline-none"
@@ -392,10 +392,10 @@ export function CourseDetails() {
                       ) : ytEmbedUrl ? (
                         <div ref={containerRef} className={`bg-black rounded-lg overflow-hidden relative ${isFullscreen ? "w-screen h-screen flex items-center justify-center" : "aspect-video w-full"}`}>
                           <div className="absolute top-0 left-0 right-0 z-10"
-                            style={{ 
+                            style={{
                               height: isFullscreen ? '100px' : '75px',
-                              background: 'rgba(0,0,0,0)', 
-                              cursor: 'default' 
+                              background: 'rgba(0,0,0,0)',
+                              cursor: 'default'
                             }}
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -403,11 +403,11 @@ export function CourseDetails() {
                             onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
                           <div className="absolute bottom-0 right-0 z-10"
-                            style={{ 
-                              width: isFullscreen ? '450px' : '350px',
-                              height: isFullscreen ? '80px' : '60px',
-                              background: 'rgba(0,0,0,0)', 
-                              cursor: 'default' 
+                            style={{
+                              width: isFullscreen ? '500px' : '400px',
+                              height: isFullscreen ? '100px' : '80px',
+                              background: 'rgba(0,0,0,0)',
+                              cursor: 'default'
                             }}
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -415,11 +415,11 @@ export function CourseDetails() {
                             onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
                           <div className="absolute bottom-0 left-0 z-10"
-                            style={{ 
-                              width: isFullscreen ? '180px' : '140px',
-                              height: isFullscreen ? '60px' : '45px',
-                              background: 'rgba(0,0,0,0)', 
-                              cursor: 'default' 
+                            style={{
+                              width: isFullscreen ? '220px' : '180px',
+                              height: isFullscreen ? '80px' : '65px',
+                              background: 'rgba(0,0,0,0)',
+                              cursor: 'default'
                             }}
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -433,7 +433,7 @@ export function CourseDetails() {
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             frameBorder="0"
                           />
-                          
+
                           <button
                             onClick={toggleFullscreen}
                             className="absolute bottom-3 right-3 z-20 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all focus:outline-none"
