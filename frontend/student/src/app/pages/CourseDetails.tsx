@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router";
-import { ArrowLeft, Bell, Video, FileText, ExternalLink as ExternalLinkIcon, Download, Check, Eye, Maximize, Minimize } from "lucide-react";
+import { ArrowLeft, Bell, Video, FileText, ExternalLink as ExternalLinkIcon, Download, Check, Eye, Maximize, Minimize, Volume2, VolumeX, Gauge } from "lucide-react";
 import {
   mockCourses,
   mockRecordings,
@@ -42,6 +42,9 @@ export function CourseDetails() {
   const [currentVideo, setCurrentVideo] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [volume, setVolume] = useState(1);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -93,6 +96,13 @@ export function CourseDetails() {
       }
     }
   };
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = playbackSpeed;
+      videoRef.current.volume = volume;
+    }
+  }, [currentVideo, playbackSpeed, volume]);
 
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -453,15 +463,95 @@ export function CourseDetails() {
                           />
                         </div>
                       ) : (
-                        <div className="bg-black rounded-lg overflow-hidden">
+                        <div className="bg-black rounded-lg overflow-hidden flex flex-col">
                           <video
+                            ref={videoRef}
                             key={currentVideo}
                             controls
                             className="w-full aspect-video"
                             src={activeRec.videoUrl}
+                            onPlay={() => {
+                              if (videoRef.current) {
+                                videoRef.current.playbackRate = playbackSpeed;
+                                videoRef.current.volume = volume;
+                              }
+                            }}
                           >
                             Your browser does not support the video tag.
                           </video>
+                          
+                          {/* Speed & Volume Control Panel */}
+                          <div className="bg-gray-900 text-white p-3 flex flex-wrap items-center justify-between gap-4 border-t border-gray-800">
+                            {/* Volume section */}
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  const newVol = volume === 0 ? 1 : 0;
+                                  setVolume(newVol);
+                                  if (videoRef.current) {
+                                    videoRef.current.volume = newVol;
+                                  }
+                                }}
+                                className="p-1.5 hover:bg-gray-850 rounded transition-colors text-gray-400 hover:text-white"
+                                title={volume === 0 ? "Unmute" : "Mute"}
+                              >
+                                {volume === 0 ? (
+                                  <VolumeX className="w-5 h-5 text-red-500" />
+                                ) : (
+                                  <Volume2 className="w-5 h-5 text-blue-500" />
+                                )}
+                              </button>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs text-gray-400">Vol:</span>
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="1"
+                                  step="0.05"
+                                  value={volume}
+                                  onChange={(e) => {
+                                    const val = parseFloat(e.target.value);
+                                    setVolume(val);
+                                    if (videoRef.current) {
+                                      videoRef.current.volume = val;
+                                    }
+                                  }}
+                                  className="w-20 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                />
+                                <span className="text-xs font-mono w-8 text-right">
+                                  {Math.round(volume * 100)}%
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Speed section */}
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-1">
+                                <Gauge className="w-4 h-4 text-blue-500" />
+                                <span className="text-xs text-gray-400">Speed:</span>
+                              </div>
+                              <div className="flex items-center gap-1 bg-gray-850 rounded-lg p-0.5 border border-gray-700">
+                                {[0.5, 1, 1.25, 1.5, 2].map((speed) => (
+                                  <button
+                                    key={speed}
+                                    onClick={() => {
+                                      setPlaybackSpeed(speed);
+                                      if (videoRef.current) {
+                                        videoRef.current.playbackRate = speed;
+                                      }
+                                    }}
+                                    className={`px-2 py-0.5 text-xs rounded transition-all font-medium ${
+                                      playbackSpeed === speed
+                                        ? "bg-blue-600 text-white shadow-sm"
+                                        : "text-gray-400 hover:text-white hover:bg-gray-800"
+                                    }`}
+                                  >
+                                    {speed}x
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
