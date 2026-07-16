@@ -19,7 +19,7 @@ function getYouTubeEmbedUrl(url: string): string | null {
   const match = url.match(regExp);
   if (match && match[2].length === 11) {
     const videoId = match[2];
-    return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&fs=0`;
+    return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&fs=0&enablejsapi=1`;
   }
   return null;
 }
@@ -29,7 +29,7 @@ function getVimeoEmbedUrl(url: string): string | null {
   const regExp = /vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|video\/|)(\d+)(?:$|\/|\?)/;
   const match = url.match(regExp);
   if (match && match[3]) {
-    return `https://player.vimeo.com/video/${match[3]}`;
+    return `https://player.vimeo.com/video/${match[3]}?api=1`;
   }
   return null;
 }
@@ -97,11 +97,46 @@ export function CourseDetails() {
     }
   };
 
-  useEffect(() => {
+  const applySpeedAndVolume = (speed: number, vol: number) => {
     if (videoRef.current) {
-      videoRef.current.playbackRate = playbackSpeed;
-      videoRef.current.volume = volume;
+      videoRef.current.playbackRate = speed;
+      videoRef.current.volume = vol;
     }
+
+    const iframe = containerRef.current?.querySelector("iframe");
+    if (iframe && iframe.contentWindow) {
+      try {
+        const src = iframe.src || "";
+        if (src.includes("youtube.com") || (iframe.outerHTML && iframe.outerHTML.includes("youtube.com"))) {
+          iframe.contentWindow.postMessage(
+            JSON.stringify({ event: "command", func: "setPlaybackRate", args: [speed, true] }),
+            "*"
+          );
+          iframe.contentWindow.postMessage(
+            JSON.stringify({ event: "command", func: "setVolume", args: [vol * 100] }),
+            "*"
+          );
+        } else if (src.includes("vimeo.com")) {
+          iframe.contentWindow.postMessage(
+            JSON.stringify({ method: "setPlaybackRate", value: speed }),
+            "*"
+          );
+          iframe.contentWindow.postMessage(
+            JSON.stringify({ method: "setVolume", value: vol }),
+            "*"
+          );
+        }
+      } catch (e) {
+        console.error("Error communicating with iframe player:", e);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      applySpeedAndVolume(playbackSpeed, volume);
+    }, 400);
+    return () => clearTimeout(timer);
   }, [currentVideo, playbackSpeed, volume]);
 
   const [course, setCourse] = useState<any>(null);
@@ -348,9 +383,61 @@ export function CourseDetails() {
 
                   return (
                     <div className="max-w-2xl mx-auto mb-6">
-                      {hasEmbed ? (
-                        <div ref={containerRef} className={`bg-black rounded-lg overflow-hidden relative ${isFullscreen ? "w-screen h-screen flex items-center justify-center" : "aspect-video w-full"}`}>
-                          {displayEmbed.includes("youtube.com") && (
+                      <div ref={containerRef} className="bg-black rounded-lg overflow-hidden flex flex-col relative group">
+                        {/* Player wrapper */}
+                        <div className={`relative ${isFullscreen ? "w-screen h-screen flex items-center justify-center bg-black" : "aspect-video w-full"}`}>
+                          {hasEmbed ? (
+                            <>
+                              {displayEmbed.includes("youtube.com") && (
+                                <>
+                                  <div className="absolute top-0 left-0 right-0 z-10"
+                                    style={{
+                                      height: isFullscreen ? '100px' : '75px',
+                                      background: 'rgba(0,0,0,0)',
+                                      cursor: 'default'
+                                    }}
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                    onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                    onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                    onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                    onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
+                                  <div className="absolute bottom-0 right-0 z-10"
+                                    style={{
+                                      width: isFullscreen ? '500px' : '400px',
+                                      height: isFullscreen ? '100px' : '80px',
+                                      background: 'rgba(0,0,0,0)',
+                                      cursor: 'default'
+                                    }}
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                    onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                    onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                    onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                    onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
+                                  <div className="absolute bottom-0 left-0 z-10"
+                                    style={{
+                                      width: isFullscreen ? '220px' : '180px',
+                                      height: isFullscreen ? '80px' : '65px',
+                                      background: 'rgba(0,0,0,0)',
+                                      cursor: 'default'
+                                    }}
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                    onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                    onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                    onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                    onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
+                                </>
+                              )}
+                              <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: displayEmbed }} />
+
+                              <button
+                                onClick={toggleFullscreen}
+                                className="absolute bottom-3 right-3 z-20 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all focus:outline-none"
+                                title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                              >
+                                {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                              </button>
+                            </>
+                          ) : ytEmbedUrl ? (
                             <>
                               <div className="absolute top-0 left-0 right-0 z-10"
                                 style={{
@@ -387,173 +474,116 @@ export function CourseDetails() {
                                 onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
-                            </>
-                          )}
-                          <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: displayEmbed }} />
 
-                          <button
-                            onClick={toggleFullscreen}
-                            className="absolute bottom-3 right-3 z-20 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all focus:outline-none"
-                            title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-                          >
-                            {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-                          </button>
-                        </div>
-                      ) : ytEmbedUrl ? (
-                        <div ref={containerRef} className={`bg-black rounded-lg overflow-hidden relative ${isFullscreen ? "w-screen h-screen flex items-center justify-center" : "aspect-video w-full"}`}>
-                          <div className="absolute top-0 left-0 right-0 z-10"
-                            style={{
-                              height: isFullscreen ? '100px' : '75px',
-                              background: 'rgba(0,0,0,0)',
-                              cursor: 'default'
-                            }}
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                            onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                            onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                            onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
-                          <div className="absolute bottom-0 right-0 z-10"
-                            style={{
-                              width: isFullscreen ? '500px' : '400px',
-                              height: isFullscreen ? '100px' : '80px',
-                              background: 'rgba(0,0,0,0)',
-                              cursor: 'default'
-                            }}
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                            onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                            onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                            onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
-                          <div className="absolute bottom-0 left-0 z-10"
-                            style={{
-                              width: isFullscreen ? '220px' : '180px',
-                              height: isFullscreen ? '80px' : '65px',
-                              background: 'rgba(0,0,0,0)',
-                              cursor: 'default'
-                            }}
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                            onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                            onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                            onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
+                              <iframe
+                                src={ytEmbedUrl}
+                                className="w-full h-full"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                frameBorder="0"
+                              />
 
-                          <iframe
-                            src={ytEmbedUrl}
-                            className="w-full h-full"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            frameBorder="0"
-                          />
-
-                          <button
-                            onClick={toggleFullscreen}
-                            className="absolute bottom-3 right-3 z-20 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all focus:outline-none"
-                            title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-                          >
-                            {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-                          </button>
-                        </div>
-                      ) : vimeoEmbedUrl ? (
-                        <div className="bg-black rounded-lg overflow-hidden aspect-video w-full">
-                          <iframe
-                            src={vimeoEmbedUrl}
-                            className="w-full h-full aspect-video"
-                            allow="autoplay; fullscreen; picture-in-picture"
-                            allowFullScreen
-                            frameBorder="0"
-                          />
-                        </div>
-                      ) : (
-                        <div className="bg-black rounded-lg overflow-hidden flex flex-col">
-                          <video
-                            ref={videoRef}
-                            key={currentVideo}
-                            controls
-                            className="w-full aspect-video"
-                            src={activeRec.videoUrl}
-                            onPlay={() => {
-                              if (videoRef.current) {
-                                videoRef.current.playbackRate = playbackSpeed;
-                                videoRef.current.volume = volume;
-                              }
-                            }}
-                          >
-                            Your browser does not support the video tag.
-                          </video>
-                          
-                          {/* Speed & Volume Control Panel */}
-                          <div className="bg-gray-900 text-white p-3 flex flex-wrap items-center justify-between gap-4 border-t border-gray-800">
-                            {/* Volume section */}
-                            <div className="flex items-center gap-2">
                               <button
-                                onClick={() => {
-                                  const newVol = volume === 0 ? 1 : 0;
-                                  setVolume(newVol);
-                                  if (videoRef.current) {
-                                    videoRef.current.volume = newVol;
-                                  }
-                                }}
-                                className="p-1.5 hover:bg-gray-850 rounded transition-colors text-gray-400 hover:text-white"
-                                title={volume === 0 ? "Unmute" : "Mute"}
+                                onClick={toggleFullscreen}
+                                className="absolute bottom-3 right-3 z-20 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all focus:outline-none"
+                                title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
                               >
-                                {volume === 0 ? (
-                                  <VolumeX className="w-5 h-5 text-red-500" />
-                                ) : (
-                                  <Volume2 className="w-5 h-5 text-blue-500" />
-                                )}
+                                {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
                               </button>
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xs text-gray-400">Vol:</span>
-                                <input
-                                  type="range"
-                                  min="0"
-                                  max="1"
-                                  step="0.05"
-                                  value={volume}
-                                  onChange={(e) => {
-                                    const val = parseFloat(e.target.value);
-                                    setVolume(val);
-                                    if (videoRef.current) {
-                                      videoRef.current.volume = val;
-                                    }
-                                  }}
-                                  className="w-20 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                                />
-                                <span className="text-xs font-mono w-8 text-right">
-                                  {Math.round(volume * 100)}%
-                                </span>
-                              </div>
-                            </div>
+                            </>
+                          ) : vimeoEmbedUrl ? (
+                            <iframe
+                              src={vimeoEmbedUrl}
+                              className="w-full h-full aspect-video"
+                              allow="autoplay; fullscreen; picture-in-picture"
+                              allowFullScreen
+                              frameBorder="0"
+                            />
+                          ) : (
+                            <video
+                              ref={videoRef}
+                              key={currentVideo}
+                              controls
+                              className="w-full h-full aspect-video"
+                              src={activeRec.videoUrl}
+                              onPlay={() => {
+                                if (videoRef.current) {
+                                  videoRef.current.playbackRate = playbackSpeed;
+                                  videoRef.current.volume = volume;
+                                }
+                              }}
+                            >
+                              Your browser does not support the video tag.
+                            </video>
+                          )}
+                        </div>
 
-                            {/* Speed section */}
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center gap-1">
-                                <Gauge className="w-4 h-4 text-blue-500" />
-                                <span className="text-xs text-gray-400">Speed:</span>
-                              </div>
-                              <div className="flex items-center gap-1 bg-gray-850 rounded-lg p-0.5 border border-gray-700">
-                                {[0.5, 1, 1.25, 1.5, 2].map((speed) => (
-                                  <button
-                                    key={speed}
-                                    onClick={() => {
-                                      setPlaybackSpeed(speed);
-                                      if (videoRef.current) {
-                                        videoRef.current.playbackRate = speed;
-                                      }
-                                    }}
-                                    className={`px-2 py-0.5 text-xs rounded transition-all font-medium ${
-                                      playbackSpeed === speed
-                                        ? "bg-blue-600 text-white shadow-sm"
-                                        : "text-gray-400 hover:text-white hover:bg-gray-800"
-                                    }`}
-                                  >
-                                    {speed}x
-                                  </button>
-                                ))}
-                              </div>
+                        {/* Speed & Volume Control Panel (Always visible at the bottom) */}
+                        <div className="bg-gray-900 text-white p-3 flex flex-wrap items-center justify-between gap-4 border-t border-gray-800 z-30">
+                          {/* Volume section */}
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                const newVol = volume === 0 ? 1 : 0;
+                                setVolume(newVol);
+                                applySpeedAndVolume(playbackSpeed, newVol);
+                              }}
+                              className="p-1.5 hover:bg-gray-800 rounded transition-colors text-gray-400 hover:text-white"
+                              title={volume === 0 ? "Unmute" : "Mute"}
+                            >
+                              {volume === 0 ? (
+                                <VolumeX className="w-5 h-5 text-red-500" />
+                              ) : (
+                                <Volume2 className="w-5 h-5 text-blue-500" />
+                              )}
+                            </button>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs text-gray-400">Vol:</span>
+                              <input
+                                type="range"
+                                min="0"
+                                max="1"
+                                step="0.05"
+                                value={volume}
+                                onChange={(e) => {
+                                  const val = parseFloat(e.target.value);
+                                  setVolume(val);
+                                  applySpeedAndVolume(playbackSpeed, val);
+                                }}
+                                className="w-20 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                              />
+                              <span className="text-xs font-mono w-8 text-right">
+                                {Math.round(volume * 100)}%
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Speed section */}
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1">
+                              <Gauge className="w-4 h-4 text-blue-500" />
+                              <span className="text-xs text-gray-400">Speed:</span>
+                            </div>
+                            <div className="flex items-center gap-1 bg-gray-850 rounded-lg p-0.5 border border-gray-700">
+                              {[0.5, 1, 1.25, 1.5, 2].map((speed) => (
+                                <button
+                                  key={speed}
+                                  onClick={() => {
+                                    setPlaybackSpeed(speed);
+                                    applySpeedAndVolume(speed, volume);
+                                  }}
+                                  className={`px-2 py-0.5 text-xs rounded transition-all font-medium ${
+                                    playbackSpeed === speed
+                                      ? "bg-blue-600 text-white shadow-sm"
+                                      : "text-gray-400 hover:text-white hover:bg-gray-800"
+                                  }`}
+                                >
+                                  {speed}x
+                                </button>
+                              ))}
                             </div>
                           </div>
                         </div>
-                      )}
+                      </div>
                     </div>
                   );
                 })()}
