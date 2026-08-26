@@ -23,11 +23,37 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "ICT Academy",
+    "url": "https://ict-academy-sooty.vercel.app",
+    "logo": "https://ict-academy-sooty.vercel.app/favicon.svg",
+    "description": "Level up your technical skills with our professional certifications, expert mentors, and hands-on labs. Explore courses and access your student LMS portal.",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "98 High Level Rd, Nawagamuwa",
+      "addressLocality": "Kaduwela",
+      "addressCountry": "LK"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+94 705688895",
+      "contactType": "customer service"
+    }
+  };
+
   return (
     <html
       lang="en"
       className={`${inter.variable} ${outfit.variable} scroll-smooth antialiased`}
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="font-sans bg-slate-50 text-slate-900 min-h-screen selection:bg-blue-600 selection:text-white">
         {children}
       </body>
