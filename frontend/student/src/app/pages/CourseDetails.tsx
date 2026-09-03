@@ -667,7 +667,7 @@ export function CourseDetails() {
                   }
 
                   return (
-                    <div className="max-w-2xl mx-auto mb-6">
+                    <div className="max-w-3xl mx-auto mb-6">
                       <div ref={containerRef} className="bg-black rounded-lg overflow-hidden flex flex-col relative group">
                         {/* Quality change on-screen toast badge */}
                         {qualityToast && (
@@ -706,6 +706,7 @@ export function CourseDetails() {
                                     onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                     onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                     onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                    touch-action="none"
                                     onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
                                   <div className="absolute bottom-0 left-0 z-10"
                                     style={{
@@ -833,27 +834,27 @@ export function CourseDetails() {
                           )}
                         </div>
 
-                        {/* Speed, Quality & Volume Control Panel (Always visible at the bottom) */}
-                        <div className="bg-gray-900 text-white p-3 flex flex-wrap items-center justify-between gap-4 border-t border-gray-800 z-30">
+                        {/* Speed, Quality & Volume Control Panel (Always in a single unified line) */}
+                        <div className="bg-gray-900 text-white px-3 py-2 flex flex-nowrap items-center justify-between gap-2 sm:gap-4 border-t border-gray-800 z-30 overflow-x-auto">
                           {/* Volume section */}
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 shrink-0">
                             <button
                               onClick={() => {
                                 const newVol = volume === 0 ? 1 : 0;
                                 setVolume(newVol);
                                 applySpeedAndVolume(playbackSpeed, newVol);
                               }}
-                              className="p-1.5 hover:bg-gray-800 rounded transition-colors text-gray-400 hover:text-white cursor-pointer"
+                              className="p-1 hover:bg-gray-800 rounded transition-colors text-gray-400 hover:text-white cursor-pointer"
                               title={volume === 0 ? "Unmute" : "Mute"}
                             >
                               {volume === 0 ? (
-                                <VolumeX className="w-5 h-5 text-red-500" />
+                                <VolumeX className="w-4 h-4 text-red-500" />
                               ) : (
-                                <Volume2 className="w-5 h-5 text-blue-500" />
+                                <Volume2 className="w-4 h-4 text-blue-500" />
                               )}
                             </button>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs text-gray-400">Vol:</span>
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-gray-400 hidden xs:inline">Vol:</span>
                               <input
                                 type="range"
                                 min="0"
@@ -865,21 +866,21 @@ export function CourseDetails() {
                                   setVolume(val);
                                   applySpeedAndVolume(playbackSpeed, val);
                                 }}
-                                className="w-20 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                className="w-14 sm:w-16 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
                               />
-                              <span className="text-xs font-mono w-8 text-right">
+                              <span className="text-[11px] font-mono w-7 text-right text-gray-400">
                                 {Math.round(volume * 100)}%
                               </span>
                             </div>
                           </div>
 
                           {/* Speed section */}
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 shrink-0">
                             <div className="flex items-center gap-1">
                               <Gauge className="w-4 h-4 text-blue-500" />
                               <span className="text-xs text-gray-400">Speed:</span>
                             </div>
-                            <div className="flex items-center gap-1 bg-gray-850 rounded-lg p-0.5 border border-gray-700">
+                            <div className="flex items-center gap-0.5 bg-gray-850 rounded-lg p-0.5 border border-gray-700">
                               {[0.5, 1, 1.25, 1.5, 2].map((speed) => (
                                 <button
                                   key={speed}
@@ -887,7 +888,7 @@ export function CourseDetails() {
                                     setPlaybackSpeed(speed);
                                     applySpeedAndVolume(speed, volume);
                                   }}
-                                  className={`px-2 py-0.5 text-xs rounded transition-all font-medium cursor-pointer ${
+                                  className={`px-1.5 py-0.5 text-xs rounded transition-all font-medium cursor-pointer ${
                                     playbackSpeed === speed
                                       ? "bg-blue-600 text-white shadow-sm"
                                       : "text-gray-400 hover:text-white hover:bg-gray-800"
@@ -900,7 +901,7 @@ export function CourseDetails() {
                           </div>
 
                           {/* Quality section */}
-                          <div className="relative flex items-center gap-2">
+                          <div className="relative flex items-center gap-1.5 shrink-0">
                             <div className="flex items-center gap-1">
                               <SlidersHorizontal className="w-4 h-4 text-blue-500" />
                               <span className="text-xs text-gray-400">Quality:</span>
@@ -909,12 +910,12 @@ export function CourseDetails() {
                             <div className="relative" ref={qualityMenuRef}>
                               <button
                                 onClick={() => setQualityMenuOpen(!qualityMenuOpen)}
-                                className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-800 hover:bg-gray-750 active:bg-gray-700 text-white text-xs font-medium rounded-lg border border-gray-700 transition-colors shadow-sm focus:outline-none cursor-pointer"
+                                className="flex items-center gap-1 px-2 py-1 bg-gray-800 hover:bg-gray-750 active:bg-gray-700 text-white text-xs font-medium rounded-lg border border-gray-700 transition-colors shadow-sm focus:outline-none cursor-pointer"
                                 title="Select playback quality (144p - 1080p)"
                               >
                                 <span>{currentQualityOption.shortLabel}</span>
                                 {currentQualityOption.badge && (
-                                  <span className="px-1.5 py-0.2 bg-blue-600/80 text-[10px] rounded text-white font-semibold">
+                                  <span className="px-1 py-0.2 bg-blue-600/80 text-[10px] rounded text-white font-semibold">
                                     {currentQualityOption.badge}
                                   </span>
                                 )}
@@ -923,7 +924,7 @@ export function CourseDetails() {
 
                               {qualityMenuOpen && (
                                 <div 
-                                  className="absolute bottom-full mb-2 right-0 w-52 bg-gray-900/95 backdrop-blur-md border border-gray-750 rounded-xl shadow-2xl py-1.5 z-50 overflow-hidden"
+                                  className="absolute bottom-full mb-2 right-0 w-48 bg-gray-900/95 backdrop-blur-md border border-gray-750 rounded-xl shadow-2xl py-1.5 z-50 overflow-hidden"
                                 >
                                   <div className="px-3 py-1.5 border-b border-gray-800 text-[11px] font-semibold uppercase tracking-wider text-gray-400 flex items-center justify-between">
                                     <span>Video Quality</span>
