@@ -92,7 +92,6 @@ export function CourseDetails() {
   const [qualityToast, setQualityToast] = useState<string | null>(null);
   const toastTimeoutRef = useRef<any>(null);
   const qualityMenuRef = useRef<HTMLDivElement>(null);
-  const qualityButtonRef = useRef<HTMLButtonElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameIdRef = useRef<number | null>(null);
   const currentPlayTimeRef = useRef<number>(0);
@@ -147,13 +146,7 @@ export function CourseDetails() {
   // Close quality dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (
-        qualityMenuRef.current &&
-        !qualityMenuRef.current.contains(target) &&
-        qualityButtonRef.current &&
-        !qualityButtonRef.current.contains(target)
-      ) {
+      if (qualityMenuRef.current && !qualityMenuRef.current.contains(e.target as Node)) {
         setQualityMenuOpen(false);
       }
     };
@@ -674,7 +667,7 @@ export function CourseDetails() {
                   }
 
                   return (
-                    <div className="max-w-3xl mx-auto mb-6">
+                    <div className="max-w-2xl mx-auto mb-6">
                       <div ref={containerRef} className="bg-black rounded-lg overflow-hidden flex flex-col relative group">
                         {/* Quality change on-screen toast badge */}
                         {qualityToast && (
@@ -840,109 +833,53 @@ export function CourseDetails() {
                           )}
                         </div>
 
-                        {/* Quality Selection Popup Modal (Floating right above the Quality button) */}
-                        {qualityMenuOpen && (
-                          <div 
-                            ref={qualityMenuRef}
-                            className="absolute bottom-12 right-3 w-56 bg-gray-900/98 backdrop-blur-md border border-gray-700 rounded-xl shadow-2xl py-1.5 z-50 overflow-hidden"
-                          >
-                            <div className="px-3.5 py-2 border-b border-gray-800 text-xs font-semibold uppercase tracking-wider text-gray-400 flex items-center justify-between">
-                              <div className="flex items-center gap-1.5 text-white">
-                                <SlidersHorizontal className="w-3.5 h-3.5 text-blue-400" />
-                                <span>Video Quality</span>
-                              </div>
-                              <button 
-                                type="button"
-                                onClick={() => setQualityMenuOpen(false)}
-                                className="text-gray-400 hover:text-white text-xs px-1 cursor-pointer"
-                                title="Close"
-                              >
-                                ✕
-                              </button>
-                            </div>
-                            <div className="max-h-60 overflow-y-auto py-1">
-                              {QUALITY_OPTIONS.map((opt) => {
-                                const isSelected = selectedQuality === opt.id;
-                                return (
-                                  <button
-                                    key={opt.id}
-                                    type="button"
-                                    onClick={() => {
-                                      applyQuality(opt.id);
-                                      setQualityMenuOpen(false);
-                                    }}
-                                    className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer ${
-                                      isSelected
-                                        ? "bg-blue-600/20 text-blue-400 font-medium"
-                                        : "text-gray-200 hover:bg-gray-800 hover:text-white"
-                                    }`}
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      {isSelected ? (
-                                        <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                                      ) : (
-                                        <span className="w-3.5 shrink-0" />
-                                      )}
-                                      <span className="truncate">{opt.label}</span>
-                                    </div>
-                                    {opt.badge && (
-                                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold shrink-0 ml-1.5 ${
-                                        isSelected ? "bg-blue-500 text-white" : "bg-gray-800 text-gray-400"
-                                      }`}>
-                                        {opt.badge}
-                                      </span>
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Speed, Quality & Volume Control Panel (Aligned cleanly in a single unified line) */}
-                        <div className="bg-gray-900/95 backdrop-blur text-white px-3 py-2 flex flex-nowrap items-center justify-between gap-2 sm:gap-3 border-t border-gray-800 z-30 select-none">
+                        {/* Speed, Quality & Volume Control Panel (Always visible at the bottom) */}
+                        <div className="bg-gray-900 text-white p-3 flex flex-wrap items-center justify-between gap-4 border-t border-gray-800 z-30">
                           {/* Volume section */}
-                          <div className="flex items-center gap-1.5 shrink-0">
+                          <div className="flex items-center gap-2">
                             <button
                               onClick={() => {
                                 const newVol = volume === 0 ? 1 : 0;
                                 setVolume(newVol);
                                 applySpeedAndVolume(playbackSpeed, newVol);
                               }}
-                              className="p-1 hover:bg-gray-800 rounded transition-colors text-gray-400 hover:text-white cursor-pointer"
+                              className="p-1.5 hover:bg-gray-800 rounded transition-colors text-gray-400 hover:text-white cursor-pointer"
                               title={volume === 0 ? "Unmute" : "Mute"}
                             >
                               {volume === 0 ? (
-                                <VolumeX className="w-4 h-4 text-red-500" />
+                                <VolumeX className="w-5 h-5 text-red-500" />
                               ) : (
-                                <Volume2 className="w-4 h-4 text-blue-400" />
+                                <Volume2 className="w-5 h-5 text-blue-500" />
                               )}
                             </button>
-                            <input
-                              type="range"
-                              min="0"
-                              max="1"
-                              step="0.05"
-                              value={volume}
-                              onChange={(e) => {
-                                const val = parseFloat(e.target.value);
-                                setVolume(val);
-                                applySpeedAndVolume(playbackSpeed, val);
-                              }}
-                              className="w-14 sm:w-18 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                            />
-                            <span className="text-[11px] font-mono text-gray-400 w-7 text-right">
-                              {Math.round(volume * 100)}%
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs text-gray-400">Vol:</span>
+                              <input
+                                type="range"
+                                min="0"
+                                max="1"
+                                step="0.05"
+                                value={volume}
+                                onChange={(e) => {
+                                  const val = parseFloat(e.target.value);
+                                  setVolume(val);
+                                  applySpeedAndVolume(playbackSpeed, val);
+                                }}
+                                className="w-20 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                              />
+                              <span className="text-xs font-mono w-8 text-right">
+                                {Math.round(volume * 100)}%
+                              </span>
+                            </div>
                           </div>
 
                           {/* Speed section */}
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <div className="flex items-center gap-1 text-gray-400">
-                              <Gauge className="w-4 h-4 text-blue-400" />
-                              <span className="text-xs hidden md:inline">Speed:</span>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              <Gauge className="w-4 h-4 text-blue-500" />
+                              <span className="text-xs text-gray-400">Speed:</span>
                             </div>
-                            <div className="flex items-center gap-0.5 bg-gray-850 rounded-lg p-0.5 border border-gray-750">
+                            <div className="flex items-center gap-1 bg-gray-850 rounded-lg p-0.5 border border-gray-700">
                               {[0.5, 1, 1.25, 1.5, 2].map((speed) => (
                                 <button
                                   key={speed}
@@ -950,7 +887,7 @@ export function CourseDetails() {
                                     setPlaybackSpeed(speed);
                                     applySpeedAndVolume(speed, volume);
                                   }}
-                                  className={`px-1.5 py-0.5 text-xs rounded transition-all font-medium cursor-pointer ${
+                                  className={`px-2 py-0.5 text-xs rounded transition-all font-medium cursor-pointer ${
                                     playbackSpeed === speed
                                       ? "bg-blue-600 text-white shadow-sm"
                                       : "text-gray-400 hover:text-white hover:bg-gray-800"
@@ -963,30 +900,73 @@ export function CourseDetails() {
                           </div>
 
                           {/* Quality section */}
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <div className="flex items-center gap-1 text-gray-400">
-                              <SlidersHorizontal className="w-4 h-4 text-blue-400" />
-                              <span className="text-xs hidden md:inline">Quality:</span>
+                          <div className="relative flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              <SlidersHorizontal className="w-4 h-4 text-blue-500" />
+                              <span className="text-xs text-gray-400">Quality:</span>
                             </div>
 
-                            <button
-                              ref={qualityButtonRef}
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setQualityMenuOpen((prev) => !prev);
-                              }}
-                              className="flex items-center gap-1 px-2.5 py-1 bg-gray-800 hover:bg-gray-750 active:bg-gray-700 text-white text-xs font-medium rounded-lg border border-gray-700 transition-colors shadow-sm focus:outline-none cursor-pointer"
-                              title="Select playback quality (144p - 1080p)"
-                            >
-                              <span>{currentQualityOption.shortLabel}</span>
-                              {currentQualityOption.badge && (
-                                <span className="px-1.5 py-0.2 bg-blue-600 text-[10px] rounded text-white font-semibold">
-                                  {currentQualityOption.badge}
-                                </span>
+                            <div className="relative" ref={qualityMenuRef}>
+                              <button
+                                onClick={() => setQualityMenuOpen(!qualityMenuOpen)}
+                                className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-800 hover:bg-gray-750 active:bg-gray-700 text-white text-xs font-medium rounded-lg border border-gray-700 transition-colors shadow-sm focus:outline-none cursor-pointer"
+                                title="Select playback quality (144p - 1080p)"
+                              >
+                                <span>{currentQualityOption.shortLabel}</span>
+                                {currentQualityOption.badge && (
+                                  <span className="px-1.5 py-0.2 bg-blue-600/80 text-[10px] rounded text-white font-semibold">
+                                    {currentQualityOption.badge}
+                                  </span>
+                                )}
+                                <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${qualityMenuOpen ? "rotate-180" : ""}`} />
+                              </button>
+
+                              {qualityMenuOpen && (
+                                <div 
+                                  className="absolute bottom-full mb-2 right-0 w-52 bg-gray-900/95 backdrop-blur-md border border-gray-750 rounded-xl shadow-2xl py-1.5 z-50 overflow-hidden"
+                                >
+                                  <div className="px-3 py-1.5 border-b border-gray-800 text-[11px] font-semibold uppercase tracking-wider text-gray-400 flex items-center justify-between">
+                                    <span>Video Quality</span>
+                                    <span className="text-[10px] text-blue-400 font-normal">Resolution</span>
+                                  </div>
+                                  <div className="max-h-60 overflow-y-auto py-1">
+                                    {QUALITY_OPTIONS.map((opt) => {
+                                      const isSelected = selectedQuality === opt.id;
+                                      return (
+                                        <button
+                                          key={opt.id}
+                                          onClick={() => {
+                                            applyQuality(opt.id);
+                                            setQualityMenuOpen(false);
+                                          }}
+                                          className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                                            isSelected
+                                              ? "bg-blue-600/20 text-blue-400 font-medium"
+                                              : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                                          }`}
+                                        >
+                                          <div className="flex items-center gap-2">
+                                            {isSelected ? (
+                                              <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                                            ) : (
+                                              <span className="w-3.5 shrink-0" />
+                                            )}
+                                            <span className="truncate">{opt.label}</span>
+                                          </div>
+                                          {opt.badge && (
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold shrink-0 ml-1 ${
+                                              isSelected ? "bg-blue-500 text-white" : "bg-gray-800 text-gray-400"
+                                            }`}>
+                                              {opt.badge}
+                                            </span>
+                                          )}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
                               )}
-                              <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${qualityMenuOpen ? "rotate-180" : ""}`} />
-                            </button>
+                            </div>
                           </div>
                         </div>
                       </div>
