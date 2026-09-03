@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router";
-import { ArrowLeft, Bell, Video, FileText, ExternalLink as ExternalLinkIcon, Download, Check, Eye, Maximize, Minimize, Volume2, VolumeX, Gauge } from "lucide-react";
+import { ArrowLeft, Bell, Video, FileText, ExternalLink as ExternalLinkIcon, Download, Check, Eye, Maximize, Minimize, Volume2, VolumeX, Gauge, SlidersHorizontal, ChevronDown } from "lucide-react";
 import {
   mockCourses,
   mockRecordings,
@@ -13,15 +13,55 @@ import { API_URL } from "../config";
 
 type TabType = "notices" | "recordings" | "notes" | "links";
 
-function getYouTubeEmbedUrl(url: string): string | null {
+export interface VideoQualityOption {
+  id: string;
+  label: string;
+  shortLabel: string;
+  width: number;
+  height: number;
+  ytQuality: string;
+  badge?: string;
+}
+
+export const QUALITY_OPTIONS: VideoQualityOption[] = [
+  { id: "auto", label: "Auto (Original)", shortLabel: "Auto", width: 0, height: 0, ytQuality: "default" },
+  { id: "1080p", label: "1080p Full HD", shortLabel: "1080p", width: 1920, height: 1080, ytQuality: "hd1080", badge: "FHD" },
+  { id: "720p", label: "720p HD", shortLabel: "720p", width: 1280, height: 720, ytQuality: "hd720", badge: "HD" },
+  { id: "480p", label: "480p Standard", shortLabel: "480p", width: 854, height: 480, ytQuality: "large", badge: "SD" },
+  { id: "360p", label: "360p Medium", shortLabel: "360p", width: 640, height: 360, ytQuality: "medium" },
+  { id: "240p", label: "240p Low", shortLabel: "240p", width: 426, height: 240, ytQuality: "small" },
+  { id: "144p", label: "144p (114p Data Saver)", shortLabel: "144p", width: 256, height: 144, ytQuality: "tiny", badge: "Saver" },
+];
+
+function getYouTubeEmbedUrl(url: string, quality?: string): string | null {
   if (!url) return null;
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
   const match = url.match(regExp);
   if (match && match[2].length === 11) {
     const videoId = match[2];
-    return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&fs=0&enablejsapi=1`;
+    const opt = QUALITY_OPTIONS.find((q) => q.id === quality);
+    const vqParam = opt && opt.ytQuality !== "default" ? `&vq=${opt.ytQuality}` : "";
+    return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&fs=0&enablejsapi=1${vqParam}`;
   }
   return null;
+}
+
+function getVideoSource(url: string, quality: string): string {
+  if (!url) return "";
+  const opt = QUALITY_OPTIONS.find((q) => q.id === quality);
+  if (!opt || opt.id === "auto") return url;
+
+  // Cloudinary transform support
+  if (url.includes("cloudinary.com") && url.includes("/upload/")) {
+    return url.replace("/upload/", `/upload/w_${opt.width},c_limit,q_auto/`);
+  }
+
+  // Multi-resolution filename pattern support (e.g. video_1080p.mp4 -> video_720p.mp4)
+  if (/(?:_|-)(1080p|720p|480p|360p|240p|144p)\.(mp4|webm|m4v)/i.test(url)) {
+    return url.replace(/(?:_|-)(1080p|720p|480p|360p|240p|144p)\.(mp4|webm|m4v)/i, `_${opt.shortLabel}.$2`);
+  }
+
+  return url;
 }
 
 function getVimeoEmbedUrl(url: string): string | null {
@@ -45,6 +85,34 @@ export function CourseDetails() {
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [volume, setVolume] = useState(1);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Quality State and Refs
+  const [selectedQuality, setSelectedQuality] = useState<string>(() => {
+    return localStorage.getItem("preferred_video_quality") || "auto";
+  });
+  const [qualityMenuOpen, setQualityMenuOpen] = useState(false);
+  const [qualityToast, setQualityToast] = useState<string | null>(null);
+  const toastTimeoutRef = useRef<any>(null);
+  const qualityMenuRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationFrameIdRef = useRef<number | null>(null);
+  const previousTimeRef = useRef<number>(0);
+  const wasPlayingRef = useRef<boolean>(false);
+
+  // Close quality dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (qualityMenuRef.current && !qualityMenuRef.current.contains(e.target as Node)) {
+        setQualityMenuOpen(false);
+      }
+    };
+    if (qualityMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [qualityMenuOpen]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -97,6 +165,51 @@ export function CourseDetails() {
     }
   };
 
+  const applyQuality = (qualityId: string) => {
+    const opt = QUALITY_OPTIONS.find((q) => q.id === qualityId) || QUALITY_OPTIONS[0];
+
+    // Save timestamp and playing state if video tag is active
+    if (videoRef.current) {
+      previousTimeRef.current = videoRef.current.currentTime;
+      wasPlayingRef.current = !videoRef.current.paused;
+    }
+
+    setSelectedQuality(opt.id);
+    localStorage.setItem("preferred_video_quality", opt.id);
+
+    setQualityToast(`Quality: ${opt.shortLabel}${opt.badge ? ` (${opt.badge})` : ""}`);
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    toastTimeoutRef.current = setTimeout(() => {
+      setQualityToast(null);
+    }, 2500);
+
+    const iframe = containerRef.current?.querySelector("iframe");
+    if (iframe && iframe.contentWindow) {
+      try {
+        const src = iframe.src || "";
+        if (src.includes("youtube.com") || (iframe.outerHTML && iframe.outerHTML.includes("youtube.com"))) {
+          iframe.contentWindow.postMessage(
+            JSON.stringify({ event: "command", func: "setPlaybackQuality", args: [opt.ytQuality] }),
+            "*"
+          );
+          iframe.contentWindow.postMessage(
+            JSON.stringify({ event: "command", func: "setPlaybackQualityRange", args: [opt.ytQuality, opt.ytQuality] }),
+            "*"
+          );
+        } else if (src.includes("vimeo.com")) {
+          iframe.contentWindow.postMessage(
+            JSON.stringify({ method: "setQuality", value: opt.shortLabel === "Auto" ? "auto" : opt.shortLabel }),
+            "*"
+          );
+        }
+      } catch (e) {
+        console.error("Error communicating quality with iframe player:", e);
+      }
+    }
+  };
+
   const applySpeedAndVolume = (speed: number, vol: number) => {
     if (videoRef.current) {
       videoRef.current.playbackRate = speed;
@@ -132,12 +245,109 @@ export function CourseDetails() {
     }
   };
 
+  // Real-time canvas downsampling engine for direct video files (MP4, WebM, etc.)
+  useEffect(() => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    if (selectedQuality === "auto") {
+      canvas.style.display = "none";
+      if (animationFrameIdRef.current) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+        animationFrameIdRef.current = null;
+      }
+      return;
+    }
+
+    canvas.style.display = "block";
+    const opt = QUALITY_OPTIONS.find((q) => q.id === selectedQuality) || QUALITY_OPTIONS[0];
+
+    const updateCanvasResolution = () => {
+      const vW = video.videoWidth || 1280;
+      const vH = video.videoHeight || 720;
+      const aspect = vW / vH;
+      const targetH = opt.height || 720;
+      const targetW = Math.round(targetH * aspect);
+      if (canvas.width !== targetW || canvas.height !== targetH) {
+        canvas.width = targetW;
+        canvas.height = targetH;
+      }
+    };
+
+    updateCanvasResolution();
+
+    const drawFrame = () => {
+      if (!video || !canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (ctx && video.readyState >= 2) {
+        updateCanvasResolution();
+        try {
+          ctx.imageSmoothingEnabled = opt.id !== "144p";
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        } catch (e) {
+          // Cross-origin fallback
+        }
+      }
+    };
+
+    let isLooping = false;
+    const loop = () => {
+      if (!isLooping) return;
+      drawFrame();
+      animationFrameIdRef.current = requestAnimationFrame(loop);
+    };
+
+    const handlePlay = () => {
+      isLooping = true;
+      loop();
+    };
+
+    const handlePause = () => {
+      isLooping = false;
+      if (animationFrameIdRef.current) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+        animationFrameIdRef.current = null;
+      }
+      drawFrame();
+    };
+
+    const handleSeeked = () => {
+      drawFrame();
+    };
+
+    video.addEventListener("play", handlePlay);
+    video.addEventListener("pause", handlePause);
+    video.addEventListener("seeked", handleSeeked);
+    video.addEventListener("loadedmetadata", updateCanvasResolution);
+
+    if (!video.paused && !video.ended) {
+      isLooping = true;
+      loop();
+    } else {
+      drawFrame();
+    }
+
+    return () => {
+      isLooping = false;
+      if (animationFrameIdRef.current) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+        animationFrameIdRef.current = null;
+      }
+      video.removeEventListener("play", handlePlay);
+      video.removeEventListener("pause", handlePause);
+      video.removeEventListener("seeked", handleSeeked);
+      video.removeEventListener("loadedmetadata", updateCanvasResolution);
+    };
+  }, [currentVideo, selectedQuality]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       applySpeedAndVolume(playbackSpeed, volume);
+      applyQuality(selectedQuality);
     }, 400);
     return () => clearTimeout(timer);
-  }, [currentVideo, playbackSpeed, volume]);
+  }, [currentVideo, playbackSpeed, volume, selectedQuality]);
 
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -360,23 +570,26 @@ export function CourseDetails() {
                   const activeRec = recordings.find((r) => r.id === currentVideo);
                   if (!activeRec) return null;
                   const hasEmbed = activeRec.embedCode && activeRec.embedCode.trim() !== "";
-                  const ytEmbedUrl = getYouTubeEmbedUrl(activeRec.videoUrl);
+                  const ytEmbedUrl = getYouTubeEmbedUrl(activeRec.videoUrl, selectedQuality);
                   const vimeoEmbedUrl = getVimeoEmbedUrl(activeRec.videoUrl);
+                  const currentQualityOption = QUALITY_OPTIONS.find((q) => q.id === selectedQuality) || QUALITY_OPTIONS[0];
 
                   let displayEmbed = activeRec.embedCode;
                   if (hasEmbed && displayEmbed.includes("youtube.com/embed/")) {
                     // Strip native fullscreen
                     displayEmbed = displayEmbed.replace(/allowfullscreen(="[^"]*")?/gi, "");
+                    const currentOpt = QUALITY_OPTIONS.find((q) => q.id === selectedQuality);
+                    const vqPart = currentOpt && currentOpt.ytQuality !== "default" ? `&vq=${currentOpt.ytQuality}` : "";
                     // Inject cleaner params into raw YouTube iframe code if not present
                     if (!displayEmbed.includes("?")) {
                       displayEmbed = displayEmbed.replace(
                         /youtube\.com\/embed\/([^"?\s>]+)/g,
-                        "youtube.com/embed/$1?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&fs=0"
+                        `youtube.com/embed/$1?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&fs=0&enablejsapi=1${vqPart}`
                       );
                     } else {
                       displayEmbed = displayEmbed.replace(
                         /youtube\.com\/embed\/([^"?\s>]+)\?/g,
-                        "youtube.com/embed/$1?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&fs=0&"
+                        `youtube.com/embed/$1?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&fs=0&enablejsapi=1${vqPart}&`
                       );
                     }
                   }
@@ -384,6 +597,14 @@ export function CourseDetails() {
                   return (
                     <div className="max-w-2xl mx-auto mb-6">
                       <div ref={containerRef} className="bg-black rounded-lg overflow-hidden flex flex-col relative group">
+                        {/* Quality change on-screen toast badge */}
+                        {qualityToast && (
+                          <div className="absolute top-4 right-4 z-40 bg-gray-900/90 text-white backdrop-blur-md px-3.5 py-1.5 rounded-full text-xs font-medium border border-gray-700 shadow-xl flex items-center gap-2 pointer-events-none transition-all">
+                            <SlidersHorizontal className="w-3.5 h-3.5 text-blue-400" />
+                            <span>{qualityToast}</span>
+                          </div>
+                        )}
+
                         {/* Player wrapper */}
                         <div className={`relative ${isFullscreen ? "w-screen h-screen flex items-center justify-center bg-black" : "aspect-video w-full"}`}>
                           {hasEmbed ? (
@@ -400,6 +621,7 @@ export function CourseDetails() {
                                     onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                     onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                     onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                    touch-action="none"
                                     onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
                                   <div className="absolute bottom-0 right-0 z-10"
                                     style={{
@@ -499,25 +721,40 @@ export function CourseDetails() {
                               frameBorder="0"
                             />
                           ) : (
-                            <video
-                              ref={videoRef}
-                              key={currentVideo}
-                              controls
-                              className="w-full h-full aspect-video"
-                              src={activeRec.videoUrl}
-                              onPlay={() => {
-                                if (videoRef.current) {
-                                  videoRef.current.playbackRate = playbackSpeed;
-                                  videoRef.current.volume = volume;
-                                }
-                              }}
-                            >
-                              Your browser does not support the video tag.
-                            </video>
+                            <div className="relative w-full h-full aspect-video flex items-center justify-center bg-black">
+                              <video
+                                ref={videoRef}
+                                key={currentVideo}
+                                controls
+                                className="w-full h-full aspect-video"
+                                src={getVideoSource(activeRec.videoUrl, selectedQuality)}
+                                onLoadedMetadata={() => {
+                                  if (videoRef.current && previousTimeRef.current > 0) {
+                                    videoRef.current.currentTime = previousTimeRef.current;
+                                    if (wasPlayingRef.current) {
+                                      videoRef.current.play().catch(() => {});
+                                    }
+                                  }
+                                }}
+                                onPlay={() => {
+                                  if (videoRef.current) {
+                                    videoRef.current.playbackRate = playbackSpeed;
+                                    videoRef.current.volume = volume;
+                                  }
+                                }}
+                              >
+                                Your browser does not support the video tag.
+                              </video>
+                              <canvas
+                                ref={canvasRef}
+                                className="absolute inset-0 w-full h-full object-contain pointer-events-none z-10"
+                                style={{ display: selectedQuality === "auto" ? "none" : "block" }}
+                              />
+                            </div>
                           )}
                         </div>
 
-                        {/* Speed & Volume Control Panel (Always visible at the bottom) */}
+                        {/* Speed, Quality & Volume Control Panel (Always visible at the bottom) */}
                         <div className="bg-gray-900 text-white p-3 flex flex-wrap items-center justify-between gap-4 border-t border-gray-800 z-30">
                           {/* Volume section */}
                           <div className="flex items-center gap-2">
@@ -527,7 +764,7 @@ export function CourseDetails() {
                                 setVolume(newVol);
                                 applySpeedAndVolume(playbackSpeed, newVol);
                               }}
-                              className="p-1.5 hover:bg-gray-800 rounded transition-colors text-gray-400 hover:text-white"
+                              className="p-1.5 hover:bg-gray-800 rounded transition-colors text-gray-400 hover:text-white cursor-pointer"
                               title={volume === 0 ? "Unmute" : "Mute"}
                             >
                               {volume === 0 ? (
@@ -558,7 +795,7 @@ export function CourseDetails() {
                           </div>
 
                           {/* Speed section */}
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
                             <div className="flex items-center gap-1">
                               <Gauge className="w-4 h-4 text-blue-500" />
                               <span className="text-xs text-gray-400">Speed:</span>
@@ -571,7 +808,7 @@ export function CourseDetails() {
                                     setPlaybackSpeed(speed);
                                     applySpeedAndVolume(speed, volume);
                                   }}
-                                  className={`px-2 py-0.5 text-xs rounded transition-all font-medium ${
+                                  className={`px-2 py-0.5 text-xs rounded transition-all font-medium cursor-pointer ${
                                     playbackSpeed === speed
                                       ? "bg-blue-600 text-white shadow-sm"
                                       : "text-gray-400 hover:text-white hover:bg-gray-800"
@@ -580,6 +817,76 @@ export function CourseDetails() {
                                   {speed}x
                                 </button>
                               ))}
+                            </div>
+                          </div>
+
+                          {/* Quality section */}
+                          <div className="relative flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              <SlidersHorizontal className="w-4 h-4 text-blue-500" />
+                              <span className="text-xs text-gray-400">Quality:</span>
+                            </div>
+
+                            <div className="relative" ref={qualityMenuRef}>
+                              <button
+                                onClick={() => setQualityMenuOpen(!qualityMenuOpen)}
+                                className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-800 hover:bg-gray-750 active:bg-gray-700 text-white text-xs font-medium rounded-lg border border-gray-700 transition-colors shadow-sm focus:outline-none cursor-pointer"
+                                title="Select playback quality (144p - 1080p)"
+                              >
+                                <span>{currentQualityOption.shortLabel}</span>
+                                {currentQualityOption.badge && (
+                                  <span className="px-1.5 py-0.2 bg-blue-600/80 text-[10px] rounded text-white font-semibold">
+                                    {currentQualityOption.badge}
+                                  </span>
+                                )}
+                                <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${qualityMenuOpen ? "rotate-180" : ""}`} />
+                              </button>
+
+                              {qualityMenuOpen && (
+                                <div 
+                                  className="absolute bottom-full mb-2 right-0 w-52 bg-gray-900/95 backdrop-blur-md border border-gray-750 rounded-xl shadow-2xl py-1.5 z-50 overflow-hidden"
+                                >
+                                  <div className="px-3 py-1.5 border-b border-gray-800 text-[11px] font-semibold uppercase tracking-wider text-gray-400 flex items-center justify-between">
+                                    <span>Video Quality</span>
+                                    <span className="text-[10px] text-blue-400 font-normal">Resolution</span>
+                                  </div>
+                                  <div className="max-h-60 overflow-y-auto py-1">
+                                    {QUALITY_OPTIONS.map((opt) => {
+                                      const isSelected = selectedQuality === opt.id;
+                                      return (
+                                        <button
+                                          key={opt.id}
+                                          onClick={() => {
+                                            applyQuality(opt.id);
+                                            setQualityMenuOpen(false);
+                                          }}
+                                          className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                                            isSelected
+                                              ? "bg-blue-600/20 text-blue-400 font-medium"
+                                              : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                                          }`}
+                                        >
+                                          <div className="flex items-center gap-2">
+                                            {isSelected ? (
+                                              <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                                            ) : (
+                                              <span className="w-3.5 shrink-0" />
+                                            )}
+                                            <span className="truncate">{opt.label}</span>
+                                          </div>
+                                          {opt.badge && (
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold shrink-0 ml-1 ${
+                                              isSelected ? "bg-blue-500 text-white" : "bg-gray-800 text-gray-400"
+                                            }`}>
+                                              {opt.badge}
+                                            </span>
+                                          )}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
