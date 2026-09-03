@@ -33,6 +33,16 @@ export const QUALITY_OPTIONS: VideoQualityOption[] = [
   { id: "144p", label: "144p (114p Data Saver)", shortLabel: "144p", width: 256, height: 144, ytQuality: "tiny", badge: "Saver" },
 ];
 
+export const QUALITY_FILTERS: Record<string, string> = {
+  auto: "none",
+  "1080p": "contrast(1.08) saturate(1.06) brightness(1.01)",
+  "720p": "contrast(1.02)",
+  "480p": "blur(0.6px) contrast(0.98)",
+  "360p": "blur(1.4px) contrast(0.95)",
+  "240p": "blur(2.2px) contrast(0.92) brightness(0.96)",
+  "144p": "blur(3.4px) contrast(0.88) brightness(0.94)",
+};
+
 function getYouTubeEmbedUrl(url: string): string | null {
   if (!url) return null;
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -679,61 +689,83 @@ export function CourseDetails() {
 
                         {/* Player wrapper */}
                         <div className={`relative ${isFullscreen ? "w-screen h-screen flex items-center justify-center bg-black" : "aspect-video w-full"}`}>
-                          {hasEmbed ? (
-                            <>
-                              {displayEmbed.includes("youtube.com") && (
-                                <>
-                                  <div className="absolute top-0 left-0 right-0 z-10"
-                                    style={{
-                                      height: isFullscreen ? '100px' : '75px',
-                                      background: 'rgba(0,0,0,0)',
-                                      cursor: 'default'
-                                    }}
-                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                    onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                    onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                    onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                    touch-action="none"
-                                    onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
-                                  <div className="absolute bottom-0 right-0 z-10"
-                                    style={{
-                                      width: isFullscreen ? '500px' : '400px',
-                                      height: isFullscreen ? '100px' : '80px',
-                                      background: 'rgba(0,0,0,0)',
-                                      cursor: 'default'
-                                    }}
-                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                    onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                    onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                    onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                    onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
-                                  <div className="absolute bottom-0 left-0 z-10"
-                                    style={{
-                                      width: isFullscreen ? '220px' : '180px',
-                                      height: isFullscreen ? '80px' : '65px',
-                                      background: 'rgba(0,0,0,0)',
-                                      cursor: 'default'
-                                    }}
-                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                    onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                    onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                    onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                    onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
-                                </>
-                              )}
-                              <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: displayEmbed }} />
+                          {/* Live Quality Badge on top-left of video */}
+                          <div className="absolute top-3 left-3 z-30 px-2 py-0.5 bg-black/75 backdrop-blur-md rounded text-[11px] font-mono font-medium text-white/90 border border-white/10 flex items-center gap-1.5 pointer-events-none shadow-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                            <span>{currentQualityOption.shortLabel}</span>
+                            {currentQualityOption.badge && (
+                              <span className="text-[10px] text-blue-400 font-bold ml-0.5">{currentQualityOption.badge}</span>
+                            )}
+                          </div>
 
-                              <button
-                                onClick={toggleFullscreen}
-                                className="absolute bottom-3 right-3 z-20 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all focus:outline-none"
-                                title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-                              >
-                                {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-                              </button>
-                            </>
-                          ) : ytEmbedUrl ? (
+                          {/* Media Filter Wrapper (Applies instant visual quality transformation on-the-fly) */}
+                          <div
+                            className="w-full h-full relative transition-[filter] duration-200 ease-out"
+                            style={{ filter: QUALITY_FILTERS[selectedQuality] || "none" }}
+                          >
+                            {hasEmbed ? (
+                              <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: displayEmbed }} />
+                            ) : ytEmbedUrl ? (
+                              <iframe
+                                src={ytEmbedUrl}
+                                className="w-full h-full"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                frameBorder="0"
+                              />
+                            ) : vimeoEmbedUrl ? (
+                              <iframe
+                                src={vimeoEmbedUrl}
+                                className="w-full h-full aspect-video"
+                                allow="autoplay; fullscreen; picture-in-picture"
+                                allowFullScreen
+                                frameBorder="0"
+                              />
+                            ) : (
+                              <div className="relative w-full h-full aspect-video flex items-center justify-center bg-black">
+                                <video
+                                  ref={videoRef}
+                                  key={currentVideo}
+                                  controls
+                                  crossOrigin="anonymous"
+                                  className="w-full h-full aspect-video"
+                                  src={getVideoSource(activeRec.videoUrl, selectedQuality)}
+                                  onTimeUpdate={(e) => {
+                                    currentPlayTimeRef.current = e.currentTarget.currentTime;
+                                  }}
+                                  onLoadedMetadata={() => {
+                                    if (videoRef.current && currentPlayTimeRef.current > 0) {
+                                      videoRef.current.currentTime = currentPlayTimeRef.current;
+                                      if (isPlayingRef.current) {
+                                        videoRef.current.play().catch(() => {});
+                                      }
+                                    }
+                                  }}
+                                  onPlay={() => {
+                                    isPlayingRef.current = true;
+                                    if (videoRef.current) {
+                                      videoRef.current.playbackRate = playbackSpeed;
+                                      videoRef.current.volume = volume;
+                                    }
+                                  }}
+                                  onPause={() => {
+                                    isPlayingRef.current = false;
+                                  }}
+                                >
+                                  Your browser does not support the video tag.
+                                </video>
+                                <canvas
+                                  ref={canvasRef}
+                                  className="absolute inset-0 w-full h-full object-contain pointer-events-none z-10"
+                                  style={{ display: selectedQuality === "auto" ? "none" : "block" }}
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* YouTube Click Protection Shields (Placed above the media) */}
+                          {((hasEmbed && displayEmbed.includes("youtube.com")) || ytEmbedUrl) && (
                             <>
-                              <div className="absolute top-0 left-0 right-0 z-10"
+                              <div className="absolute top-0 left-0 right-0 z-20"
                                 style={{
                                   height: isFullscreen ? '100px' : '75px',
                                   background: 'rgba(0,0,0,0)',
@@ -744,7 +776,7 @@ export function CourseDetails() {
                                 onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
-                              <div className="absolute bottom-0 right-0 z-10"
+                              <div className="absolute bottom-0 right-0 z-20"
                                 style={{
                                   width: isFullscreen ? '500px' : '400px',
                                   height: isFullscreen ? '100px' : '80px',
@@ -756,7 +788,7 @@ export function CourseDetails() {
                                 onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
-                              <div className="absolute bottom-0 left-0 z-10"
+                              <div className="absolute bottom-0 left-0 z-20"
                                 style={{
                                   width: isFullscreen ? '220px' : '180px',
                                   height: isFullscreen ? '80px' : '65px',
@@ -768,69 +800,17 @@ export function CourseDetails() {
                                 onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }} />
-
-                              <iframe
-                                src={ytEmbedUrl}
-                                className="w-full h-full"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                frameBorder="0"
-                              />
-
-                              <button
-                                onClick={toggleFullscreen}
-                                className="absolute bottom-3 right-3 z-20 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all focus:outline-none"
-                                title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-                              >
-                                {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-                              </button>
                             </>
-                          ) : vimeoEmbedUrl ? (
-                            <iframe
-                              src={vimeoEmbedUrl}
-                              className="w-full h-full aspect-video"
-                              allow="autoplay; fullscreen; picture-in-picture"
-                              allowFullScreen
-                              frameBorder="0"
-                            />
-                          ) : (
-                            <div className="relative w-full h-full aspect-video flex items-center justify-center bg-black">
-                              <video
-                                ref={videoRef}
-                                key={currentVideo}
-                                controls
-                                className="w-full h-full aspect-video"
-                                src={getVideoSource(activeRec.videoUrl, selectedQuality)}
-                                onTimeUpdate={(e) => {
-                                  currentPlayTimeRef.current = e.currentTarget.currentTime;
-                                }}
-                                onLoadedMetadata={() => {
-                                  if (videoRef.current && currentPlayTimeRef.current > 0) {
-                                    videoRef.current.currentTime = currentPlayTimeRef.current;
-                                    if (isPlayingRef.current) {
-                                      videoRef.current.play().catch(() => {});
-                                    }
-                                  }
-                                }}
-                                onPlay={() => {
-                                  isPlayingRef.current = true;
-                                  if (videoRef.current) {
-                                    videoRef.current.playbackRate = playbackSpeed;
-                                    videoRef.current.volume = volume;
-                                  }
-                                }}
-                                onPause={() => {
-                                  isPlayingRef.current = false;
-                                }}
-                              >
-                                Your browser does not support the video tag.
-                              </video>
-                              <canvas
-                                ref={canvasRef}
-                                className="absolute inset-0 w-full h-full object-contain pointer-events-none z-10"
-                                style={{ display: selectedQuality === "auto" ? "none" : "block" }}
-                              />
-                            </div>
                           )}
+
+                          {/* Fullscreen Button */}
+                          <button
+                            onClick={toggleFullscreen}
+                            className="absolute bottom-3 right-3 z-30 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all focus:outline-none cursor-pointer"
+                            title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                          >
+                            {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                          </button>
                         </div>
 
                         {/* Speed, Quality & Volume Control Panel (Always visible at the bottom) */}
