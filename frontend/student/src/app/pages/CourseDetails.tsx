@@ -33,15 +33,13 @@ export const QUALITY_OPTIONS: VideoQualityOption[] = [
   { id: "144p", label: "144p (114p Data Saver)", shortLabel: "144p", width: 256, height: 144, ytQuality: "tiny", badge: "Saver" },
 ];
 
-function getYouTubeEmbedUrl(url: string, quality?: string): string | null {
+function getYouTubeEmbedUrl(url: string): string | null {
   if (!url) return null;
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
   const match = url.match(regExp);
   if (match && match[2].length === 11) {
     const videoId = match[2];
-    const opt = QUALITY_OPTIONS.find((q) => q.id === quality);
-    const vqParam = opt && opt.ytQuality !== "default" ? `&vq=${opt.ytQuality}` : "";
-    return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&fs=0&enablejsapi=1${vqParam}`;
+    return `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&fs=0&enablejsapi=1`;
   }
   return null;
 }
@@ -96,8 +94,54 @@ export function CourseDetails() {
   const qualityMenuRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameIdRef = useRef<number | null>(null);
-  const previousTimeRef = useRef<number>(0);
-  const wasPlayingRef = useRef<boolean>(false);
+  const currentPlayTimeRef = useRef<number>(0);
+  const isPlayingRef = useRef<boolean>(true);
+
+  // Real-time tracking of iframe playback timestamp and play state
+  useEffect(() => {
+    const handleWindowMessage = (event: MessageEvent) => {
+      try {
+        let data = event.data;
+        if (typeof data === "string") {
+          try {
+            data = JSON.parse(data);
+          } catch {
+            return;
+          }
+        }
+        if (!data || typeof data !== "object") return;
+
+        // YouTube API infoDelivery messages
+        if (data.event === "infoDelivery" && data.info) {
+          if (typeof data.info.currentTime === "number") {
+            currentPlayTimeRef.current = data.info.currentTime;
+          }
+          if (typeof data.info.playerState === "number") {
+            // 1: PLAYING, 2: PAUSED, 3: BUFFERING
+            isPlayingRef.current = data.info.playerState === 1 || data.info.playerState === 3;
+          }
+        }
+
+        // Vimeo API messages
+        if (data.event === "timeupdate" && data.data && typeof data.data.seconds === "number") {
+          currentPlayTimeRef.current = data.data.seconds;
+        }
+        if (data.event === "play") {
+          isPlayingRef.current = true;
+        }
+        if (data.event === "pause") {
+          isPlayingRef.current = false;
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    window.addEventListener("message", handleWindowMessage);
+    return () => {
+      window.removeEventListener("message", handleWindowMessage);
+    };
+  }, []);
 
   // Close quality dropdown when clicking outside
   useEffect(() => {
@@ -168,10 +212,10 @@ export function CourseDetails() {
   const applyQuality = (qualityId: string) => {
     const opt = QUALITY_OPTIONS.find((q) => q.id === qualityId) || QUALITY_OPTIONS[0];
 
-    // Save timestamp and playing state if video tag is active
+    // If HTML5 video is active, save its current time and play state
     if (videoRef.current) {
-      previousTimeRef.current = videoRef.current.currentTime;
-      wasPlayingRef.current = !videoRef.current.paused;
+      currentPlayTimeRef.current = videoRef.current.currentTime;
+      isPlayingRef.current = !videoRef.current.paused;
     }
 
     setSelectedQuality(opt.id);
@@ -190,6 +234,12 @@ export function CourseDetails() {
       try {
         const src = iframe.src || "";
         if (src.includes("youtube.com") || (iframe.outerHTML && iframe.outerHTML.includes("youtube.com"))) {
+          // Handshake
+          iframe.contentWindow.postMessage(
+            JSON.stringify({ event: "listening" }),
+            "*"
+          );
+          // Set quality without reloading iframe
           iframe.contentWindow.postMessage(
             JSON.stringify({ event: "command", func: "setPlaybackQuality", args: [opt.ytQuality] }),
             "*"
@@ -198,11 +248,36 @@ export function CourseDetails() {
             JSON.stringify({ event: "command", func: "setPlaybackQualityRange", args: [opt.ytQuality, opt.ytQuality] }),
             "*"
           );
+          // Keep playing from current timestamp seamlessly
+          if (currentPlayTimeRef.current > 0) {
+            iframe.contentWindow.postMessage(
+              JSON.stringify({ event: "command", func: "seekTo", args: [currentPlayTimeRef.current, true] }),
+              "*"
+            );
+          }
+          if (isPlayingRef.current) {
+            iframe.contentWindow.postMessage(
+              JSON.stringify({ event: "command", func: "playVideo", args: [] }),
+              "*"
+            );
+          }
         } else if (src.includes("vimeo.com")) {
           iframe.contentWindow.postMessage(
             JSON.stringify({ method: "setQuality", value: opt.shortLabel === "Auto" ? "auto" : opt.shortLabel }),
             "*"
           );
+          if (currentPlayTimeRef.current > 0) {
+            iframe.contentWindow.postMessage(
+              JSON.stringify({ method: "seekTo", value: currentPlayTimeRef.current }),
+              "*"
+            );
+          }
+          if (isPlayingRef.current) {
+            iframe.contentWindow.postMessage(
+              JSON.stringify({ method: "play" }),
+              "*"
+            );
+          }
         }
       } catch (e) {
         console.error("Error communicating quality with iframe player:", e);
@@ -344,10 +419,9 @@ export function CourseDetails() {
   useEffect(() => {
     const timer = setTimeout(() => {
       applySpeedAndVolume(playbackSpeed, volume);
-      applyQuality(selectedQuality);
     }, 400);
     return () => clearTimeout(timer);
-  }, [currentVideo, playbackSpeed, volume, selectedQuality]);
+  }, [currentVideo, playbackSpeed, volume]);
 
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -570,7 +644,7 @@ export function CourseDetails() {
                   const activeRec = recordings.find((r) => r.id === currentVideo);
                   if (!activeRec) return null;
                   const hasEmbed = activeRec.embedCode && activeRec.embedCode.trim() !== "";
-                  const ytEmbedUrl = getYouTubeEmbedUrl(activeRec.videoUrl, selectedQuality);
+                  const ytEmbedUrl = getYouTubeEmbedUrl(activeRec.videoUrl);
                   const vimeoEmbedUrl = getVimeoEmbedUrl(activeRec.videoUrl);
                   const currentQualityOption = QUALITY_OPTIONS.find((q) => q.id === selectedQuality) || QUALITY_OPTIONS[0];
 
@@ -578,18 +652,16 @@ export function CourseDetails() {
                   if (hasEmbed && displayEmbed.includes("youtube.com/embed/")) {
                     // Strip native fullscreen
                     displayEmbed = displayEmbed.replace(/allowfullscreen(="[^"]*")?/gi, "");
-                    const currentOpt = QUALITY_OPTIONS.find((q) => q.id === selectedQuality);
-                    const vqPart = currentOpt && currentOpt.ytQuality !== "default" ? `&vq=${currentOpt.ytQuality}` : "";
                     // Inject cleaner params into raw YouTube iframe code if not present
                     if (!displayEmbed.includes("?")) {
                       displayEmbed = displayEmbed.replace(
                         /youtube\.com\/embed\/([^"?\s>]+)/g,
-                        `youtube.com/embed/$1?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&fs=0&enablejsapi=1${vqPart}`
+                        "youtube.com/embed/$1?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&fs=0&enablejsapi=1"
                       );
                     } else {
                       displayEmbed = displayEmbed.replace(
                         /youtube\.com\/embed\/([^"?\s>]+)\?/g,
-                        `youtube.com/embed/$1?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&fs=0&enablejsapi=1${vqPart}&`
+                        "youtube.com/embed/$1?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&fs=0&enablejsapi=1&"
                       );
                     }
                   }
@@ -728,19 +800,26 @@ export function CourseDetails() {
                                 controls
                                 className="w-full h-full aspect-video"
                                 src={getVideoSource(activeRec.videoUrl, selectedQuality)}
+                                onTimeUpdate={(e) => {
+                                  currentPlayTimeRef.current = e.currentTarget.currentTime;
+                                }}
                                 onLoadedMetadata={() => {
-                                  if (videoRef.current && previousTimeRef.current > 0) {
-                                    videoRef.current.currentTime = previousTimeRef.current;
-                                    if (wasPlayingRef.current) {
+                                  if (videoRef.current && currentPlayTimeRef.current > 0) {
+                                    videoRef.current.currentTime = currentPlayTimeRef.current;
+                                    if (isPlayingRef.current) {
                                       videoRef.current.play().catch(() => {});
                                     }
                                   }
                                 }}
                                 onPlay={() => {
+                                  isPlayingRef.current = true;
                                   if (videoRef.current) {
                                     videoRef.current.playbackRate = playbackSpeed;
                                     videoRef.current.volume = volume;
                                   }
+                                }}
+                                onPause={() => {
+                                  isPlayingRef.current = false;
                                 }}
                               >
                                 Your browser does not support the video tag.
