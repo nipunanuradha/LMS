@@ -3,7 +3,7 @@
 import { MapPin, Navigation, Clock, Phone, ExternalLink } from "lucide-react";
 
 export default function LocationMap() {
-  const address = "98 High Level Rd, Nawagamuwa, Kaduwela, Sri Lanka";
+  const address = "94/05,Swarnabumi Mawatha, Nawagamuwa, Ranala, Sri Lanka";
   const googleMapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     address
   )}`;
