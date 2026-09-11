@@ -7,6 +7,7 @@ import About from "./components/About";
 import CourseGrid from "./components/CourseGrid";
 import Testimonials from "./components/Testimonials";
 import ContactForm from "./components/ContactForm";
+import LocationMap from "./components/LocationMap";
 import Footer from "./components/Footer";
 import LoginModal from "./components/LoginModal";
 
@@ -55,6 +56,9 @@ export default function Home() {
 
         {/* Contact Form */}
         <ContactForm />
+
+        {/* Location & Google Map Section */}
+        <LocationMap />
       </main>
 
       {/* Footer Branding & Contacts */}
