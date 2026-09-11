@@ -3,18 +3,16 @@
 import { MapPin, Navigation, Clock, Phone, ExternalLink } from "lucide-react";
 
 export default function LocationMap() {
-  const address = "94/05,Swarnabumi Mawatha, Nawagamuwa, Ranala, Sri Lanka";
-  const googleMapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    address
-  )}`;
-  const googleMapsDirectionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-    address
-  )}`;
+  const address = "94/05, Swarnabhumi Mawatha, Nawagamuwa, Ranala, Sri Lanka";
+  const latitude = 6.920518;
+  const longitude = 80.01561;
+  const exactLocationQuery = `${latitude},${longitude}`;
 
-  // Google Maps Embed iframe source URL
-  const embedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(
-    address
-  )}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+  const googleMapsUrl = "https://maps.app.goo.gl/UUNj4ijNw6vbG68BA";
+  const googleMapsDirectionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${exactLocationQuery}`;
+
+  // Google Maps Embed iframe with pin at exact coordinates
+  const embedUrl = `https://maps.google.com/maps?q=${latitude},${longitude}&hl=en&z=16&output=embed`;
 
   return (
     <section id="location" className="py-20 bg-slate-50 relative border-t border-slate-200/70">
@@ -116,7 +114,7 @@ export default function LocationMap() {
                 Get Directions
               </a>
               <a
-                href={googleMapsSearchUrl}
+                href={googleMapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 hover:text-blue-600 transition-all cursor-pointer"

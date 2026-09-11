@@ -66,7 +66,7 @@ export default function Footer() {
               </li>
               <li className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                <span>98 High Level Rd, Nawagamuwa, Kaduwela, Sri Lanka</span>
+                <span>94/05, Swarnabhumi Mawatha, Nawagamuwa, Ranala, Sri Lanka</span>
               </li>
             </ul>
           </div>
