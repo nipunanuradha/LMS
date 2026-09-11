@@ -113,7 +113,7 @@ export default function TermsOfService() {
             <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 space-y-2 text-sm text-slate-700">
               <p><strong>Email:</strong> academyict3@gmail.com</p>
               <p><strong>Hotline:</strong> +94 705688895 / +94 781066642</p>
-              <p><strong>Address:</strong> 98 High Level Rd, Nawagamuwa, Kaduwela, Sri Lanka</p>
+              <p><strong>Address:</strong> 94/05, Swarnabhumi Mawatha, Nawagamuwa, Ranala, Sri Lanka</p>
             </div>
           </section>
 
