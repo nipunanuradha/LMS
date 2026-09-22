@@ -10,29 +10,29 @@ export default function TermsOfService() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
+    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Navbar onLoginClick={() => setIsLoginModalOpen(true)} />
 
       <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Header Section */}
         <div className="text-center mb-16">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 mb-4">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40 mb-4 shadow-sm">
             <FileText className="h-6 w-6" />
           </div>
-          <h1 className="font-display font-bold text-4xl text-slate-900 tracking-tight mb-4">
+          <h1 className="font-display font-bold text-4xl text-slate-900 dark:text-white tracking-tight mb-4">
             Terms of Service
           </h1>
-          <p className="text-slate-500 max-w-xl mx-auto text-base">
+          <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto text-base">
             Effective Date: May 30, 2026. Please read these Terms of Service carefully before enrolling or using the ICT Academy LMS platform.
           </p>
         </div>
 
         {/* Content Section */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 sm:p-12 space-y-10 text-slate-600">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-8 sm:p-12 space-y-10 text-slate-600 dark:text-slate-300">
 
           <section className="space-y-4">
-            <h2 className="font-display font-bold text-xl text-slate-900 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-blue-500" />
+            <h2 className="font-display font-bold text-xl text-slate-900 dark:text-white flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-blue-500 dark:text-blue-400" />
               1. Acceptance of Terms
             </h2>
             <p className="leading-relaxed">
@@ -40,17 +40,17 @@ export default function TermsOfService() {
             </p>
           </section>
 
-          <hr className="border-slate-100" />
+          <hr className="border-slate-100 dark:border-slate-800" />
 
           <section className="space-y-4">
-            <h2 className="font-display font-bold text-xl text-slate-900 flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-blue-500" />
+            <h2 className="font-display font-bold text-xl text-slate-900 dark:text-white flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-blue-500 dark:text-blue-400" />
               2. Student Account Registration
             </h2>
             <p className="leading-relaxed">
               To access course materials, assignments, and certifications, you must create a Student Account. You agree to:
             </p>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc pl-6 space-y-2 marker:text-blue-500 dark:marker:text-blue-400">
               <li>Provide accurate, current, and complete personal and academic information during registration.</li>
               <li>Maintain the confidentiality of your unique LMS login credentials (username and password).</li>
               <li>Be fully responsible for all activities and updates occurring under your account.</li>
@@ -58,11 +58,11 @@ export default function TermsOfService() {
             </ul>
           </section>
 
-          <hr className="border-slate-100" />
+          <hr className="border-slate-100 dark:border-slate-800" />
 
           <section className="space-y-4">
-            <h2 className="font-display font-bold text-xl text-slate-900 flex items-center gap-2">
-              <ShieldAlert className="w-5 h-5 text-blue-500" />
+            <h2 className="font-display font-bold text-xl text-slate-900 dark:text-white flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5 text-blue-500 dark:text-blue-400" />
               3. Intellectual Property Rights
             </h2>
             <p className="leading-relaxed">
@@ -73,27 +73,27 @@ export default function TermsOfService() {
             </p>
           </section>
 
-          <hr className="border-slate-100" />
+          <hr className="border-slate-100 dark:border-slate-800" />
 
           <section className="space-y-4">
-            <h2 className="font-display font-bold text-xl text-slate-900 flex items-center gap-2">
-              <BadgeCheck className="w-5 h-5 text-blue-500" />
+            <h2 className="font-display font-bold text-xl text-slate-900 dark:text-white flex items-center gap-2">
+              <BadgeCheck className="w-5 h-5 text-blue-500 dark:text-blue-400" />
               4. Code of Conduct & Academic Integrity
             </h2>
             <p className="leading-relaxed">
               Students of ICT Academy are held to high standards of honesty and academic integrity. By utilizing our LMS:
             </p>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc pl-6 space-y-2 marker:text-blue-500 dark:marker:text-blue-400">
               <li>You agree that all submitted quizzes, examinations, coding assignments, and projects are strictly your own work.</li>
               <li>Plagiarism, cheat codes, or sharing assessment questions/answers is strictly prohibited and can result in immediate termination of course access without refund.</li>
               <li>You must respect instructors and peers in community forums, chat portals, and virtual classroom sessions.</li>
             </ul>
           </section>
 
-          <hr className="border-slate-100" />
+          <hr className="border-slate-100 dark:border-slate-800" />
 
           <section className="space-y-4">
-            <h2 className="font-display font-bold text-xl text-slate-900">
+            <h2 className="font-display font-bold text-xl text-slate-900 dark:text-white">
               5. Governing Law
             </h2>
             <p className="leading-relaxed">
@@ -101,19 +101,19 @@ export default function TermsOfService() {
             </p>
           </section>
 
-          <hr className="border-slate-100" />
+          <hr className="border-slate-100 dark:border-slate-800" />
 
           <section className="space-y-4">
-            <h2 className="font-display font-bold text-xl text-slate-900">
+            <h2 className="font-display font-bold text-xl text-slate-900 dark:text-white">
               6. Contact Information
             </h2>
             <p className="leading-relaxed">
               For any questions concerning the Terms of Service, please contact us:
             </p>
-            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 space-y-2 text-sm text-slate-700">
-              <p><strong>Email:</strong> academyict3@gmail.com</p>
-              <p><strong>Hotline:</strong> +94 705688895 / +94 781066642</p>
-              <p><strong>Address:</strong> 94/05, Swarnabhumi Mawatha, Nawagamuwa, Ranala, Sri Lanka</p>
+            <div className="bg-slate-50 dark:bg-slate-950/60 p-6 rounded-xl border border-slate-100 dark:border-slate-800 space-y-2 text-sm text-slate-700 dark:text-slate-300">
+              <p><strong className="text-slate-900 dark:text-slate-100">Email:</strong> academyict3@gmail.com</p>
+              <p><strong className="text-slate-900 dark:text-slate-100">Hotline:</strong> +94 705688895 / +94 781066642</p>
+              <p><strong className="text-slate-900 dark:text-slate-100">Address:</strong> 94/05, Swarnabhumi Mawatha, Nawagamuwa, Ranala, Sri Lanka</p>
             </div>
           </section>
 
