@@ -80,8 +80,8 @@ export default function CoursesPage({ courses, setCourses, setModal, globalSearc
     <div style={{ animation: "fadeIn 0.25s ease", display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: "#0F172A" }}>Course Management</h2>
-          <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 3 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)" }}>Course Management</h2>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 3 }}>
             {globalSearch ? `${filteredCourses.length} of ${courses.length} courses found` : `${courses.length} courses available`}
           </p>
         </div>
@@ -98,33 +98,33 @@ export default function CoursesPage({ courses, setCourses, setModal, globalSearc
           const description = course.description || course.desc || "";
 
           return (
-            <div key={course.id} className="course-card" style={{ background: "#fff", borderRadius: 14, border: "1.5px solid #F1F5F9", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", overflow: "hidden", transition: "all 0.25s", display: "flex", flexDirection: "column" }}>
+            <div key={course.id} className="course-card" style={{ background: "var(--bg-card)", borderRadius: 14, border: "1.5px solid var(--border-color)", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", overflow: "hidden", transition: "all 0.25s", display: "flex", flexDirection: "column" }}>
               <CourseThumbnail course={course} />
               <div style={{ padding: "16px 18px", flex: 1, display: "flex", flexDirection: "column" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 600, color: "#0F172A", lineHeight: 1.4, flex: 1 }}>{course.title}</h3>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", lineHeight: 1.4, flex: 1 }}>{course.title}</h3>
                   <CategoryBadge cat={category} accent={accent} />
                 </div>
-                <p style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.6, flex: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6, flex: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                   {description}
                 </p>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14, paddingTop: 14, borderTop: "1.5px solid #F8FAFC" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#64748B", fontSize: 13 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14, paddingTop: 14, borderTop: "1.5px solid var(--border-color)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--text-secondary)", fontSize: 13 }}>
                     <svg style={{ width: 15, height: 15 }} viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
                     <span style={{ fontWeight: 600, color: accent }}>{course.students || 0}</span>
-                    <span style={{ color: "#94A3B8" }}>students</span>
+                    <span style={{ color: "var(--text-muted)" }}>students</span>
                   </div>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button onClick={() => setModal({ type: "manageContent", course })} className="btn-ghost"
-                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 7, border: "1.5px solid #E2E8F0", background: "#F8FAFC", color: "#2563EB", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all 0.15s" }}>
+                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 7, border: "1.5px solid var(--border-subtle)", background: "var(--input-bg)", color: "#2563EB", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all 0.15s" }}>
                       📁 Content
                     </button>
                     <button onClick={() => setModal({ type: "editCourse", course })} className="btn-ghost"
-                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 7, border: "1.5px solid #E2E8F0", background: "#F8FAFC", color: "#334155", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all 0.15s" }}>
+                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 7, border: "1.5px solid var(--border-subtle)", background: "var(--input-bg)", color: "var(--text-primary)", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all 0.15s" }}>
                       {Ic.edit(13)} Edit
                     </button>
                     <button onClick={() => deleteCourse(course.id)} className="btn-danger"
-                      style={{ display: "flex", alignItems: "center", padding: "6px 10px", borderRadius: 7, border: "1.5px solid #FECACA", background: "#FEF2F2", color: "#991B1B", cursor: "pointer", transition: "all 0.15s" }}>
+                      style={{ display: "flex", alignItems: "center", padding: "6px 10px", borderRadius: 7, border: "1.5px solid rgba(239, 68, 68, 0.4)", background: "rgba(239, 68, 68, 0.15)", color: "#DC2626", cursor: "pointer", transition: "all 0.15s" }}>
                       {Ic.trash()}
                     </button>
                   </div>
@@ -134,7 +134,7 @@ export default function CoursesPage({ courses, setCourses, setModal, globalSearc
           );
         })}
         {filteredCourses.length === 0 && (
-          <div style={{ gridColumn: "1 / -1", padding: "64px 32px", textAlign: "center", color: "#94A3B8", fontSize: 14 }}>
+          <div style={{ gridColumn: "1 / -1", padding: "64px 32px", textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>
             No courses found matching your search.
           </div>
         )}

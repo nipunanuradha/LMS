@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router";
 import { GraduationCap, LogOut, User, Clock } from "lucide-react";
 import { getDaysRemaining } from "../utils/mockData";
 import { API_URL, LANDING_URL, getImageUrl } from "../config";
+import { ThemeToggle } from "../components/ThemeToggle";
 
 function CourseThumbnail({ thumbnail, title, accent, category }: { thumbnail: string; title: string; accent: string; category: string }) {
   const [imgError, setImgError] = useState(false);
@@ -75,12 +76,10 @@ export function Dashboard() {
       });
 
       if (response.ok) {
-        // Update user state and local storage
         const updatedUser = { ...user, password: newPassword };
         localStorage.setItem("currentUser", JSON.stringify(updatedUser));
         setUser(updatedUser);
 
-        // Update fallback mock storage if it exists
         const users = JSON.parse(localStorage.getItem("lmsUsers") || "[]");
         const updatedUsers = users.map((u: any) => {
           if (u.id === user.id) {
@@ -106,35 +105,39 @@ export function Dashboard() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b border-gray-200">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-200">
+      <header className="bg-card shadow-xs border-b border-border transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-green-400 rounded-full flex items-center justify-center">
               <GraduationCap className="w-6 h-6 text-white" />
             </div>
-            <span className="font-semibold text-gray-900">ICT Academy With Anuradha Athukorala</span>
+            <span className="font-semibold text-foreground">ICT Academy With Anuradha Athukorala</span>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <LogOut className="w-5 h-5" />
-            <span className="hidden sm:inline">Logout</span>
-          </button>
+          
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg hover:bg-accent"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
+          </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="bg-gradient-to-r from-blue-500 to-blue-800 rounded-lg shadow-md p-6 mb-8 text-white">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl shadow-md p-6 sm:p-8 mb-8 text-white">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="mb-2">Welcome Back, {user.name}!</h1>
+              <h1 className="mb-2 text-2xl sm:text-3xl font-bold">Welcome Back, {user.name}!</h1>
               <p className="text-blue-100">Continue your learning journey</p>
             </div>
             <button
               onClick={() => setShowEditPassword(!showEditPassword)}
-              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl transition-colors cursor-pointer"
             >
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Edit Profile</span>
@@ -142,8 +145,8 @@ export function Dashboard() {
           </div>
 
           {showEditPassword && (
-            <form onSubmit={handlePasswordUpdate} className="mt-4 pt-4 border-t border-blue-500">
-              <label className="block text-sm mb-2">Change Password</label>
+            <form onSubmit={handlePasswordUpdate} className="mt-4 pt-4 border-t border-white/20">
+              <label className="block text-sm mb-2 text-blue-50">Change Password</label>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -151,11 +154,11 @@ export function Dashboard() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
                   required
-                  className="flex-1 px-4 py-2 rounded-lg bg-white/20 border border-white/30 placeholder-blue-200 text-white focus:outline-none focus:ring-2 focus:ring-white/50"
+                  className="flex-1 px-4 py-2 rounded-xl bg-white/20 border border-white/30 placeholder-blue-200 text-white focus:outline-none focus:ring-2 focus:ring-white/50"
                 />
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+                  className="px-6 py-2 bg-white text-blue-600 font-semibold rounded-xl hover:bg-blue-50 transition-colors cursor-pointer"
                 >
                   Save
                 </button>
@@ -165,7 +168,7 @@ export function Dashboard() {
         </div>
 
         <div>
-          <h2 className="mb-6">My Enrolled Courses</h2>
+          <h2 className="mb-6 text-xl font-bold text-foreground">My Enrolled Courses</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courses.map((course) => {
               const expiryDate = course.expiry_date || course.expiryDate;
@@ -182,10 +185,10 @@ export function Dashboard() {
                 <Link
                   key={course.id}
                   to={`/course/${course.id}`}
-                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 hover:border-blue-300 flex flex-col"
+                  className="bg-card rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-6 border border-border hover:border-blue-500/50 flex flex-col group"
                 >
                   {/* Thumbnail Section */}
-                  <div className="w-full h-40 bg-gray-100 rounded-md mb-4 overflow-hidden relative shrink-0">
+                  <div className="w-full h-40 bg-muted rounded-xl mb-4 overflow-hidden relative shrink-0">
                     <CourseThumbnail 
                       thumbnail={thumbnail} 
                       title={course.title} 
@@ -196,24 +199,24 @@ export function Dashboard() {
 
                   {/* Card Content Section */}
                   <div className="flex flex-col flex-1">
-                    <h3 className="mb-4 font-semibold text-lg text-gray-800">{course.title}</h3>
+                    <h3 className="mb-4 font-semibold text-lg text-card-foreground group-hover:text-blue-500 transition-colors">{course.title}</h3>
 
                     <div className="mt-auto">
                       <div
                         className={`flex items-center gap-2 ${isExpired
-                          ? "text-red-600"
+                          ? "text-red-500"
                           : isExpiringSoon
-                            ? "text-orange-600"
-                            : "text-gray-600"
+                            ? "text-orange-500"
+                            : "text-muted-foreground"
                           }`}
                       >
-                        <Clock className="w-5 h-5" />
+                        <Clock className="w-4 h-4" />
                         <span className="text-sm">
                           {isExpired ? (
                             "Access expired"
                           ) : (
                             <>
-                              <span className="font-semibold">{daysRemaining}</span> day
+                              <span className="font-semibold text-foreground">{daysRemaining}</span> day
                               {daysRemaining !== 1 ? "s" : ""} remaining
                             </>
                           )}
@@ -221,7 +224,7 @@ export function Dashboard() {
                       </div>
 
                       {!isExpired && (
-                        <div className="mt-3 bg-gray-200 rounded-full h-2 overflow-hidden">
+                        <div className="mt-3 bg-muted rounded-full h-2 overflow-hidden">
                           <div
                             className={`h-full ${isExpiringSoon ? "bg-gradient-to-r from-orange-500 to-red-500" : "bg-gradient-to-r from-blue-500 to-green-500"
                               }`}
@@ -232,7 +235,7 @@ export function Dashboard() {
                         </div>
                       )}
 
-                      <div className="mt-4 text-sm text-gray-500">
+                      <div className="mt-4 text-xs text-muted-foreground">
                         Expires: {expiryDate ? new Date(expiryDate).toLocaleDateString() : "N/A"}
                       </div>
                     </div>

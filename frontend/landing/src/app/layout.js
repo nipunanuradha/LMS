@@ -22,6 +22,20 @@ export const metadata = {
   },
 };
 
+const themeScript = `
+  (function() {
+    try {
+      var stored = localStorage.getItem('lms_theme');
+      var supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (stored === 'dark' || (!stored && supportDarkMode) || (stored === 'system' && supportDarkMode)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } catch (e) {}
+  })();
+`;
+
 export default function RootLayout({ children }) {
   const jsonLd = {
     "@context": "https://schema.org",
@@ -46,15 +60,17 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${inter.variable} ${outfit.variable} scroll-smooth antialiased`}
     >
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="font-sans bg-slate-50 text-slate-900 min-h-screen selection:bg-blue-600 selection:text-white">
+      <body className="font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen selection:bg-blue-600 selection:text-white transition-colors duration-200">
         {children}
       </body>
     </html>

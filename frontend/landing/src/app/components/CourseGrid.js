@@ -91,19 +91,19 @@ export default function CourseGrid({ onEnrollClick }) {
   };
 
   return (
-    <section id="courses" className="py-24 bg-slate-50 border-y border-slate-100">
+    <section id="courses" className="py-24 bg-slate-50 dark:bg-slate-950 border-y border-slate-100 dark:border-slate-800/80 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold uppercase tracking-wider">
-            <BookOpen className="w-4 h-4 text-blue-600" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 text-xs font-semibold uppercase tracking-wider">
+            <BookOpen className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             Our Curriculum
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-display">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight font-display">
             Explore Professional Tech Courses
           </h2>
-          <p className="text-slate-600 text-lg leading-relaxed">
+          <p className="text-slate-600 dark:text-slate-300 text-lg leading-relaxed">
             Gain in-demand skills and accelerate your career path with our structured, production-ready modules & lessons.
           </p>
         </div>
@@ -112,11 +112,11 @@ export default function CourseGrid({ onEnrollClick }) {
         {loading ? (
           <div className="grid md:grid-cols-3 gap-8">
             {[1, 2, 3].map((n) => (
-              <div key={n} className="bg-white rounded-2xl p-6 border border-slate-200/60 shadow-sm animate-pulse space-y-4 h-96">
-                <div className="w-full h-44 bg-slate-200 rounded-xl" />
-                <div className="h-6 bg-slate-200 rounded w-3/4" />
-                <div className="h-4 bg-slate-200 rounded w-5/6" />
-                <div className="h-10 bg-slate-200 rounded w-full mt-auto" />
+              <div key={n} className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/60 dark:border-slate-800 shadow-sm animate-pulse space-y-4 h-96">
+                <div className="w-full h-44 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+                <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
+                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-5/6" />
+                <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded w-full mt-auto" />
               </div>
             ))}
           </div>
@@ -134,10 +134,10 @@ export default function CourseGrid({ onEnrollClick }) {
               return (
                 <div
                   key={course.id}
-                  className="group bg-white rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden"
+                  className="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden"
                 >
                   {/* Thumbnail / Accent Image */}
-                  <div className="w-full h-48 relative shrink-0 overflow-hidden bg-slate-100">
+                  <div className="w-full h-48 relative shrink-0 overflow-hidden bg-slate-100 dark:bg-slate-800">
                     <CourseThumbnail
                       thumbnail={course.thumbnail_url}
                       title={course.title}
@@ -145,7 +145,7 @@ export default function CourseGrid({ onEnrollClick }) {
                     />
 
                     {/* Price Tag Overlay */}
-                    <div className="absolute top-4 right-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur px-3.5 py-1.5 rounded-full font-bold text-sm text-blue-600 dark:text-blue-400 shadow-md">
+                    <div className="absolute top-4 right-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur px-3.5 py-1.5 rounded-full font-bold text-sm text-blue-600 dark:text-blue-400 shadow-md border border-slate-100 dark:border-slate-800">
                       {formatLKR(course.price)}
                     </div>
                   </div>
@@ -153,28 +153,22 @@ export default function CourseGrid({ onEnrollClick }) {
                   {/* Card Content */}
                   <div className="p-6 flex-1 flex flex-col justify-between">
                     <div>
-                      <span className="inline-block text-xs font-semibold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md mb-3">
+                      <span className="inline-block text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-1 rounded-md mb-3">
                         {course.category || "Web Dev"}
                       </span>
-                      <h3 className="text-lg font-bold text-slate-900 line-clamp-2 group-hover:text-blue-600 transition-colors mb-2">
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-2">
                         {course.title}
                       </h3>
-                      <p className="text-slate-500 text-sm leading-relaxed line-clamp-3 mb-4">
+                      <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed line-clamp-3 mb-4">
                         {course.description}
                       </p>
                     </div>
 
-                    <div className="space-y-4 pt-4 border-t border-slate-100">
-                      {/* Metric info */}
-                      {/* <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                        <User className="w-4 h-4 text-slate-400" />
-                        <span>{course.students || 0} active students enrolled</span>
-                      </div> */}
-
+                    <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                       {/* Enroll Button */}
                       <button
                         onClick={onEnrollClick}
-                        className="w-full py-3 px-4 bg-slate-900 hover:bg-blue-600 text-white font-semibold rounded-xl hover:-translate-y-0.5 active:translate-y-0 transition-all shadow-md hover:shadow-blue-500/20 cursor-pointer text-center"
+                        className="w-full py-3 px-4 bg-slate-900 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-semibold rounded-xl hover:-translate-y-0.5 active:translate-y-0 transition-all shadow-md hover:shadow-blue-500/20 cursor-pointer text-center"
                       >
                         Enroll Now
                       </button>

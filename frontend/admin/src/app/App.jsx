@@ -9,10 +9,11 @@ import SettingsPage from "./pages/Settingspage";
 import InquiriesPage from "./pages/InquiriesPage";
 import ModalManager from "./components/modals/ModalManager";
 import AdminChatWidget from "./components/AdminChatWidget";
+import { ThemeProvider } from "./context/ThemeContext";
 import { STUDENTS_INIT, COURSES_INIT } from "./data/mockData";
 import { API_URL, LANDING_URL } from "./config";
 
-// ── Font & Global Styles ──────────────────────────────────────────────────────
+// ── Font & Global Theme Styles ────────────────────────────────────────────────
 function GlobalStyles() {
   useEffect(() => {
     const link = document.createElement("link");
@@ -21,27 +22,87 @@ function GlobalStyles() {
     document.head.appendChild(link);
     const style = document.createElement("style");
     style.textContent = `
+      :root {
+        --bg-main: #F9FAFB;
+        --bg-card: #FFFFFF;
+        --bg-card-subtle: #F8FAFC;
+        --border-color: #F1F5F9;
+        --border-subtle: #E2E8F0;
+        --text-primary: #0F172A;
+        --text-secondary: #64748B;
+        --text-muted: #94A3B8;
+        --input-bg: #FAFAFA;
+        --table-header-bg: #F8FAFC;
+        --table-row-hover: #F8FAFC;
+        --breadcrumb-bg: #FFFFFF;
+      }
+
+      html.dark, [data-theme="dark"] {
+        --bg-main: #0B1120;
+        --bg-card: #131E32;
+        --bg-card-subtle: #19263E;
+        --border-color: #1E293B;
+        --border-subtle: #334155;
+        --text-primary: #F8FAFC;
+        --text-secondary: #94A3B8;
+        --text-muted: #64748B;
+        --input-bg: #0F172A;
+        --table-header-bg: #162238;
+        --table-row-hover: #192742;
+        --breadcrumb-bg: #131E32;
+      }
+
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: 'DM Sans', sans-serif; }
+      body {
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg-main);
+        color: var(--text-primary);
+        transition: background-color 0.2s ease, color 0.2s ease;
+      }
       ::-webkit-scrollbar { width: 6px; height: 6px; }
       ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+      html.dark ::-webkit-scrollbar-thumb { background: #334155; }
+      
       @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
       @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
       @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+      
       .nav-item:hover { background: rgba(255,255,255,0.08) !important; }
       .nav-item.active { background: rgba(37,99,235,0.25) !important; }
       .btn-primary:hover { background: #1d4ed8 !important; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.35) !important; }
       .btn-primary:active { transform: translateY(0); }
-      .btn-ghost:hover { background: #F1F5F9 !important; }
-      .btn-danger:hover { background: #FEF2F2 !important; }
-      .btn-success:hover { background: #F0FDF4 !important; }
-      .btn-warning:hover { background: #FFFBEB !important; }
-      .card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important; }
-      .course-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.1) !important; }
-      .table-row:hover td { background: #F8FAFC !important; }
-      input, select, textarea { font-family: 'DM Sans', sans-serif; outline: none; }
-      input:focus, select:focus, textarea:focus { border-color: #2563EB !important; box-shadow: 0 0 0 3px rgba(37,99,235,0.12) !important; }
+      
+      .btn-ghost:hover { background: var(--border-color) !important; }
+      .btn-danger:hover { background: rgba(239, 68, 68, 0.15) !important; }
+      .btn-success:hover { background: rgba(34, 197, 94, 0.15) !important; }
+      .btn-warning:hover { background: rgba(245, 158, 11, 0.15) !important; }
+      
+      .card {
+        background: var(--bg-card) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+        transition: all 0.25s ease;
+      }
+      .card:hover {
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12) !important;
+      }
+      
+      .course-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.15) !important; }
+      .table-row:hover td { background: var(--table-row-hover) !important; }
+      
+      input, select, textarea {
+        font-family: 'DM Sans', sans-serif;
+        outline: none;
+        background: var(--input-bg) !important;
+        color: var(--text-primary) !important;
+        border-color: var(--border-subtle) !important;
+      }
+      input:focus, select:focus, textarea:focus {
+        border-color: #2563EB !important;
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.18) !important;
+      }
+      
       .kpi-card:hover { transform: translateY(-2px); }
       .action-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,99,235,0.3) !important; }
 
@@ -95,7 +156,7 @@ function GlobalStyles() {
   return null;
 }
 
-export default function App() {
+function AdminLayout() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     const tokenParam = params.get("token");
@@ -119,6 +180,7 @@ export default function App() {
   const [students, setStudents] = useState([]);
   const [courses, setCourses] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [globalSearch, setGlobalSearch] = useState("");
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -150,8 +212,6 @@ export default function App() {
     }
   }, [isLoggedIn]);
 
-  const [globalSearch, setGlobalSearch] = useState("");
-
   if (!isLoggedIn) {
     window.location.href = LANDING_URL;
     return null;
@@ -162,10 +222,10 @@ export default function App() {
   return (
     <>
       <GlobalStyles />
-      <div style={{ display: "flex", height: "100vh", fontFamily: "'DM Sans', sans-serif", background: "#F9FAFB", overflow: "hidden" }}>
+      <div style={{ display: "flex", height: "100vh", fontFamily: "'DM Sans', sans-serif", background: "var(--bg-main)", color: "var(--text-primary)", overflow: "hidden" }}>
         {/* Sidebar */}
         <Sidebar page={page} setPage={setPage} open={sidebarOpen} onClose={() => setSidebar(false)} />
-        {/* Main */}
+        {/* Main Content Area */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
           <Header
             sidebarOpen={sidebarOpen} setSidebarOpen={setSidebar}
@@ -175,10 +235,10 @@ export default function App() {
             students={students} courses={courses}
           />
           {/* Breadcrumb */}
-          <div className="breadcrumb-container" style={{ padding: "10px 28px", background: "#fff", borderBottom: "1px solid #F1F5F9", display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 12, color: "#94A3B8" }}>ICT With Anuradha Nipun</span>
-            <span style={{ fontSize: 12, color: "#CBD5E1" }}>/</span>
-            <span style={{ fontSize: 12, color: "#2563EB", fontWeight: 500 }}>{pageNames[page]}</span>
+          <div className="breadcrumb-container" style={{ padding: "10px 28px", background: "var(--breadcrumb-bg)", borderBottom: "1px solid var(--border-color)", display: "flex", alignItems: "center", gap: 8, transition: "all 0.2s" }}>
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>ICT With Anuradha Nipun</span>
+            <span style={{ fontSize: 12, color: "var(--border-subtle)" }}>/</span>
+            <span style={{ fontSize: 12, color: "#2563EB", fontWeight: 600 }}>{pageNames[page]}</span>
           </div>
           <main style={{ flex: 1, overflow: "auto", padding: "24px 28px" }}>
             {page === "dashboard" && <DashboardPage students={students} courses={courses} setModal={setModal} />}
@@ -201,5 +261,13 @@ export default function App() {
         <AdminChatWidget students={students} />
       </div>
     </>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AdminLayout />
+    </ThemeProvider>
   );
 }

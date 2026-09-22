@@ -10,6 +10,7 @@ import {
   getDaysRemaining,
 } from "../utils/mockData";
 import { API_URL } from "../config";
+import { ThemeToggle } from "../components/ThemeToggle";
 
 type TabType = "notices" | "recordings" | "notes" | "links";
 
@@ -573,21 +574,24 @@ export function CourseDetails() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b border-gray-200">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-200">
+      <header className="bg-card shadow-xs border-b border-border transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back to Dashboard
-          </Link>
+          <div className="flex items-center justify-between mb-4">
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              Back to Dashboard
+            </Link>
+            <ThemeToggle />
+          </div>
 
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="mb-2">{course.title}</h1>
-              <p className="text-gray-600">
+              <h1 className="mb-2 text-2xl font-bold text-foreground">{course.title}</h1>
+              <p className="text-muted-foreground">
                 {daysRemaining > 0 ? `${daysRemaining} days remaining` : "Access expired"}
               </p>
             </div>
@@ -596,8 +600,8 @@ export function CourseDetails() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="border-b border-gray-200">
+        <div className="bg-card rounded-2xl shadow-xs border border-border overflow-hidden transition-colors">
+          <div className="border-b border-border">
             <nav className="flex overflow-x-auto">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
@@ -608,15 +612,15 @@ export function CourseDetails() {
                       setActiveTab(tab.id);
                       setCurrentVideo(null);
                     }}
-                    className={`flex items-center gap-2 px-6 py-4 border-b-2 whitespace-nowrap transition-colors ${activeTab === tab.id
-                      ? "border-blue-600 text-blue-600"
-                      : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
+                    className={`flex items-center gap-2 px-6 py-4 border-b-2 whitespace-nowrap transition-colors cursor-pointer ${activeTab === tab.id
+                      ? "border-blue-600 text-blue-600 dark:text-blue-400 font-semibold"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                       }`}
                   >
                     <Icon className="w-5 h-5" />
                     <span>{tab.label}</span>
                     <span
-                      className={`px-2 py-0.5 rounded-full text-xs ${activeTab === tab.id ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600"
+                      className={`px-2 py-0.5 rounded-full text-xs ${activeTab === tab.id ? "bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400" : "bg-muted text-muted-foreground"
                         }`}
                     >
                       {tab.count}
@@ -631,17 +635,17 @@ export function CourseDetails() {
             {activeTab === "notices" && (
               <div className="space-y-4">
                 {notices.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">No notices available</p>
+                  <p className="text-muted-foreground text-center py-8">No notices available</p>
                 ) : (
                   notices.map((notice) => (
-                    <div key={notice.id} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div key={notice.id} className="bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 rounded-xl p-4">
                       <div className="flex items-start justify-between mb-2">
-                        <h3 className="text-blue-900">{notice.title}</h3>
-                        <span className="text-sm text-blue-600">
+                        <h3 className="text-blue-900 dark:text-blue-200 font-semibold">{notice.title}</h3>
+                        <span className="text-sm text-blue-600 dark:text-blue-400">
                           {new Date(notice.date).toLocaleDateString()}
                         </span>
                       </div>
-                      <p className="text-gray-700">{notice.content}</p>
+                      <p className="text-blue-950 dark:text-blue-100 text-sm leading-relaxed">{notice.content}</p>
                     </div>
                   ))
                 )}
@@ -955,36 +959,36 @@ export function CourseDetails() {
                 })()}
 
                 {recordings.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">No recordings available</p>
+                  <p className="text-muted-foreground text-center py-8">No recordings available</p>
                 ) : (
-                  <div className="flex flex-col overflow-y-auto overflow-x-auto max-h-[480px] gap-3 pb-3 pr-1">
+                  <div className="flex flex-col overflow-y-auto overflow-x-auto max-h-[480px] gap-3 pb-3 pr-1 custom-scrollbar">
                     {recordings.map((recording) => (
                       <div
                         key={recording.id}
-                        className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors shrink-0 min-w-[500px] sm:min-w-0 w-full"
+                        className="flex items-center gap-4 p-4 bg-muted/50 dark:bg-card border border-border rounded-xl hover:bg-muted transition-colors shrink-0 min-w-[500px] sm:min-w-0 w-full"
                       >
                         <button
                           onClick={() => setCurrentVideo(recording.id)}
-                          className="flex-1 flex items-center gap-3 text-left min-w-0"
+                          className="flex-1 flex items-center gap-3 text-left min-w-0 cursor-pointer"
                         >
-                          <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-green-400 rounded-full flex items-center justify-center flex-shrink-0">
+                          <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
                             <Video className="w-5 h-5 text-white" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 truncate">{recording.title}</p>
-                            <p className="text-sm text-gray-500">{recording.duration}</p>
+                            <p className="font-medium text-foreground truncate">{recording.title}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{recording.duration}</p>
                           </div>
                         </button>
 
                         <button
                           onClick={() => toggleWatched(recording.id)}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors shrink-0 ${watchedVideos.has(recording.id)
-                            ? "bg-green-100 text-green-700 hover:bg-green-200"
-                            : "bg-white text-gray-600 hover:bg-gray-200 border border-gray-300"
+                          className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors shrink-0 cursor-pointer text-xs font-semibold ${watchedVideos.has(recording.id)
+                            ? "bg-green-100 dark:bg-green-950/60 text-green-700 dark:text-green-300 hover:bg-green-200"
+                            : "bg-card text-muted-foreground hover:text-foreground hover:bg-muted border border-border"
                             }`}
                         >
                           <Check className="w-4 h-4" />
-                          <span className="text-sm hidden sm:inline">
+                          <span className="hidden sm:inline">
                             {watchedVideos.has(recording.id) ? "Watched" : "Mark as Watched"}
                           </span>
                         </button>
@@ -998,20 +1002,20 @@ export function CourseDetails() {
             {activeTab === "notes" && (
               <div className="space-y-3">
                 {pdfs.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">No notes available</p>
+                  <p className="text-muted-foreground text-center py-8">No notes available</p>
                 ) : (
                   pdfs.map((pdf) => (
                     <div
                       key={pdf.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between p-4 bg-muted/50 dark:bg-card border border-border rounded-xl hover:bg-muted transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-red-600" />
+                        <div className="w-10 h-10 bg-red-100 dark:bg-red-950/60 rounded-xl flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-red-600 dark:text-red-400" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{pdf.title}</p>
-                          <p className="text-sm text-gray-500">{pdf.size}</p>
+                          <p className="font-medium text-foreground">{pdf.title}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{pdf.size}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1019,7 +1023,7 @@ export function CourseDetails() {
                           href={pdf.downloadUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                          className="flex items-center gap-2 px-4 py-2 bg-card hover:bg-accent text-foreground border border-border rounded-xl transition-colors text-sm font-medium"
                         >
                           <Eye className="w-4 h-4" />
                           <span className="hidden sm:inline">View</span>
@@ -1027,7 +1031,7 @@ export function CourseDetails() {
                         <a
                           href={pdf.downloadUrl}
                           download
-                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm font-semibold shadow-xs"
                         >
                           <Download className="w-4 h-4" />
                           <span className="hidden sm:inline">Download</span>
@@ -1042,7 +1046,7 @@ export function CourseDetails() {
             {activeTab === "links" && (
               <div className="space-y-3">
                 {links.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">No external materials available</p>
+                  <p className="text-muted-foreground text-center py-8">No external materials available</p>
                 ) : (
                   links.map((link) => (
                     <a
@@ -1050,15 +1054,15 @@ export function CourseDetails() {
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex items-start gap-3 p-4 bg-muted/50 dark:bg-card border border-border rounded-xl hover:bg-muted transition-colors"
                     >
-                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <ExternalLinkIcon className="w-5 h-5 text-purple-600" />
+                      <div className="w-10 h-10 bg-purple-100 dark:bg-purple-950/60 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <ExternalLinkIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900">{link.title}</p>
-                        <p className="text-sm text-gray-600 mt-1">{link.description}</p>
-                        <p className="text-xs text-blue-600 mt-2 truncate">{link.url}</p>
+                        <p className="font-medium text-foreground">{link.title}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{link.description}</p>
+                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 truncate">{link.url}</p>
                       </div>
                     </a>
                   ))

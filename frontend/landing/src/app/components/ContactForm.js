@@ -46,34 +46,34 @@ export default function ContactForm() {
   };
 
   return (
-    <section id="contact" className="py-24 bg-white relative">
+    <section id="contact" className="py-24 bg-white dark:bg-slate-900/50 relative transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-12 gap-12 items-center">
 
           {/* Text and context */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold uppercase tracking-wider">
-              <PhoneCall className="w-4 h-4 text-blue-600" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 text-xs font-semibold uppercase tracking-wider">
+              <PhoneCall className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               Get In Touch
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-display">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight font-display">
               Have Questions? <br />
               <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
                 Reach Out to Us
               </span>
             </h2>
-            <p className="text-slate-600 leading-relaxed text-base sm:text-lg">
+            <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-base sm:text-lg">
               Want to enroll, learn about course structures, or request corporate training packages? Leave us a message and our counselor will call you within 24 hours.
             </p>
 
-            <div className="pt-6 border-t border-slate-100 space-y-4">
+            <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
               <div className="flex gap-4 items-center">
-                <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                <div className="p-3 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-xl">
                   <PhoneCall className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900 text-sm">Call Center</h4>
-                  <p className="text-sm text-slate-600">+94 705688895</p>
+                  <h4 className="font-bold text-slate-900 dark:text-white text-sm">Call Center</h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">+94 705688895</p>
                 </div>
               </div>
             </div>
@@ -81,19 +81,19 @@ export default function ContactForm() {
 
           {/* Form Card */}
           <div className="lg:col-span-7">
-            <div className="bg-slate-50 border border-slate-200/60 shadow-xl rounded-3xl p-8 sm:p-10">
-              <h3 className="text-xl font-bold text-slate-900 mb-6">Send an Inquiry</h3>
+            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 shadow-xl rounded-3xl p-8 sm:p-10">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Send an Inquiry</h3>
 
               {success && (
-                <div className="mb-6 flex items-center gap-3 bg-green-50 text-green-700 p-4 rounded-2xl border border-green-100 text-sm font-medium">
-                  <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />
+                <div className="mb-6 flex items-center gap-3 bg-green-50 dark:bg-green-950/50 text-green-700 dark:text-green-300 p-4 rounded-2xl border border-green-100 dark:border-green-900 text-sm font-medium">
+                  <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 shrink-0" />
                   <span>Thank you! Your message has been received. We will contact you soon.</span>
                 </div>
               )}
 
               {error && (
-                <div className="mb-6 flex items-center gap-3 bg-red-50 text-red-700 p-4 rounded-2xl border border-red-100 text-sm font-medium">
-                  <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                <div className="mb-6 flex items-center gap-3 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 p-4 rounded-2xl border border-red-100 dark:border-red-900 text-sm font-medium">
+                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
@@ -101,7 +101,7 @@ export default function ContactForm() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="contact-name" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                    <label htmlFor="contact-name" className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
                       Full Name
                     </label>
                     <input
@@ -110,13 +110,13 @@ export default function ContactForm() {
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-950 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="e.g. Saman Perera"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="contact-phone" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                    <label htmlFor="contact-phone" className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
                       Phone Number
                     </label>
                     <input
@@ -125,7 +125,7 @@ export default function ContactForm() {
                       required
                       value={formData.phone_number}
                       onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-950 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="e.g. 077xxxxx77"
                     />
                   </div>
@@ -133,7 +133,7 @@ export default function ContactForm() {
 
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="contact-email" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                    <label htmlFor="contact-email" className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
                       Email Address
                     </label>
                     <input
@@ -142,13 +142,13 @@ export default function ContactForm() {
                       required
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-950 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="e.g. support@ictacademy.lk"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="contact-subject" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                    <label htmlFor="contact-subject" className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
                       Subject
                     </label>
                     <input
@@ -157,14 +157,14 @@ export default function ContactForm() {
                       required
                       value={formData.subject}
                       onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-950 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="e.g. Course Enrollment Enquiry"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="contact-message" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                  <label htmlFor="contact-message" className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
                     Message
                   </label>
                   <textarea
@@ -173,7 +173,7 @@ export default function ContactForm() {
                     rows={4}
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                    className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-950 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
                     placeholder="Enter your message details here..."
                   />
                 </div>

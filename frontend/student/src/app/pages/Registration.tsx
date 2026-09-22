@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { GraduationCap } from "lucide-react";
-
+import { ThemeToggle } from "../components/ThemeToggle";
 import { API_URL } from "../config";
 
 export function Registration() {
@@ -51,26 +51,29 @@ export function Registration() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background text-foreground transition-colors duration-200 relative">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-green-400 rounded-full mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl mb-4 shadow-lg shadow-blue-500/25">
             <GraduationCap className="w-8 h-8 text-white" />
           </div>
-          <h2>Student Registration</h2>
-          <p className="text-gray-600 mt-2">Create your account to access courses</p>
+          <h2 className="text-2xl font-bold text-foreground">Student Registration</h2>
+          <p className="text-muted-foreground mt-2">Create your account to access courses</p>
         </div>
 
         {!generatedPassword ? (
-          <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-8">
+          <form onSubmit={handleSubmit} className="bg-card rounded-2xl shadow-xl p-8 border border-border">
             <div className="space-y-4">
               {error && (
-                <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm border border-red-100">
+                <div className="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm border border-red-200 dark:border-red-900/40">
                   {error}
                 </div>
               )}
               <div>
-                <label htmlFor="name" className="block text-sm mb-1 text-gray-700">
+                <label htmlFor="name" className="block text-xs font-semibold uppercase tracking-wider mb-1 text-muted-foreground">
                   Full Name
                 </label>
                 <input
@@ -79,13 +82,13 @@ export function Registration() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter your full name"
                 />
               </div>
 
               <div>
-                <label htmlFor="phone" className="block text-sm mb-1 text-gray-700">
+                <label htmlFor="phone" className="block text-xs font-semibold uppercase tracking-wider mb-1 text-muted-foreground">
                   Phone Number
                 </label>
                 <input
@@ -94,13 +97,13 @@ export function Registration() {
                   required
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="07XXXXXXXX"
                 />
               </div>
 
               <div>
-                <label htmlFor="district" className="block text-sm mb-1 text-gray-700">
+                <label htmlFor="district" className="block text-xs font-semibold uppercase tracking-wider mb-1 text-muted-foreground">
                   District
                 </label>
                 <input
@@ -109,13 +112,13 @@ export function Registration() {
                   required
                   value={formData.district}
                   onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter your district or address"
                 />
               </div>
 
               <div>
-                <label htmlFor="province" className="block text-sm mb-1 text-gray-700">
+                <label htmlFor="province" className="block text-xs font-semibold uppercase tracking-wider mb-1 text-muted-foreground">
                   Province
                 </label>
                 <select
@@ -123,7 +126,7 @@ export function Registration() {
                   required
                   value={formData.province}
                   onChange={(e) => setFormData({ ...formData, province: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select province</option>
                   <option value="Western">Western</option>
@@ -140,50 +143,45 @@ export function Registration() {
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-green-400 text-white py-2.5 rounded-lg hover:from-blue-700 hover:to-green-500 transition-all duration-300"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 rounded-xl transition-all duration-300 shadow-md shadow-blue-500/20 cursor-pointer"
               >
                 Register
               </button>
 
-              <div className="text-center text-sm text-gray-600">
-                Already have an account?{" "}
-                <Link to="/" className="text-blue-600 hover:underline">
+              <div className="text-center text-sm pt-2">
+                <span className="text-muted-foreground">Already have an account? </span>
+                <Link to="/" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
                   Login here
                 </Link>
               </div>
             </div>
           </form>
         ) : (
-          <div className="bg-white rounded-lg shadow-md p-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h3 className="mb-4">Registration Successful!</h3>
-              <p className="text-gray-600 mb-4">Your account has been created. Please Remember & save your login credentials:</p>
+          <div className="bg-card rounded-2xl shadow-xl p-8 border border-border">
+            <h3 className="text-xl font-bold text-foreground mb-4 text-center">Registration Successful!</h3>
+            <p className="text-sm text-muted-foreground mb-6 text-center">
+              Please save your login credentials:
+            </p>
 
-              <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
-                <div className="mb-2">
-                  <span className="text-sm text-gray-600">Phone Number:</span>
-                  <p>{formData.phone}</p>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-600">Generated Password:</span>
-                  <p className="font-mono bg-white px-3 py-2 rounded border border-gray-300 mt-1">
-                    {generatedPassword}
-                  </p>
-                </div>
+            <div className="bg-muted p-4 rounded-xl space-y-3 mb-6">
+              <div>
+                <span className="text-xs text-muted-foreground uppercase font-semibold">Phone Number:</span>
+                <p className="font-semibold text-foreground">{formData.phone}</p>
               </div>
-
-              <button
-                onClick={handleContinue}
-                className="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Continue to Login
-              </button>
+              <div>
+                <span className="text-xs text-muted-foreground uppercase font-semibold">Generated Password:</span>
+                <p className="font-mono bg-background px-3 py-1.5 rounded-lg border border-border text-lg font-bold text-foreground mt-1">
+                  {generatedPassword}
+                </p>
+              </div>
             </div>
+
+            <button
+              onClick={handleContinue}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors cursor-pointer"
+            >
+              Continue to Login
+            </button>
           </div>
         )}
       </div>

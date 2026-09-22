@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Avatar } from "../ui/Primitives";
 import { Ic } from "../ui/icons";
+import ThemeToggle from "./ThemeToggle";
 import { API_URL, LANDING_URL } from "../../config";
 
 export default function Header({ sidebarOpen, setSidebarOpen, notifications = [], setNotifications, searchVal, onSearch, setPage, setModal, students = [], courses = [] }) {
@@ -77,14 +78,15 @@ export default function Header({ sidebarOpen, setSidebarOpen, notifications = []
   };
 
   return (
-    <header style={{ height: 64, background: "#fff", borderBottom: "1.5px solid #F1F5F9", display: "flex", alignItems: "center", padding: "0 24px", gap: 16, flexShrink: 0, zIndex: 40, position: "relative" }}>
+    <header style={{ height: 64, background: "var(--bg-card)", borderBottom: "1.5px solid var(--border-color)", display: "flex", alignItems: "center", padding: "0 24px", gap: 14, flexShrink: 0, zIndex: 40, position: "relative", transition: "all 0.2s" }}>
       <button onClick={() => setSidebarOpen(o => !o)} className="btn-ghost"
-        style={{ border: "none", background: "none", cursor: "pointer", padding: "8px", borderRadius: 8, color: "#64748B", display: "flex", transition: "all 0.15s" }}>
+        style={{ border: "none", background: "none", cursor: "pointer", padding: "8px", borderRadius: 8, color: "var(--text-secondary)", display: "flex", transition: "all 0.15s" }}>
         {Ic.menu()}
       </button>
+      
       {/* Search */}
       <div ref={searchContainerRef} style={{ flex: 1, maxWidth: 400, position: "relative" }}>
-        <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#94A3B8", display: "flex" }}>{Ic.search()}</span>
+        <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", display: "flex" }}>{Ic.search()}</span>
         <input 
           value={searchVal} 
           onChange={e => {
@@ -93,7 +95,7 @@ export default function Header({ sidebarOpen, setSidebarOpen, notifications = []
           }} 
           onFocus={() => setDropdownOpen(true)}
           placeholder="Search students, courses..."
-          style={{ width: "100%", padding: "9px 14px 9px 36px", borderRadius: 10, border: "1.5px solid #E2E8F0", fontSize: 14, color: "#0F172A", background: "#F8FAFC", transition: "all 0.2s" }} 
+          style={{ width: "100%", padding: "9px 14px 9px 36px", borderRadius: 10, border: "1.5px solid var(--border-subtle)", fontSize: 14, color: "var(--text-primary)", background: "var(--input-bg)", transition: "all 0.2s" }} 
         />
 
         {/* Global Search Dropdown */}
@@ -103,10 +105,10 @@ export default function Header({ sidebarOpen, setSidebarOpen, notifications = []
             left: 0, 
             right: 0, 
             top: "calc(100% + 8px)", 
-            background: "#fff", 
+            background: "var(--bg-card)", 
             borderRadius: 12, 
-            boxShadow: "0 10px 30px rgba(0,0,0,0.12)", 
-            border: "1.5px solid #E2E8F0", 
+            boxShadow: "0 10px 30px rgba(0,0,0,0.2)", 
+            border: "1.5px solid var(--border-subtle)", 
             zIndex: 300, 
             maxHeight: 380, 
             overflowY: "auto", 
@@ -115,9 +117,9 @@ export default function Header({ sidebarOpen, setSidebarOpen, notifications = []
             flexDirection: "column"
           }}>
             {/* Students Section */}
-            <div style={{ padding: "10px 14px 4px", fontSize: 11, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.5px" }}>Students / Admins</div>
+            <div style={{ padding: "10px 14px 4px", fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Students / Admins</div>
             {filteredStudents.length === 0 ? (
-              <div style={{ padding: "8px 16px", fontSize: 13, color: "#94A3B8" }}>No users found</div>
+              <div style={{ padding: "8px 16px", fontSize: 13, color: "var(--text-muted)" }}>No users found</div>
             ) : (
               filteredStudents.map(s => (
                 <div key={s.id} onClick={() => handleStudentClick(s)} style={{ 
@@ -130,40 +132,27 @@ export default function Header({ sidebarOpen, setSidebarOpen, notifications = []
                   margin: "2px 6px",
                   transition: "background 0.15s",
                   background: "transparent"
-                }} className="btn-ghost"
-                onMouseEnter={e => e.currentTarget.style.background = "#F8FAFC"}
-                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                }} className="table-row">
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 28, height: 28, borderRadius: "50%", background: s.role === 'admin' ? "#7C3AED" : (s.color || "#2563EB"), color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600 }}>
                       {s.full_name ? s.full_name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "U"}
                     </div>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: "#0F172A" }}>{s.full_name}</div>
-                      <div style={{ fontSize: 11, color: "#94A3B8" }}>ID: {s.id} · {s.district || "No District"}</div>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{s.full_name}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.role === 'admin' ? 'Admin' : 'Student'} · ID: {s.id}</div>
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: 4 }} onClick={e => e.stopPropagation()}>
-                    <button onClick={() => { setModal({ type: "resetPw", student: s }); setDropdownOpen(false); }} 
-                      style={{ border: "1.5px solid #FDE68A", background: "#FFFBEB", color: "#92400E", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: "pointer", transition: "all 0.15s" }}>
-                      PW
-                    </button>
-                    {(!s.role || s.role === "student") && (
-                      <button onClick={() => { setModal({ type: "enroll", student: s }); setDropdownOpen(false); }} 
-                        style={{ border: "1.5px solid #A7F3D0", background: "#F0FDF4", color: "#065F46", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: "pointer", transition: "all 0.15s" }}>
-                        Enroll
-                      </button>
-                    )}
-                  </div>
+                  <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 12, background: s.status === 'Active' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', color: s.status === 'Active' ? '#22C55E' : '#EF4444' }}>
+                    {s.status || 'Active'}
+                  </span>
                 </div>
               ))
             )}
 
-            <div style={{ height: "1.5px", background: "#F1F5F9", margin: "6px 0" }} />
-
             {/* Courses Section */}
-            <div style={{ padding: "4px 14px 4px", fontSize: 11, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.5px" }}>Courses</div>
+            <div style={{ padding: "10px 14px 4px", fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", borderTop: "1px solid var(--border-color)" }}>Courses</div>
             {filteredCourses.length === 0 ? (
-              <div style={{ padding: "8px 16px", fontSize: 13, color: "#94A3B8" }}>No courses found</div>
+              <div style={{ padding: "8px 16px", fontSize: 13, color: "var(--text-muted)" }}>No courses found</div>
             ) : (
               filteredCourses.map(c => (
                 <div key={c.id} onClick={() => handleCourseClick(c)} style={{ 
@@ -176,20 +165,18 @@ export default function Header({ sidebarOpen, setSidebarOpen, notifications = []
                   margin: "2px 6px",
                   transition: "background 0.15s",
                   background: "transparent"
-                }} className="btn-ghost"
-                onMouseEnter={e => e.currentTarget.style.background = "#F8FAFC"}
-                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                }} className="table-row">
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: "#0F172A" }}>{c.title}</div>
-                    <div style={{ fontSize: 11, color: "#94A3B8" }}>{c.category || "Web Dev"} · {c.students || 0} students</div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{c.title}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{c.category || "Web Dev"} · {c.students || 0} students</div>
                   </div>
                   <div style={{ display: "flex", gap: 4 }} onClick={e => e.stopPropagation()}>
                     <button onClick={() => { setModal({ type: "manageContent", course: c }); setDropdownOpen(false); }} 
-                      style={{ border: "1.5px solid #E2E8F0", background: "#F8FAFC", color: "#2563EB", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: "pointer", transition: "all 0.15s" }}>
+                      style={{ border: "1.5px solid var(--border-subtle)", background: "var(--input-bg)", color: "#2563EB", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: "pointer", transition: "all 0.15s" }}>
                       Content
                     </button>
                     <button onClick={() => { setModal({ type: "editCourse", course: c }); setDropdownOpen(false); }} 
-                      style={{ border: "1.5px solid #E2E8F0", background: "#F8FAFC", color: "#334155", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: "pointer", transition: "all 0.15s" }}>
+                      style={{ border: "1.5px solid var(--border-subtle)", background: "var(--input-bg)", color: "var(--text-secondary)", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: "pointer", transition: "all 0.15s" }}>
                       Edit
                     </button>
                   </div>
@@ -199,27 +186,32 @@ export default function Header({ sidebarOpen, setSidebarOpen, notifications = []
           </div>
         )}
       </div>
+
       <div style={{ flex: 1 }} />
+
+      {/* Theme Switcher Toggle */}
+      <ThemeToggle />
+
       {/* Notifications */}
       <div style={{ position: "relative" }}>
         <button onClick={() => { setShowNotif(n => !n); setShowProfile(false); }} className="btn-ghost"
-          style={{ border: "1.5px solid #E2E8F0", background: "#fff", cursor: "pointer", padding: 9, borderRadius: 10, color: "#64748B", display: "flex", alignItems: "center", transition: "all 0.15s", position: "relative" }}>
+          style={{ border: "1.5px solid var(--border-subtle)", background: "var(--bg-card)", cursor: "pointer", padding: 9, borderRadius: 10, color: "var(--text-secondary)", display: "flex", alignItems: "center", transition: "all 0.15s", position: "relative" }}>
           {Ic.bell()}
           {notifications.length > 0 && (
-            <span style={{ position: "absolute", top: 4, right: 4, width: 16, height: 16, borderRadius: "50%", background: "#EF4444", color: "#fff", fontSize: 9, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff" }}>
+            <span style={{ position: "absolute", top: 4, right: 4, width: 16, height: 16, borderRadius: "50%", background: "#EF4444", color: "#fff", fontSize: 9, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid var(--bg-card)" }}>
               {notifications.length}
             </span>
           )}
         </button>
         {showNotif && (
-          <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", width: 300, background: "#fff", borderRadius: 12, boxShadow: "0 10px 40px rgba(0,0,0,0.12)", border: "1.5px solid #F1F5F9", zIndex: 200, animation: "fadeIn 0.15s ease" }}>
-            <div style={{ padding: "14px 16px", borderBottom: "1.5px solid #F8FAFC", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "#0F172A" }}>Notifications</span>
+          <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", width: 300, background: "var(--bg-card)", borderRadius: 12, boxShadow: "0 10px 40px rgba(0,0,0,0.2)", border: "1.5px solid var(--border-subtle)", zIndex: 200, animation: "fadeIn 0.15s ease" }}>
+            <div style={{ padding: "14px 16px", borderBottom: "1.5px solid var(--border-color)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>Notifications</span>
               <span onClick={clearAllNotifications} style={{ fontSize: 11, color: "#2563EB", fontWeight: 500, cursor: "pointer" }}>Mark all read</span>
             </div>
             <div style={{ maxHeight: 300, overflowY: "auto" }}>
               {notifications.length === 0 ? (
-                <div style={{ padding: "20px 16px", textAlign: "center", color: "#94A3B8", fontSize: 13 }}>No new notifications</div>
+                <div style={{ padding: "20px 16px", textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>No new notifications</div>
               ) : (
                 notifications.map((n, i) => {
                   let dot = "#2563EB";
@@ -227,22 +219,12 @@ export default function Header({ sidebarOpen, setSidebarOpen, notifications = []
                   else if (n.type === "course") dot = "#059669";
                   else if (n.type === "enroll") dot = "#2563EB";
 
-                  const timeString = (() => {
-                    const diffMs = new Date() - new Date(n.created_at);
-                    const diffMins = Math.floor(diffMs / 60000);
-                    if (diffMins < 1) return "Just now";
-                    if (diffMins < 60) return `${diffMins}m ago`;
-                    const diffHrs = Math.floor(diffMins / 60);
-                    if (diffHrs < 24) return `${diffHrs}h ago`;
-                    return new Date(n.created_at).toLocaleDateString();
-                  })();
-
                   return (
-                    <div key={n.id} style={{ padding: "12px 16px", display: "flex", gap: 10, alignItems: "flex-start", borderBottom: i < notifications.length - 1 ? "1px solid #F8FAFC" : "none" }}>
+                    <div key={i} style={{ padding: "12px 16px", borderBottom: "1px solid var(--border-color)", display: "flex", gap: 10, alignItems: "flex-start" }}>
                       <span style={{ width: 8, height: 8, borderRadius: "50%", background: dot, marginTop: 5, flexShrink: 0 }} />
                       <div>
-                        <div style={{ fontSize: 13, color: "#334155" }}>{n.message}</div>
-                        <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 2 }}>{timeString}</div>
+                        <div style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>{n.title || n.message}</div>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{n.created_at ? new Date(n.created_at).toLocaleTimeString() : "Just now"}</div>
                       </div>
                     </div>
                   );
@@ -252,19 +234,17 @@ export default function Header({ sidebarOpen, setSidebarOpen, notifications = []
           </div>
         )}
       </div>
-      {/* Profile */}
+
+      {/* User Profile */}
       <div style={{ position: "relative" }}>
-        <button onClick={() => { setShowProfile(p => !p); setShowNotif(false); }}
-          style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 12px 6px 6px", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "#fff", cursor: "pointer", transition: "all 0.15s" }}>
-          <Avatar initials={initials} size={32} bg="#2563EB" />
-          <div style={{ textAlign: "left" }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#0F172A" }}>{name}</div>
-            <div style={{ fontSize: 11, color: "#94A3B8" }}>Super Admin</div>
-          </div>
-          <span style={{ color: "#94A3B8", marginLeft: 4 }}>{Ic.chevDown()}</span>
+        <button onClick={() => { setShowProfile(p => !p); setShowNotif(false); }} className="btn-ghost"
+          style={{ border: "1.5px solid var(--border-subtle)", background: "var(--bg-card)", cursor: "pointer", padding: "6px 10px 6px 6px", borderRadius: 10, display: "flex", alignItems: "center", gap: 8, transition: "all 0.15s" }}>
+          <Avatar initials={initials} size={28} bg="#2563EB" />
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{name}</span>
+          <span style={{ color: "var(--text-muted)" }}>{Ic.chevDown(12)}</span>
         </button>
         {showProfile && (
-          <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", width: 200, background: "#fff", borderRadius: 12, boxShadow: "0 10px 40px rgba(0,0,0,0.12)", border: "1.5px solid #F1F5F9", zIndex: 200, animation: "fadeIn 0.15s ease", padding: 8 }}>
+          <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", width: 200, background: "var(--bg-card)", borderRadius: 12, boxShadow: "0 10px 40px rgba(0,0,0,0.2)", border: "1.5px solid var(--border-subtle)", zIndex: 200, animation: "fadeIn 0.15s ease", padding: 8 }}>
             {[
               { label: "My Profile", icon: Ic.users, onClick: () => setModal("profile") },
               { label: "Settings", icon: Ic.cog, onClick: () => setPage("settings") },
@@ -281,8 +261,8 @@ export default function Header({ sidebarOpen, setSidebarOpen, notifications = []
             ].map((item, i) => (
               <button key={i} className={item.danger ? "btn-danger" : "btn-ghost"}
                 onClick={() => { item.onClick(); setShowProfile(false); }}
-                style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", width: "100%", textAlign: "left", fontSize: 13, color: item.danger ? "#DC2626" : "#334155", transition: "all 0.15s" }}>
-                <span style={{ color: item.danger ? "#DC2626" : "#64748B" }}>{item.icon(14)}</span>
+                style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", width: "100%", textAlign: "left", fontSize: 13, color: item.danger ? "#DC2626" : "var(--text-primary)", transition: "all 0.15s" }}>
+                <span style={{ color: item.danger ? "#DC2626" : "var(--text-secondary)" }}>{item.icon(14)}</span>
                 {item.label}
               </button>
             ))}

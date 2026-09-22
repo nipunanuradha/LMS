@@ -6,6 +6,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <title>ICT Academy Student portal</title>
+  <script>
+    (function() {
+      try {
+        var stored = localStorage.getItem('lms_theme');
+        var supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (stored === 'dark' || (!stored && supportDarkMode) || (stored === 'system' && supportDarkMode)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
   <style>
     html,
     body {

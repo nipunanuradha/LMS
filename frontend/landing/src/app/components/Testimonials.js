@@ -28,19 +28,19 @@ export default function Testimonials() {
   ];
 
   return (
-    <section id="Stories" className="py-24 bg-white relative">
+    <section id="Stories" className="py-24 bg-white dark:bg-slate-900/40 relative transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-800 text-xs font-semibold uppercase tracking-wider">
-            <MessageSquare className="w-4 h-4 text-blue-600" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold uppercase tracking-wider">
+            <MessageSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             Success Stories
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-display">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight font-display">
             Loved By Thousands of Students
           </h2>
-          <p className="text-slate-600 text-lg leading-relaxed">
+          <p className="text-slate-600 dark:text-slate-300 text-lg leading-relaxed">
             Read how our comprehensive curriculum, expert support, and practical LMS platform help students achieve their goals.
           </p>
         </div>
@@ -50,7 +50,7 @@ export default function Testimonials() {
           {reviews.map((rev, idx) => (
             <div
               key={idx}
-              className="bg-slate-50 border border-slate-100 p-8 rounded-2xl flex flex-col justify-between hover:shadow-lg transition-all duration-300"
+              className="bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 p-8 rounded-2xl flex flex-col justify-between hover:shadow-lg transition-all duration-300"
             >
               {/* Rating stars */}
               <div className="flex gap-1 mb-6">
@@ -60,18 +60,18 @@ export default function Testimonials() {
               </div>
 
               {/* Content */}
-              <p className="text-slate-600 italic text-sm sm:text-base leading-relaxed mb-6">
+              <p className="text-slate-600 dark:text-slate-300 italic text-sm sm:text-base leading-relaxed mb-6">
                 "{rev.content}"
               </p>
 
               {/* Author details */}
-              <div className="flex items-center gap-3 pt-4 border-t border-slate-200/50">
+              <div className="flex items-center gap-3 pt-4 border-t border-slate-200/50 dark:border-slate-700/60">
                 <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center text-white font-bold text-sm">
                   {rev.name.split(" ").map(n => n[0]).join("")}
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900 text-sm">{rev.name}</h4>
-                  <p className="text-xs text-slate-500">{rev.role} at {rev.company}</p>
+                  <h4 className="font-bold text-slate-900 dark:text-white text-sm">{rev.name}</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{rev.role} at {rev.company}</p>
                 </div>
               </div>
             </div>
