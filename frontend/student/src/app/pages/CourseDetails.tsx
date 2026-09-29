@@ -479,9 +479,10 @@ export function CourseDetails() {
         }
 
         if (targetId) {
-          setSelectedMonthId(targetId);
           const activeObj = fetchedMonths.find((m: any) => m.id === targetId) || fetchedMonths[0];
+          setSelectedMonthId(targetId);
           setSelectedMonthData(activeObj);
+          fetchContentForMonth(targetId, !!activeObj?.is_unlocked || !!data.hasFullEnrollment || !!data.isAdmin);
         }
       }
     } catch (err) {
@@ -490,8 +491,36 @@ export function CourseDetails() {
   };
 
   // 2. Fetch Content & Recordings for Selected Month
-  const fetchContentForMonth = async (monthId: number | null) => {
+  const fetchContentForMonth = async (monthId: number | null, isUnlocked?: boolean) => {
     try {
+      // First, fetch course notices/announcements (public to enrolled students)
+      try {
+        const notificationsResponse = await fetch(`${API_URL}/api/courses/${courseId}/notifications`);
+        if (notificationsResponse.ok) {
+          const nots = (await notificationsResponse.json()).map((c: any) => ({
+            id: String(c.id),
+            title: c.title,
+            content: c.message,
+            date: c.created_at
+          }));
+          setDbNotices(nots);
+        }
+      } catch (e) {
+        console.error("Failed to load course notices:", e);
+      }
+
+      // Check if user has permission to view this month's materials
+      const monthObj = months.find((m: any) => m.id === monthId);
+      const canAccess = isUnlocked !== undefined ? isUnlocked : (!!monthObj?.is_unlocked || hasFullEnrollment);
+
+      // If month is locked, do NOT fire requests to protected endpoints to prevent 403 console errors
+      if (!canAccess) {
+        setDbPDFs([]);
+        setDbLinks([]);
+        setDbRecordings([]);
+        return;
+      }
+
       const token = localStorage.getItem("token");
       const currentStoredUser = localStorage.getItem("currentUser");
       const parsedUser = currentStoredUser ? JSON.parse(currentStoredUser) : currentUserObj;
@@ -507,10 +536,9 @@ export function CourseDetails() {
 
       const monthQuery = monthId ? `?course_month_id=${monthId}${userIdParam}` : "";
 
-      const [contentResponse, recordingsResponse, notificationsResponse] = await Promise.all([
+      const [contentResponse, recordingsResponse] = await Promise.all([
         fetch(`${API_URL}/api/courses/${courseId}/content${monthQuery}`, { headers }),
-        fetch(`${API_URL}/api/courses/${courseId}/recordings${monthQuery}`, { headers }),
-        fetch(`${API_URL}/api/courses/${courseId}/notifications`)
+        fetch(`${API_URL}/api/courses/${courseId}/recordings${monthQuery}`, { headers })
       ]);
 
       if (contentResponse.ok) {
@@ -549,16 +577,6 @@ export function CourseDetails() {
         // Locked / Unauthorized
         setDbRecordings([]);
       }
-
-      if (notificationsResponse.ok) {
-        const nots = (await notificationsResponse.json()).map((c: any) => ({
-          id: String(c.id),
-          title: c.title,
-          content: c.message,
-          date: c.created_at
-        }));
-        setDbNotices(nots);
-      }
     } catch (err) {
       console.error("Failed to load month materials:", err);
     }
@@ -594,9 +612,13 @@ export function CourseDetails() {
   // When selected month changes, load its videos and materials
   useEffect(() => {
     if (selectedMonthId) {
-      fetchContentForMonth(selectedMonthId);
       const activeObj = months.find((m) => m.id === selectedMonthId);
-      if (activeObj) setSelectedMonthData(activeObj);
+      if (activeObj) {
+        setSelectedMonthData(activeObj);
+        fetchContentForMonth(selectedMonthId, !!activeObj.is_unlocked || hasFullEnrollment);
+      } else {
+        fetchContentForMonth(selectedMonthId);
+      }
     }
   }, [selectedMonthId]);
 
