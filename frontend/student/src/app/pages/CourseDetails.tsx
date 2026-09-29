@@ -482,7 +482,7 @@ export function CourseDetails() {
           const activeObj = fetchedMonths.find((m: any) => m.id === targetId) || fetchedMonths[0];
           setSelectedMonthId(targetId);
           setSelectedMonthData(activeObj);
-          fetchContentForMonth(targetId, !!activeObj?.is_unlocked || !!data.hasFullEnrollment || !!data.isAdmin);
+          fetchContentForMonth(targetId, !!activeObj?.is_unlocked);
         }
       }
     } catch (err) {
@@ -511,7 +511,7 @@ export function CourseDetails() {
 
       // Check if user has permission to view this month's materials
       const monthObj = months.find((m: any) => m.id === monthId);
-      const canAccess = isUnlocked !== undefined ? isUnlocked : (!!monthObj?.is_unlocked || hasFullEnrollment);
+      const canAccess = isUnlocked !== undefined ? isUnlocked : !!monthObj?.is_unlocked;
 
       // If month is locked, do NOT fire requests to protected endpoints to prevent 403 console errors
       if (!canAccess) {
@@ -615,9 +615,9 @@ export function CourseDetails() {
       const activeObj = months.find((m) => m.id === selectedMonthId);
       if (activeObj) {
         setSelectedMonthData(activeObj);
-        fetchContentForMonth(selectedMonthId, !!activeObj.is_unlocked || hasFullEnrollment);
+        fetchContentForMonth(selectedMonthId, !!activeObj.is_unlocked);
       } else {
-        fetchContentForMonth(selectedMonthId);
+        fetchContentForMonth(selectedMonthId, false);
       }
     }
   }, [selectedMonthId]);
