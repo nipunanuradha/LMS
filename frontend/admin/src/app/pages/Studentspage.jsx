@@ -105,17 +105,27 @@ export default function StudentsPage({ students, setStudents, setModal, globalSe
                 <td style={{ padding: "13px 16px", borderBottom: i < filtered.length - 1 ? "1px solid var(--border-color)" : "none" }}>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button onClick={() => setModal({ type: "resetPw", student: s })} className="btn-warning"
-                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 7, border: "1.5px solid rgba(245, 158, 11, 0.4)", background: "rgba(245, 158, 11, 0.15)", color: "#D97706", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all 0.15s" }}>
-                      {Ic.key()} Reset PW
+                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 7, border: "1.5px solid rgba(245, 158, 11, 0.4)", background: "rgba(245, 158, 11, 0.15)", color: "#D97706", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all 0.15s" }}
+                      title="Reset Password">
+                      {Ic.key()} Reset
                     </button>
                     {(!s.role || s.role === "student") && (
-                      <button onClick={() => setModal({ type: "enroll", student: s })} className="btn-success"
-                        style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 7, border: "1.5px solid rgba(34, 197, 94, 0.4)", background: "rgba(34, 197, 94, 0.15)", color: "#16A34A", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all 0.15s" }}>
-                        {Ic.plus(12)} Enroll
-                      </button>
+                      <>
+                        <button onClick={() => setModal({ type: "manageStudentAccess", student: s })} className="btn-primary"
+                          style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 7, border: "1.5px solid rgba(37, 99, 235, 0.4)", background: "rgba(37, 99, 235, 0.12)", color: "#2563EB", cursor: "pointer", fontSize: 12, fontWeight: 600, transition: "all 0.15s" }}
+                          title="Manage Enrolled Courses & Month Access">
+                          🎓 Courses & Access
+                        </button>
+                        <button onClick={() => setModal({ type: "enroll", student: s })} className="btn-success"
+                          style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 7, border: "1.5px solid rgba(34, 197, 94, 0.4)", background: "rgba(34, 197, 94, 0.15)", color: "#16A34A", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all 0.15s" }}
+                          title="Quick Enroll in Course">
+                          {Ic.plus(12)} Enroll
+                        </button>
+                      </>
                     )}
                     <button onClick={() => deleteStudent(s.id)} className="btn-danger"
-                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 7, border: "1.5px solid rgba(239, 68, 68, 0.4)", background: "rgba(239, 68, 68, 0.15)", color: "#DC2626", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all 0.15s" }}>
+                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 7, border: "1.5px solid rgba(239, 68, 68, 0.4)", background: "rgba(239, 68, 68, 0.15)", color: "#DC2626", cursor: "pointer", fontSize: 12, fontWeight: 500, transition: "all 0.15s" }}
+                      title="Delete User">
                       {Ic.trash()}
                     </button>
                   </div>

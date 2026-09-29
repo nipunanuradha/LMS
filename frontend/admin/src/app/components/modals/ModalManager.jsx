@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Modal from "./Modal";
 import { Input, Select } from "../ui/Primitives";
 import { Ic } from "../ui/icons";
@@ -131,55 +131,27 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
   }
 
   if (modal?.type === "enroll") {
-    const confirm = async () => {
-      if (enroll.courseId && enroll.expiry) {
-        try {
-          const res = await fetch(`${API_URL}/api/admin/enrollments`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              student_id: modal.student.id,
-              course_id: enroll.courseId,
-              expiry_date: enroll.expiry
-            })
-          });
-          const data = await res.json();
-          if (res.ok) {
-            alert("Student enrolled successfully!");
-            window.location.reload();
-          } else {
-            alert(data.error || "Enrollment failed");
-          }
-        } catch (err) {
-          console.error(err);
-          alert("Server connection failed");
-        }
-      }
-    };
     return (
-      <Modal title="Enroll Student" subtitle={`Enrolling ${modal.student?.full_name || modal.student?.name} into a course`} onClose={close}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <Select label="Select Course" value={enroll.courseId} onChange={e => setEnroll(en => ({ ...en, courseId: e.target.value }))}
-            options={courses.map(c => ({ value: c.id, label: `${c.title} (${c.students} students)` }))} />
-          {enroll.courseId && (() => {
-            const c = courses.find(x => x.id === enroll.courseId);
-            return c && (
-              <div style={{ background: `${c.accent}10`, border: `1.5px solid ${c.accent}30`, borderRadius: 10, padding: "12px 14px", display: "flex", gap: 10, alignItems: "center" }}>
-                <div style={{ width: 10, height: 10, borderRadius: "50%", background: c.accent, flexShrink: 0 }} />
-                <div style={{ fontSize: 13, color: "#334155" }}><strong>{c.title}</strong> · {c.students} students currently enrolled</div>
-              </div>
-            );
-          })()}
-          <Input label="Expiry Date *" type="date" value={enroll.expiry} onChange={e => setEnroll(en => ({ ...en, expiry: e.target.value }))} />
-          <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
-            <button onClick={close} className="btn-ghost" style={{ flex: 1, padding: "10px", borderRadius: 9, border: "1.5px solid #E2E8F0", background: "#F8FAFC", cursor: "pointer", fontWeight: 500, fontSize: 14, color: "#64748B", transition: "all 0.15s" }}>Cancel</button>
-            <button onClick={confirm} disabled={!enroll.courseId || !enroll.expiry}
-              style={{ flex: 1, padding: "10px", borderRadius: 9, border: "none", background: enroll.courseId && enroll.expiry ? "#059669" : "#E2E8F0", cursor: enroll.courseId && enroll.expiry ? "pointer" : "not-allowed", fontWeight: 600, fontSize: 14, color: enroll.courseId && enroll.expiry ? "#fff" : "#94A3B8", transition: "all 0.2s" }}>
-              Confirm Enrollment
-            </button>
-          </div>
-        </div>
-      </Modal>
+      <EnhancedEnrollModal
+        student={modal.student}
+        courses={courses}
+        onClose={close}
+        onEnrolled={() => {
+          close();
+          window.location.reload();
+        }}
+      />
+    );
+  }
+
+  if (modal?.type === "manageStudentAccess") {
+    return (
+      <ManageStudentAccessModal
+        student={modal.student}
+        courses={courses}
+        onClose={close}
+        onOpenEnroll={(st) => setModal({ type: "enroll", student: st })}
+      />
     );
   }
 
@@ -191,6 +163,8 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
       category: isEdit ? (modal.course.category || modal.course.course_category || "Web Dev") : "Web Dev",
       thumbnail: isEdit ? (modal.course.thumbnail_url || modal.course.thumbnail || "") : "",
       price: isEdit ? (modal.course.price || "") : "",
+      offer_price: isEdit ? (modal.course.offer_price || "") : "",
+      discount_badge: isEdit ? (modal.course.discount_badge || "") : "",
     });
     const [dragOver, setDragOver] = useState(false);
 
@@ -212,6 +186,8 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
         description: formState.desc,
         thumbnail_url: formState.thumbnail,
         price: parseFloat(formState.price) || 0,
+        offer_price: formState.offer_price !== "" ? parseFloat(formState.offer_price) : null,
+        discount_badge: formState.discount_badge.trim() || null,
         course_category: formState.category
       };
 
@@ -246,8 +222,8 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
       }
     };
     return (
-      <Modal title={isEdit ? "Edit Course" : "Create New Course"} subtitle={isEdit ? `Editing: ${modal.course.title}` : "Fill in the details below"} onClose={close} width={520}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <Modal title={isEdit ? "Edit Course & Pricing" : "Create New Course"} subtitle={isEdit ? `Editing: ${modal.course.title}` : "Fill in the details below"} onClose={close} width={540}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <Input label="Course Title *" value={formState.title} onChange={e => setFormState(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Advanced React Development" />
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <label style={{ fontSize: 13, fontWeight: 500, color: "#374151" }}>Description</label>
@@ -257,7 +233,42 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <Select label="Category" value={formState.category} onChange={e => setFormState(f => ({ ...f, category: e.target.value }))}
               options={["Web Dev", "Data Science", "Design", "Backend", "Mobile", "Cloud", "O/L", "A/L"]} />
-            <Input label="Price (LKR) *" type="number" value={formState.price} onChange={e => setFormState(f => ({ ...f, price: e.target.value }))} placeholder="e.g. 5000" />
+            <Input label="Regular Monthly Fee (LKR) *" type="number" value={formState.price} onChange={e => setFormState(f => ({ ...f, price: e.target.value }))} placeholder="e.g. 5000" />
+          </div>
+
+          {/* Special Offer / Discount Section */}
+          <div style={{ background: "#F0FDF4", border: "1.5px solid #BBF7D0", borderRadius: 10, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#166534", display: "flex", alignItems: "center", gap: 5 }}>
+                🎁 Promotional Offer / Discount Price
+              </span>
+              <span style={{ fontSize: 11, color: "#15803D" }}>Optional</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 500, color: "#166534", display: "block", marginBottom: 4 }}>Offer Price (LKR)</label>
+                <input
+                  type="number"
+                  placeholder="e.g. 3500 (Leave empty for none)"
+                  value={formState.offer_price}
+                  onChange={e => setFormState(f => ({ ...f, offer_price: e.target.value }))}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1.5px solid #86EFAC", fontSize: 13, background: "#fff", color: "#0F172A", outline: "none" }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 500, color: "#166534", display: "block", marginBottom: 4 }}>Offer Badge Label</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 30% OFF, SPECIAL OFFER"
+                  value={formState.discount_badge}
+                  onChange={e => setFormState(f => ({ ...f, discount_badge: e.target.value }))}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1.5px solid #86EFAC", fontSize: 13, background: "#fff", color: "#0F172A", outline: "none" }}
+                />
+              </div>
+            </div>
+            <p style={{ fontSize: 11, color: "#166534", margin: 0 }}>
+              * When an Offer Price is active, it becomes the default student fee across all months unless customized individually.
+            </p>
           </div>
           {/* File Upload */}
           <div>
@@ -306,6 +317,8 @@ export default function ModalManager({ modal, setModal, students, setStudents, c
 
 function ManageContentModal({ course, onClose }) {
   const [activeTab, setActiveTab] = useState("notices");
+  const [months, setMonths] = useState([]);
+  const [selectedMonthId, setSelectedMonthId] = useState("");
   const [notices, setNotices] = useState([]);
   const [recordings, setRecordings] = useState([]);
   const [contents, setContents] = useState([]);
@@ -315,15 +328,45 @@ function ManageContentModal({ course, onClose }) {
   const [pdfForm, setPdfForm] = useState({ title: "", content_url: "" });
   const [linkForm, setLinkForm] = useState({ title: "", content_url: "" });
 
+  // Fetch 12 course months
+  const fetchMonths = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/courses/${course.id}/months`);
+      if (res.ok) {
+        const data = await res.json();
+        setMonths(data);
+        if (data.length > 0 && !selectedMonthId) {
+          // Default to current month or first month
+          const curMonthNum = new Date().getMonth() + 1;
+          const matched = data.find(m => m.month_number === curMonthNum) || data[0];
+          setSelectedMonthId(String(matched.id));
+        }
+      }
+    } catch (err) {
+      console.error("Fetch months error:", err);
+    }
+  };
+
   const fetchAll = async () => {
     try {
+      const token = localStorage.getItem("token");
+      const headers = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      try {
+        const stored = JSON.parse(localStorage.getItem("currentUser") || "{}");
+        if (stored.id) headers["x-user-id"] = String(stored.id);
+      } catch (e) { }
+
       const nRes = await fetch(`${API_URL}/api/courses/${course.id}/notifications`);
       if (nRes.ok) setNotices(await nRes.json());
 
-      const rRes = await fetch(`${API_URL}/api/courses/${course.id}/recordings`);
+      const monthQuery = selectedMonthId ? `?course_month_id=${selectedMonthId}` : "";
+      const rRes = await fetch(`${API_URL}/api/courses/${course.id}/recordings${monthQuery}`, { headers });
       if (rRes.ok) setRecordings(await rRes.json());
 
-      const cRes = await fetch(`${API_URL}/api/courses/${course.id}/content`);
+      const cRes = await fetch(`${API_URL}/api/courses/${course.id}/content${monthQuery}`, { headers });
       if (cRes.ok) setContents(await cRes.json());
     } catch (err) {
       console.error("Fetch content error:", err);
@@ -331,8 +374,12 @@ function ManageContentModal({ course, onClose }) {
   };
 
   React.useEffect(() => {
-    fetchAll();
+    fetchMonths();
   }, [course.id]);
+
+  React.useEffect(() => {
+    fetchAll();
+  }, [course.id, selectedMonthId]);
 
   const addNotice = async () => {
     if (!noticeForm.title || !noticeForm.message) return;
@@ -367,11 +414,15 @@ function ManageContentModal({ course, onClose }) {
       const res = await fetch(`${API_URL}/api/courses/${course.id}/recordings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(recForm)
+        body: JSON.stringify({
+          ...recForm,
+          course_month_id: selectedMonthId ? parseInt(selectedMonthId) : null
+        })
       });
       if (res.ok) {
         setRecForm({ title: "", video_url: "", embed_code: "" });
         fetchAll();
+        fetchMonths();
       }
     } catch (err) {
       console.error(err);
@@ -382,7 +433,10 @@ function ManageContentModal({ course, onClose }) {
     if (!window.confirm("Are you sure?")) return;
     try {
       const res = await fetch(`${API_URL}/api/courses/recordings/${id}`, { method: "DELETE" });
-      if (res.ok) fetchAll();
+      if (res.ok) {
+        fetchAll();
+        fetchMonths();
+      }
     } catch (err) {
       console.error(err);
     }
@@ -394,11 +448,17 @@ function ManageContentModal({ course, onClose }) {
       const res = await fetch(`${API_URL}/api/courses/${course.id}/content`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: form.title, content_url: form.content_url, content_type: type })
+        body: JSON.stringify({
+          title: form.title,
+          content_url: form.content_url,
+          content_type: type,
+          course_month_id: selectedMonthId ? parseInt(selectedMonthId) : null
+        })
       });
       if (res.ok) {
         setForm({ title: "", content_url: "" });
         fetchAll();
+        fetchMonths();
       }
     } catch (err) {
       console.error(err);
@@ -409,15 +469,149 @@ function ManageContentModal({ course, onClose }) {
     if (!window.confirm("Are you sure?")) return;
     try {
       const res = await fetch(`${API_URL}/api/courses/content/${id}`, { method: "DELETE" });
-      if (res.ok) fetchAll();
+      if (res.ok) {
+        fetchAll();
+        fetchMonths();
+      }
     } catch (err) {
       console.error(err);
     }
   };
 
+  const [monthPriceInput, setMonthPriceInput] = useState("");
+  const [isUpdatingPrice, setIsUpdatingPrice] = useState(false);
+
+  const currentSelectedMonth = months.find(m => String(m.id) === String(selectedMonthId));
+
+  React.useEffect(() => {
+    if (currentSelectedMonth) {
+      setMonthPriceInput(String(currentSelectedMonth.monthly_price || 0));
+    }
+  }, [selectedMonthId, months]);
+
+  const updateMonthPrice = async (isReset = false) => {
+    if (!currentSelectedMonth) return;
+    setIsUpdatingPrice(true);
+    try {
+      // Default course price (offer price if set, otherwise regular price)
+      const courseDefaultPrice = (course.offer_price !== null && course.offer_price !== undefined && parseFloat(course.offer_price) > 0)
+        ? parseFloat(course.offer_price)
+        : (parseFloat(course.price) || 0);
+
+      const targetPrice = isReset ? courseDefaultPrice : parseFloat(monthPriceInput) || 0;
+      const customFlag = isReset ? 0 : 1;
+
+      const res = await fetch(`${API_URL}/api/courses/${course.id}/months/${currentSelectedMonth.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          monthly_price: targetPrice,
+          is_custom_price: customFlag
+        })
+      });
+
+      if (res.ok) {
+        await fetchMonths();
+        alert(isReset ? `Reset ${currentSelectedMonth.title} to default course price (Rs. ${courseDefaultPrice.toLocaleString()})` : `Updated ${currentSelectedMonth.title} fee to Rs. ${targetPrice.toLocaleString()}!`);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.error || "Failed to update month price");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Server error updating price: " + err.message);
+    } finally {
+      setIsUpdatingPrice(false);
+    }
+  };
+
   return (
-    <Modal title="Manage Course Materials" subtitle={`Course: ${course.title}`} onClose={onClose} width={650}>
+    <Modal title="Manage Course Materials & Monthly Pricing" subtitle={`Course: ${course.title}`} onClose={onClose} width={720}>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {/* Month Selector Bar */}
+        <div style={{ background: "#F1F5F9", padding: "12px 14px", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>📅 Select Month:</span>
+            <select
+              value={selectedMonthId}
+              onChange={e => setSelectedMonthId(e.target.value)}
+              style={{
+                padding: "7px 12px",
+                borderRadius: 8,
+                border: "1.5px solid #CBD5E1",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#1E293B",
+                background: "#fff",
+                cursor: "pointer"
+              }}
+            >
+              {months.map(m => (
+                <option key={m.id} value={m.id}>
+                  {m.title} {m.monthly_price > 0 ? `(Rs. ${Number(m.monthly_price).toLocaleString()})` : ""} {m.is_custom_price ? "★ Custom" : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+          {currentSelectedMonth && (
+            <div style={{ display: "flex", gap: 8, fontSize: 12 }}>
+              <span style={{ background: "#DBEAFE", color: "#1E40AF", padding: "4px 8px", borderRadius: 6, fontWeight: 600 }}>
+                {recordings.length} Videos
+              </span>
+              <span style={{ background: "#DCFCE7", color: "#166534", padding: "4px 8px", borderRadius: 6, fontWeight: 600 }}>
+                {contents.length} Materials
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Month Fee Control Strip */}
+        {currentSelectedMonth && (
+          <div style={{ background: "#EFF6FF", border: "1.5px solid #BFDBFE", borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#1E40AF", display: "flex", alignItems: "center", gap: 6 }}>
+                <span>💰 Fee for {currentSelectedMonth.title}:</span>
+                <span style={{ color: "#2563EB", fontSize: 14 }}>Rs. {Number(currentSelectedMonth.monthly_price || 0).toLocaleString()}</span>
+                {currentSelectedMonth.is_custom_price ? (
+                  <span style={{ background: "#FEF3C7", color: "#92400E", padding: "2px 6px", borderRadius: 4, fontSize: 10, fontWeight: 600 }}>Customized</span>
+                ) : (
+                  <span style={{ background: "#E2E8F0", color: "#475569", padding: "2px 6px", borderRadius: 4, fontSize: 10, fontWeight: 600 }}>Default Rate</span>
+                )}
+              </div>
+              <div style={{ fontSize: 11, color: "#64748B", marginTop: 2 }}>
+                Default course rate: Rs. {Number((course.offer_price > 0 ? course.offer_price : course.price) || 0).toLocaleString()}
+              </div>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                type="number"
+                value={monthPriceInput}
+                onChange={e => setMonthPriceInput(e.target.value)}
+                placeholder="Custom Fee"
+                style={{ width: 110, padding: "6px 10px", borderRadius: 6, border: "1.5px solid #93C5FD", fontSize: 13, background: "#fff", color: "#0F172A", outline: "none" }}
+              />
+              <button
+                onClick={() => updateMonthPrice(false)}
+                disabled={isUpdatingPrice}
+                style={{ padding: "6px 12px", borderRadius: 6, background: "#2563EB", color: "#fff", border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.15s" }}
+              >
+                Set Fee
+              </button>
+              {currentSelectedMonth.is_custom_price ? (
+                <button
+                  onClick={() => updateMonthPrice(true)}
+                  disabled={isUpdatingPrice}
+                  title="Reset this month to the default course fee"
+                  style={{ padding: "6px 10px", borderRadius: 6, background: "#F1F5F9", color: "#475569", border: "1.5px solid #CBD5E1", fontSize: 12, fontWeight: 500, cursor: "pointer" }}
+                >
+                  Reset Default
+                </button>
+              ) : null}
+            </div>
+          </div>
+        )}
+
         {/* Navigation Tabs */}
         <div style={{ display: "flex", borderBottom: "2px solid #E2E8F0" }}>
           {["notices", "recordings", "notes", "links"].map(tab => (
@@ -438,7 +632,7 @@ function ManageContentModal({ course, onClose }) {
                 transition: "all 0.15s"
               }}
             >
-              {tab === "notes" ? "Notes / PDFs" : tab === "links" ? "External Links" : tab}
+              {tab === "notices" ? "Notices" : tab === "recordings" ? "Recordings" : tab === "notes" ? "Notes / PDFs" : "External Links"}
             </button>
           ))}
         </div>
@@ -446,12 +640,160 @@ function ManageContentModal({ course, onClose }) {
         {/* Tab Contents */}
         <div style={{ maxHeight: "350px", overflowY: "auto", paddingRight: 4, display: "flex", flexDirection: "column", gap: 12 }}>
 
+          {/* RECORDINGS TAB */}
+          {activeTab === "recordings" && (
+            <>
+              {/* Add form */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12, background: "#F8FAFC", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <h4 style={{ margin: 0, fontSize: 13, color: "#1E293B" }}>
+                    Add Video Recording for <strong>{currentSelectedMonth?.title || "selected month"}</strong>
+                  </h4>
+                  <span style={{ fontSize: 11, color: "#2563EB", fontWeight: 600 }}>Month {currentSelectedMonth?.month_number || ""}</span>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Video Title (e.g. Day 01 - Full Class Recording)"
+                  value={recForm.title}
+                  onChange={e => setRecForm(f => ({ ...f, title: e.target.value }))}
+                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                />
+                <input
+                  type="text"
+                  placeholder="Video URL (Direct YouTube / Vimeo or MP4 link)"
+                  value={recForm.video_url}
+                  onChange={e => setRecForm(f => ({ ...f, video_url: e.target.value }))}
+                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                />
+                <textarea
+                  placeholder="Or Embed HTML Code (e.g. YouTube Iframe Embed Code)"
+                  rows={2}
+                  value={recForm.embed_code}
+                  onChange={e => setRecForm(f => ({ ...f, embed_code: e.target.value }))}
+                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, fontFamily: "inherit", resize: "vertical", background: "#fff", color: "#000" }}
+                />
+                <button onClick={addRecording} style={{ alignSelf: "flex-end", padding: "6px 16px", borderRadius: 6, background: "#2563EB", color: "#fff", border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+                  Add Video to {currentSelectedMonth?.title || "Month"}
+                </button>
+              </div>
+
+              {/* List */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <h4 style={{ margin: "10px 0 0 0", fontSize: 13, color: "#64748B" }}>
+                  Videos in {currentSelectedMonth?.title || "this month"} ({recordings.length})
+                </h4>
+                {recordings.map(r => (
+                  <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 8 }}>
+                    <div style={{ flex: 1, marginRight: 10 }}>
+                      <h5 style={{ margin: 0, color: "#166534", fontSize: 13 }}>{r.title}</h5>
+                      <span style={{ fontSize: 11, color: "#15803D", wordBreak: "break-all" }}>{r.video_url || "Embed HTML Code"}</span>
+                    </div>
+                    <button onClick={() => deleteRecording(r.id)} style={{ padding: "4px 8px", background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", borderRadius: 5, fontSize: 11, cursor: "pointer" }}>Delete</button>
+                  </div>
+                ))}
+                {recordings.length === 0 && <p style={{ fontSize: 12, color: "#94A3B8", textAlign: "center", padding: "10px 0" }}>No videos added for this month yet.</p>}
+              </div>
+            </>
+          )}
+
+          {/* NOTES/PDF TAB */}
+          {activeTab === "notes" && (
+            <>
+              {/* Add form */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12, background: "#F8FAFC", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+                <h4 style={{ margin: 0, fontSize: 13, color: "#1E293B" }}>
+                  Upload Note / PDF Link for <strong>{currentSelectedMonth?.title || "selected month"}</strong>
+                </h4>
+                <input
+                  type="text"
+                  placeholder="Document Title (e.g. Month 01 Theory Note)"
+                  value={pdfForm.title}
+                  onChange={e => setPdfForm(f => ({ ...f, title: e.target.value }))}
+                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                />
+                <input
+                  type="text"
+                  placeholder="Document URL (PDF Direct link / Google Drive link)"
+                  value={pdfForm.content_url}
+                  onChange={e => setPdfForm(f => ({ ...f, content_url: e.target.value }))}
+                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                />
+                <button onClick={() => addContent("pdf", pdfForm, setPdfForm)} style={{ alignSelf: "flex-end", padding: "6px 16px", borderRadius: 6, background: "#2563EB", color: "#fff", border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+                  Add PDF to {currentSelectedMonth?.title || "Month"}
+                </button>
+              </div>
+
+              {/* List */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <h4 style={{ margin: "10px 0 0 0", fontSize: 13, color: "#64748B" }}>
+                  Notes in {currentSelectedMonth?.title || "this month"} ({contents.filter(c => c.content_type === "pdf").length})
+                </h4>
+                {contents.filter(c => c.content_type === "pdf").map(c => (
+                  <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, background: "#FEF2F2", border: "1px solid #FEE2E2", borderRadius: 8 }}>
+                    <div style={{ flex: 1, marginRight: 10 }}>
+                      <h5 style={{ margin: 0, color: "#991B1B", fontSize: 13 }}>{c.title}</h5>
+                      <span style={{ fontSize: 11, color: "#B91C1C", wordBreak: "break-all" }}>{c.content_url}</span>
+                    </div>
+                    <button onClick={() => deleteContent(c.id)} style={{ padding: "4px 8px", background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", borderRadius: 5, fontSize: 11, cursor: "pointer" }}>Delete</button>
+                  </div>
+                ))}
+                {contents.filter(c => c.content_type === "pdf").length === 0 && <p style={{ fontSize: 12, color: "#94A3B8", textAlign: "center", padding: "10px 0" }}>No notes added for this month yet.</p>}
+              </div>
+            </>
+          )}
+
+          {/* EXTERNAL LINKS TAB */}
+          {activeTab === "links" && (
+            <>
+              {/* Add form */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12, background: "#F8FAFC", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+                <h4 style={{ margin: 0, fontSize: 13, color: "#1E293B" }}>
+                  Add External Link for <strong>{currentSelectedMonth?.title || "selected month"}</strong>
+                </h4>
+                <input
+                  type="text"
+                  placeholder="Material Title (e.g. Online Quiz / Resource Site)"
+                  value={linkForm.title}
+                  onChange={e => setLinkForm(f => ({ ...f, title: e.target.value }))}
+                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                />
+                <input
+                  type="text"
+                  placeholder="Material URL (e.g. Website URL / Form link)"
+                  value={linkForm.content_url}
+                  onChange={e => setLinkForm(f => ({ ...f, content_url: e.target.value }))}
+                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                />
+                <button onClick={() => addContent("link", linkForm, setLinkForm)} style={{ alignSelf: "flex-end", padding: "6px 16px", borderRadius: 6, background: "#2563EB", color: "#fff", border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+                  Add Link to {currentSelectedMonth?.title || "Month"}
+                </button>
+              </div>
+
+              {/* List */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <h4 style={{ margin: "10px 0 0 0", fontSize: 13, color: "#64748B" }}>
+                  Links in {currentSelectedMonth?.title || "this month"} ({contents.filter(c => c.content_type === "link").length})
+                </h4>
+                {contents.filter(c => c.content_type === "link").map(c => (
+                  <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, background: "#FAF5FF", border: "1px solid #E9D5FF", borderRadius: 8 }}>
+                    <div style={{ flex: 1, marginRight: 10 }}>
+                      <h5 style={{ margin: 0, color: "#6B21A8", fontSize: 13 }}>{c.title}</h5>
+                      <span style={{ fontSize: 11, color: "#7E22CE", wordBreak: "break-all" }}>{c.content_url}</span>
+                    </div>
+                    <button onClick={() => deleteContent(c.id)} style={{ padding: "4px 8px", background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", borderRadius: 5, fontSize: 11, cursor: "pointer" }}>Delete</button>
+                  </div>
+                ))}
+                {contents.filter(c => c.content_type === "link").length === 0 && <p style={{ fontSize: 12, color: "#94A3B8", textAlign: "center", padding: "10px 0" }}>No external links added for this month yet.</p>}
+              </div>
+            </>
+          )}
+
           {/* NOTICES TAB */}
           {activeTab === "notices" && (
             <>
               {/* Add form */}
               <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12, background: "#F8FAFC", borderRadius: 10, border: "1px solid #E2E8F0" }}>
-                <h4 style={{ margin: 0, fontSize: 13, color: "#1E293B" }}>Create Course Notice</h4>
+                <h4 style={{ margin: 0, fontSize: 13, color: "#1E293B" }}>Create General Course Notice</h4>
                 <input
                   type="text"
                   placeholder="Notice Title"
@@ -471,7 +813,7 @@ function ManageContentModal({ course, onClose }) {
 
               {/* List */}
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <h4 style={{ margin: "10px 0 0 0", fontSize: 13, color: "#64748B" }}>Existing Notices ({notices.length})</h4>
+                <h4 style={{ margin: "10px 0 0 0", fontSize: 13, color: "#64748B" }}>Course Notices ({notices.length})</h4>
                 {notices.map(n => (
                   <div key={n.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: 12, background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 8 }}>
                     <div style={{ flex: 1, marginRight: 10 }}>
@@ -486,133 +828,6 @@ function ManageContentModal({ course, onClose }) {
             </>
           )}
 
-          {/* RECORDINGS TAB */}
-          {activeTab === "recordings" && (
-            <>
-              {/* Add form */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12, background: "#F8FAFC", borderRadius: 10, border: "1px solid #E2E8F0" }}>
-                <h4 style={{ margin: 0, fontSize: 13, color: "#1E293B" }}>Add Video Recording</h4>
-                <input
-                  type="text"
-                  placeholder="Video Title"
-                  value={recForm.title}
-                  onChange={e => setRecForm(f => ({ ...f, title: e.target.value }))}
-                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
-                />
-                <input
-                  type="text"
-                  placeholder="Video URL (Direct link to video or mp4)"
-                  value={recForm.video_url}
-                  onChange={e => setRecForm(f => ({ ...f, video_url: e.target.value }))}
-                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
-                />
-                <textarea
-                  placeholder="Or Embed HTML Code (e.g. YouTube Iframe Embed Code)"
-                  rows={2}
-                  value={recForm.embed_code}
-                  onChange={e => setRecForm(f => ({ ...f, embed_code: e.target.value }))}
-                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, fontFamily: "inherit", resize: "vertical", background: "#fff", color: "#000" }}
-                />
-                <button onClick={addRecording} style={{ alignSelf: "flex-end", padding: "6px 16px", borderRadius: 6, background: "#2563EB", color: "#fff", border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Add Video</button>
-              </div>
-
-              {/* List */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <h4 style={{ margin: "10px 0 0 0", fontSize: 13, color: "#64748B" }}>Existing Recordings ({recordings.length})</h4>
-                {recordings.map(r => (
-                  <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 8 }}>
-                    <div style={{ flex: 1, marginRight: 10 }}>
-                      <h5 style={{ margin: 0, color: "#166534", fontSize: 13 }}>{r.title}</h5>
-                      <span style={{ fontSize: 11, color: "#15803D", wordBreak: "break-all" }}>{r.video_url || "Embed HTML Code"}</span>
-                    </div>
-                    <button onClick={() => deleteRecording(r.id)} style={{ padding: "4px 8px", background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", borderRadius: 5, fontSize: 11, cursor: "pointer" }}>Delete</button>
-                  </div>
-                ))}
-                {recordings.length === 0 && <p style={{ fontSize: 12, color: "#94A3B8", textAlign: "center", padding: "10px 0" }}>No videos added yet.</p>}
-              </div>
-            </>
-          )}
-
-          {/* NOTES/PDF TAB */}
-          {activeTab === "notes" && (
-            <>
-              {/* Add form */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12, background: "#F8FAFC", borderRadius: 10, border: "1px solid #E2E8F0" }}>
-                <h4 style={{ margin: 0, fontSize: 13, color: "#1E293B" }}>Upload Note / PDF Link</h4>
-                <input
-                  type="text"
-                  placeholder="Document Title"
-                  value={pdfForm.title}
-                  onChange={e => setPdfForm(f => ({ ...f, title: e.target.value }))}
-                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
-                />
-                <input
-                  type="text"
-                  placeholder="Document URL (PDF URL / File Link)"
-                  value={pdfForm.content_url}
-                  onChange={e => setPdfForm(f => ({ ...f, content_url: e.target.value }))}
-                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
-                />
-                <button onClick={() => addContent("pdf", pdfForm, setPdfForm)} style={{ alignSelf: "flex-end", padding: "6px 16px", borderRadius: 6, background: "#2563EB", color: "#fff", border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Add PDF</button>
-              </div>
-
-              {/* List */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <h4 style={{ margin: "10px 0 0 0", fontSize: 13, color: "#64748B" }}>Existing Notes ({contents.filter(c => c.content_type === "pdf").length})</h4>
-                {contents.filter(c => c.content_type === "pdf").map(c => (
-                  <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, background: "#FEF2F2", border: "1px solid #FEE2E2", borderRadius: 8 }}>
-                    <div style={{ flex: 1, marginRight: 10 }}>
-                      <h5 style={{ margin: 0, color: "#991B1B", fontSize: 13 }}>{c.title}</h5>
-                      <span style={{ fontSize: 11, color: "#B91C1C", wordBreak: "break-all" }}>{c.content_url}</span>
-                    </div>
-                    <button onClick={() => deleteContent(c.id)} style={{ padding: "4px 8px", background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", borderRadius: 5, fontSize: 11, cursor: "pointer" }}>Delete</button>
-                  </div>
-                ))}
-                {contents.filter(c => c.content_type === "pdf").length === 0 && <p style={{ fontSize: 12, color: "#94A3B8", textAlign: "center", padding: "10px 0" }}>No notes added yet.</p>}
-              </div>
-            </>
-          )}
-
-          {/* EXTERNAL LINKS TAB */}
-          {activeTab === "links" && (
-            <>
-              {/* Add form */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12, background: "#F8FAFC", borderRadius: 10, border: "1px solid #E2E8F0" }}>
-                <h4 style={{ margin: 0, fontSize: 13, color: "#1E293B" }}>Add External Material Link</h4>
-                <input
-                  type="text"
-                  placeholder="Material Title"
-                  value={linkForm.title}
-                  onChange={e => setLinkForm(f => ({ ...f, title: e.target.value }))}
-                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
-                />
-                <input
-                  type="text"
-                  placeholder="Material URL (e.g. Website URL / Video Link)"
-                  value={linkForm.content_url}
-                  onChange={e => setLinkForm(f => ({ ...f, content_url: e.target.value }))}
-                  style={{ padding: "8px 12px", borderRadius: 6, border: "1.5px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
-                />
-                <button onClick={() => addContent("link", linkForm, setLinkForm)} style={{ alignSelf: "flex-end", padding: "6px 16px", borderRadius: 6, background: "#2563EB", color: "#fff", border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Add Link</button>
-              </div>
-
-              {/* List */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <h4 style={{ margin: "10px 0 0 0", fontSize: 13, color: "#64748B" }}>Existing Links ({contents.filter(c => c.content_type === "link").length})</h4>
-                {contents.filter(c => c.content_type === "link").map(c => (
-                  <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, background: "#FAF5FF", border: "1px solid #E9D5FF", borderRadius: 8 }}>
-                    <div style={{ flex: 1, marginRight: 10 }}>
-                      <h5 style={{ margin: 0, color: "#6B21A8", fontSize: 13 }}>{c.title}</h5>
-                      <span style={{ fontSize: 11, color: "#7E22CE", wordBreak: "break-all" }}>{c.content_url}</span>
-                    </div>
-                    <button onClick={() => deleteContent(c.id)} style={{ padding: "4px 8px", background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", borderRadius: 5, fontSize: 11, cursor: "pointer" }}>Delete</button>
-                  </div>
-                ))}
-                {contents.filter(c => c.content_type === "link").length === 0 && <p style={{ fontSize: 12, color: "#94A3B8", textAlign: "center", padding: "10px 0" }}>No external links added yet.</p>}
-              </div>
-            </>
-          )}
-
         </div>
 
         {/* Close footer */}
@@ -621,3 +836,634 @@ function ManageContentModal({ course, onClose }) {
     </Modal>
   );
 }
+
+/* ========================================================
+   Enhanced Enroll Modal with Month-Access Selection
+   ======================================================== */
+function EnhancedEnrollModal({ student, courses, onClose, onEnrolled }) {
+  const [courseId, setCourseId] = useState(courses[0]?.id || "");
+  const [expiry, setExpiry] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().split("T")[0];
+  });
+  const [grantAll, setGrantAll] = useState(true);
+  const [months, setMonths] = useState([]);
+  const [selectedMonths, setSelectedMonths] = useState([]);
+  const [loadingMonths, setLoadingMonths] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // When courseId changes, fetch months
+  useEffect(() => {
+    if (!courseId) return;
+    let isMounted = true;
+    setLoadingMonths(true);
+    fetch(`${API_URL}/api/courses/${courseId}/months`)
+      .then(res => res.json())
+      .then(data => {
+        if (isMounted) {
+          setMonths(Array.isArray(data) ? data : []);
+          setSelectedMonths(Array.isArray(data) ? data.map(m => m.id) : []);
+          setLoadingMonths(false);
+        }
+      })
+      .catch(err => {
+        console.error("Error loading months:", err);
+        if (isMounted) setLoadingMonths(false);
+      });
+    return () => { isMounted = false; };
+  }, [courseId]);
+
+  const toggleMonth = (mId) => {
+    setSelectedMonths(prev =>
+      prev.includes(mId) ? prev.filter(id => id !== mId) : [...prev, mId]
+    );
+  };
+
+  const handleConfirm = async () => {
+    if (!courseId || !expiry) {
+      alert("Please select a course and expiry date.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${API_URL}/api/admin/enrollments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          student_id: student.id,
+          course_id: courseId,
+          expiry_date: expiry,
+          grant_all_months: grantAll,
+          month_ids: grantAll ? [] : selectedMonths
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Student enrolled successfully with selected month access!");
+        onEnrolled();
+      } else {
+        alert(data.error || "Enrollment failed");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to connect to server");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const selectedCourse = courses.find(c => c.id === courseId);
+
+  return (
+    <Modal
+      title="Enroll Student"
+      subtitle={`Enrolling ${student?.full_name || student?.name} (ID: ${student?.id})`}
+      onClose={onClose}
+      width={600}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <Select
+          label="Select Course *"
+          value={courseId}
+          onChange={e => setCourseId(e.target.value)}
+          options={courses.map(c => ({ value: c.id, label: `${c.title} (${c.students || 0} students)` }))}
+        />
+
+        {selectedCourse && (
+          <div style={{ background: "#F0FDF4", border: "1.5px solid #BBF7D0", borderRadius: 10, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ fontSize: 13, color: "#166534" }}>
+              <strong>Fee:</strong> Rs. {parseFloat(selectedCourse.offer_price || selectedCourse.price || 0).toLocaleString()}
+              {selectedCourse.discount_badge && (
+                <span style={{ marginLeft: 8, background: "#16A34A", color: "#fff", padding: "2px 6px", borderRadius: 4, fontSize: 10, fontWeight: 700 }}>
+                  {selectedCourse.discount_badge}
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize: 12, color: "#15803D" }}>
+              Category: <strong>{selectedCourse.course_category || "General"}</strong>
+            </div>
+          </div>
+        )}
+
+        <Input
+          label="Course Access Expiry Date *"
+          type="date"
+          value={expiry}
+          onChange={e => setExpiry(e.target.value)}
+        />
+
+        {/* Month Access Selection */}
+        <div style={{ border: "1.5px solid #E2E8F0", borderRadius: 12, padding: "14px", background: "#F8FAFC" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <div>
+              <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#1E293B" }}>
+                📅 Monthly Content Access
+              </h4>
+              <p style={{ margin: 0, fontSize: 11, color: "#64748B" }}>
+                Select which months of learning materials this student can unlock
+              </p>
+            </div>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: "#2563EB", cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={grantAll}
+                onChange={e => {
+                  setGrantAll(e.target.checked);
+                  if (e.target.checked) {
+                    setSelectedMonths(months.map(m => m.id));
+                  } else {
+                    setSelectedMonths([]);
+                  }
+                }}
+                style={{ width: 16, height: 16, cursor: "pointer" }}
+              />
+              Unlock All 12 Months
+            </label>
+          </div>
+
+          {loadingMonths ? (
+            <div style={{ padding: "16px", textAlign: "center", fontSize: 12, color: "#94A3B8" }}>Loading months...</div>
+          ) : !grantAll ? (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, maxHeight: 180, overflowY: "auto", padding: "4px" }}>
+              {months.map(m => {
+                const checked = selectedMonths.includes(m.id);
+                return (
+                  <div
+                    key={m.id}
+                    onClick={() => toggleMonth(m.id)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "8px 10px",
+                      borderRadius: 8,
+                      border: checked ? "1.5px solid #2563EB" : "1.5px solid #E2E8F0",
+                      background: checked ? "#EFF6FF" : "#fff",
+                      cursor: "pointer",
+                      transition: "all 0.15s"
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => { }}
+                      style={{ cursor: "pointer" }}
+                    />
+                    <div style={{ overflow: "hidden" }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: checked ? "#1E40AF" : "#334155", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
+                        {m.title || `Month ${m.month_number}`}
+                      </div>
+                      <div style={{ fontSize: 10, color: "#94A3B8" }}>Rs. {parseFloat(m.monthly_price || 0).toLocaleString()}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ background: "#EFF6FF", border: "1px dashed #93C5FD", borderRadius: 8, padding: "10px", textAlign: "center", fontSize: 12, color: "#1E40AF" }}>
+              ✓ All 12 monthly content modules (notices, videos, pdfs) will be automatically unlocked for this student.
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
+          <button
+            onClick={onClose}
+            type="button"
+            className="btn-ghost"
+            style={{ flex: 1, padding: "10px", borderRadius: 9, border: "1.5px solid #E2E8F0", background: "#F8FAFC", cursor: "pointer", fontWeight: 500, fontSize: 14, color: "#64748B" }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirm}
+            type="button"
+            disabled={!courseId || !expiry || submitting}
+            style={{
+              flex: 1,
+              padding: "10px",
+              borderRadius: 9,
+              border: "none",
+              background: courseId && expiry && !submitting ? "#059669" : "#94A3B8",
+              cursor: courseId && expiry && !submitting ? "pointer" : "not-allowed",
+              fontWeight: 600,
+              fontSize: 14,
+              color: "#fff",
+              transition: "all 0.2s"
+            }}
+          >
+            {submitting ? "Enrolling..." : "Confirm & Unlock"}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+/* ========================================================
+   Manage Student Enrolled Courses & Month Access Modal
+   ======================================================== */
+function ManageStudentAccessModal({ student, courses, onClose, onOpenEnroll }) {
+  const [enrollments, setEnrollments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeCourseId, setActiveCourseId] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const fetchEnrollments = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/admin/students/${student.id}/enrollments`);
+      if (res.ok) {
+        const data = await res.json();
+        setEnrollments(data);
+        if (data.length > 0 && !activeCourseId) {
+          setActiveCourseId(data[0].course_id);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching student enrollments:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEnrollments();
+  }, [student.id]);
+
+  // Toggle individual month
+  const toggleMonth = async (courseId, monthId, currentStatus) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/admin/students/${student.id}/courses/${courseId}/month-access`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          course_month_id: monthId,
+          grant: !currentStatus
+        })
+      });
+      if (res.ok) {
+        await fetchEnrollments();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to update month access");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to connect to server");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Toggle all months for course
+  const toggleAllMonths = async (courseId, grant) => {
+    if (!confirm(`Are you sure you want to ${grant ? "UNLOCK" : "LOCK"} all 12 months for this student?`)) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/admin/students/${student.id}/courses/${courseId}/toggle-all-months`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ grant })
+      });
+      if (res.ok) {
+        await fetchEnrollments();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to toggle months");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to connect to server");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Unenroll / remove student from course
+  const unenrollCourse = async (courseId, courseTitle) => {
+    if (!confirm(`⚠️ Are you sure you want to REMOVE ${student.full_name || student.name} from "${courseTitle}"?\n\nThis will revoke all course & monthly content access immediately.`)) {
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/admin/students/${student.id}/courses/${courseId}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        alert("Student removed from course successfully.");
+        await fetchEnrollments();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to remove student from course");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to connect to server");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const activeEnr = enrollments.find(e => e.course_id === activeCourseId) || enrollments[0];
+
+  return (
+    <Modal
+      title="Student Course & Month Access"
+      subtitle={`Managing courses & permissions for ${student?.full_name || student?.name} · Phone: ${student?.phone_number || "N/A"}`}
+      onClose={onClose}
+      width={780}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {/* Top Header bar with quick enroll button */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#F1F5F9", padding: "10px 14px", borderRadius: 10 }}>
+          <div style={{ fontSize: 13, color: "#334155" }}>
+            Enrolled in <strong>{enrollments.length}</strong> {enrollments.length === 1 ? "course" : "courses"}
+          </div>
+          <button
+            onClick={() => {
+              onClose();
+              onOpenEnroll(student);
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 12px",
+              borderRadius: 7,
+              background: "#2563EB",
+              color: "#fff",
+              border: "none",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer"
+            }}
+          >
+            {Ic.plus(12)} Enroll in Another Course
+          </button>
+        </div>
+
+        {loading ? (
+          <div style={{ padding: "40px", textAlign: "center", color: "#64748B", fontSize: 14 }}>
+            Loading student course data...
+          </div>
+        ) : enrollments.length === 0 ? (
+          <div style={{ padding: "40px 20px", textAlign: "center", background: "#F8FAFC", borderRadius: 12, border: "1.5px dashed #CBD5E1" }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>🎓</div>
+            <h3 style={{ margin: "0 0 6px 0", color: "#1E293B", fontSize: 16 }}>No Enrolled Courses Found</h3>
+            <p style={{ margin: "0 0 16px 0", color: "#64748B", fontSize: 13 }}>
+              This student has not been enrolled in any courses yet.
+            </p>
+            <button
+              onClick={() => {
+                onClose();
+                onOpenEnroll(student);
+              }}
+              style={{
+                padding: "8px 18px",
+                borderRadius: 8,
+                background: "#059669",
+                color: "#fff",
+                border: "none",
+                fontWeight: 600,
+                fontSize: 13,
+                cursor: "pointer"
+              }}
+            >
+              Enroll Student Now
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 16 }}>
+            {/* Left side: Course list */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "#64748B", letterSpacing: "0.5px" }}>
+                Enrolled Courses ({enrollments.length})
+              </span>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 360, overflowY: "auto" }}>
+                {enrollments.map(enr => {
+                  const isSelected = activeCourseId === enr.course_id;
+                  const unlockedCount = (enr.months || []).filter(m => m.has_access).length;
+                  return (
+                    <div
+                      key={enr.enrollment_id}
+                      onClick={() => setActiveCourseId(enr.course_id)}
+                      style={{
+                        padding: "10px 12px",
+                        borderRadius: 9,
+                        border: isSelected ? "1.5px solid #2563EB" : "1.5px solid #E2E8F0",
+                        background: isSelected ? "#EFF6FF" : "#fff",
+                        cursor: "pointer",
+                        transition: "all 0.15s"
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: isSelected ? "#1E40AF" : "#1E293B", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1, paddingRight: 6 }}>
+                          {enr.course_title}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            unenrollCourse(enr.course_id, enr.course_title);
+                          }}
+                          disabled={actionLoading}
+                          title="Remove from Course"
+                          style={{
+                            padding: "3px 6px",
+                            borderRadius: 5,
+                            border: "1px solid #FECACA",
+                            background: "#FEF2F2",
+                            color: "#DC2626",
+                            cursor: actionLoading ? "not-allowed" : "pointer",
+                            fontSize: 10,
+                            fontWeight: 600,
+                            display: "flex",
+                            alignItems: "center"
+                          }}
+                        >
+                          {Ic.trash(11)}
+                        </button>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, color: "#64748B" }}>
+                        <span>{enr.course_category || "General"}</span>
+                        <span style={{ fontWeight: 600, color: unlockedCount > 0 ? "#16A34A" : "#94A3B8" }}>
+                          {unlockedCount}/12 Unlocked
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right side: Course details & Month Access toggles */}
+            {activeEnr ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, borderLeft: "1px solid #E2E8F0", paddingLeft: 16 }}>
+                {/* Course Banner */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", paddingBottom: 10, borderBottom: "1px solid #F1F5F9" }}>
+                  <div>
+                    <h3 style={{ margin: "0 0 4px 0", color: "#0F172A", fontSize: 16, fontWeight: 700 }}>
+                      {activeEnr.course_title}
+                    </h3>
+                    <div style={{ display: "flex", gap: 12, fontSize: 12, color: "#64748B" }}>
+                      <span>Expires: <strong>{activeEnr.expiry_date ? new Date(activeEnr.expiry_date).toLocaleDateString() : "Permanent"}</strong></span>
+                      <span>Enrolled on: {new Date(activeEnr.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => unenrollCourse(activeEnr.course_id, activeEnr.course_title)}
+                    disabled={actionLoading}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                      padding: "6px 12px",
+                      borderRadius: 7,
+                      border: "1.5px solid rgba(239, 68, 68, 0.4)",
+                      background: "rgba(239, 68, 68, 0.1)",
+                      color: "#DC2626",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: actionLoading ? "not-allowed" : "pointer"
+                    }}
+                    title="Remove student from this course completely"
+                  >
+                    {Ic.trash(12)} Remove from Course
+                  </button>
+                </div>
+
+                {/* Bulk Actions for months */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#334155" }}>
+                    Monthly Content Access (12 Months)
+                  </span>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      onClick={() => toggleAllMonths(activeEnr.course_id, true)}
+                      disabled={actionLoading}
+                      style={{
+                        padding: "5px 10px",
+                        borderRadius: 6,
+                        border: "1px solid #86EFAC",
+                        background: "#F0FDF4",
+                        color: "#166534",
+                        fontSize: 11,
+                        fontWeight: 600,
+                        cursor: actionLoading ? "not-allowed" : "pointer"
+                      }}
+                    >
+                      ✓ Unlock All Months
+                    </button>
+                    <button
+                      onClick={() => toggleAllMonths(activeEnr.course_id, false)}
+                      disabled={actionLoading}
+                      style={{
+                        padding: "5px 10px",
+                        borderRadius: 6,
+                        border: "1px solid #FECACA",
+                        background: "#FEF2F2",
+                        color: "#991B1B",
+                        fontSize: 11,
+                        fontWeight: 600,
+                        cursor: actionLoading ? "not-allowed" : "pointer"
+                      }}
+                    >
+                      ✕ Lock All Months
+                    </button>
+                  </div>
+                </div>
+
+                {/* Grid of 12 Months */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, maxHeight: 260, overflowY: "auto", padding: "2px" }}>
+                  {(activeEnr.months || []).map(m => {
+                    const isUnlocked = m.has_access;
+                    return (
+                      <div
+                        key={m.month_id}
+                        style={{
+                          padding: "10px",
+                          borderRadius: 8,
+                          border: isUnlocked ? "1.5px solid #86EFAC" : "1.5px solid #E2E8F0",
+                          background: isUnlocked ? "#F0FDF4" : "#F8FAFC",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 6
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: isUnlocked ? "#166534" : "#475569" }}>
+                            {m.month_title || `Month ${m.month_number}`}
+                          </span>
+                          <span
+                            style={{
+                              padding: "2px 6px",
+                              borderRadius: 4,
+                              fontSize: 10,
+                              fontWeight: 700,
+                              background: isUnlocked ? "#DCFCE7" : "#E2E8F0",
+                              color: isUnlocked ? "#15803D" : "#64748B"
+                            }}
+                          >
+                            {isUnlocked ? "UNLOCKED" : "LOCKED"}
+                          </span>
+                        </div>
+
+                        <div style={{ fontSize: 10, color: "#64748B" }}>
+                          Fee: Rs. {parseFloat(m.monthly_price || 0).toLocaleString()}
+                        </div>
+
+                        <button
+                          onClick={() => toggleMonth(activeEnr.course_id, m.month_id, isUnlocked)}
+                          disabled={actionLoading}
+                          style={{
+                            width: "100%",
+                            padding: "5px 8px",
+                            borderRadius: 6,
+                            border: "none",
+                            background: isUnlocked ? "#FEE2E2" : "#DBEAFE",
+                            color: isUnlocked ? "#991B1B" : "#1E40AF",
+                            fontSize: 11,
+                            fontWeight: 600,
+                            cursor: actionLoading ? "not-allowed" : "pointer",
+                            transition: "all 0.15s"
+                          }}
+                        >
+                          {isUnlocked ? "Lock Access" : "Unlock Access"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {/* Footer */}
+        <div style={{ borderTop: "1px solid #E2E8F0", paddingTop: 12, display: "flex", justifyContent: "flex-end" }}>
+          <button
+            onClick={onClose}
+            className="btn-primary"
+            style={{
+              padding: "9px 22px",
+              borderRadius: 8,
+              border: "none",
+              background: "#2563EB",
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: "pointer"
+            }}
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+

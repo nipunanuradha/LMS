@@ -21,6 +21,9 @@ export function Registration() {
 
     const passwordToSet = Math.random().toString(36).slice(-8);
 
+    const params = new URLSearchParams(window.location.search);
+    const courseIdParam = params.get("course_id") || params.get("course");
+
     try {
       const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
@@ -30,7 +33,8 @@ export function Registration() {
           phone_number: formData.phone,
           district: formData.district,
           province: formData.province,
-          password: passwordToSet
+          password: passwordToSet,
+          course_id: courseIdParam ? parseInt(courseIdParam) : undefined
         }),
       });
 
@@ -47,7 +51,13 @@ export function Registration() {
   };
 
   const handleContinue = () => {
-    navigate("/");
+    const params = new URLSearchParams(window.location.search);
+    const cid = params.get("course_id") || params.get("course");
+    if (cid) {
+      navigate(`/?course_id=${cid}`);
+    } else {
+      navigate("/");
+    }
   };
 
   return (
@@ -140,6 +150,22 @@ export function Registration() {
                   <option value="Sabaragamuwa">Sabaragamuwa</option>
                 </select>
               </div>
+
+              <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
+                By registering, you agree to ICT Academy's{" "}
+                <Link to="/terms-of-service" className="text-blue-600 dark:text-blue-400 font-semibold underline hover:text-blue-700">
+                  Terms of Service
+                </Link>
+                ,{" "}
+                <Link to="/privacy-policy" className="text-blue-600 dark:text-blue-400 font-semibold underline hover:text-blue-700">
+                  Privacy Policy
+                </Link>
+                , and{" "}
+                <Link to="/refund-policy" className="text-blue-600 dark:text-blue-400 font-semibold underline hover:text-blue-700">
+                  Refund Policy
+                </Link>
+                .
+              </p>
 
               <button
                 type="submit"

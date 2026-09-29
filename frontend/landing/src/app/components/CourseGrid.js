@@ -124,62 +124,82 @@ export default function CourseGrid({ onEnrollClick }) {
           <div className={courses.length > 6 ? "max-h-[1050px] overflow-y-auto custom-scrollbar px-4 py-3 -mx-4 -my-3" : ""}>
             <div className="grid md:grid-cols-3 gap-8 p-1">
               {courses.map((course) => {
-              const colors = [
-                "from-blue-600 to-indigo-600",
-                "from-cyan-500 to-blue-600",
-                "from-indigo-600 to-purple-600"
-              ];
-              const randomGradient = colors[course.id % colors.length] || colors[0];
+                const colors = [
+                  "from-blue-600 to-indigo-600",
+                  "from-cyan-500 to-blue-600",
+                  "from-indigo-600 to-purple-600"
+                ];
+                const randomGradient = colors[course.id % colors.length] || colors[0];
 
-              return (
-                <div
-                  key={course.id}
-                  className="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden"
-                >
-                  {/* Thumbnail / Accent Image */}
-                  <div className="w-full h-48 relative shrink-0 overflow-hidden bg-slate-100 dark:bg-slate-800">
-                    <CourseThumbnail
-                      thumbnail={course.thumbnail_url}
-                      title={course.title}
-                      gradient={randomGradient}
-                    />
+                return (
+                  <div
+                    key={course.id}
+                    className="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden"
+                  >
+                    {/* Thumbnail / Accent Image */}
+                    <div className="w-full h-48 relative shrink-0 overflow-hidden bg-slate-100 dark:bg-slate-800">
+                      <CourseThumbnail
+                        thumbnail={course.thumbnail_url}
+                        title={course.title}
+                        gradient={randomGradient}
+                      />
 
-                    {/* Price Tag Overlay */}
-                    <div className="absolute top-4 right-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur px-3.5 py-1.5 rounded-full font-bold text-sm text-blue-600 dark:text-blue-400 shadow-md border border-slate-100 dark:border-slate-800">
-                      {formatLKR(course.price)}
+                      {/* Price Tag Overlay */}
+                      <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                        {course.discount_badge && (
+                          <span className="bg-emerald-500 text-white text-[11px] font-bold px-2 py-1 rounded-full shadow-md uppercase tracking-wider animate-pulse">
+                            {course.discount_badge}
+                          </span>
+                        )}
+                        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur px-3 py-1.5 rounded-full font-bold text-sm shadow-md border border-slate-100 dark:border-slate-800 flex items-baseline gap-1.5">
+                          {course.offer_price && Number(course.offer_price) > 0 ? (
+                            <>
+                              <span className="text-emerald-600 dark:text-emerald-400">
+                                {formatLKR(course.offer_price)}
+                              </span>
+                              <span className="text-[11px] text-slate-400 line-through font-normal">
+                                {formatLKR(course.price)}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-blue-600 dark:text-blue-400">
+                              {formatLKR(course.price)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card Content */}
+                    <div className="p-6 flex-1 flex flex-col justify-between">
+                      <div>
+                        <span className="inline-block text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-1 rounded-md mb-3">
+                          {course.category || "Web Dev"}
+                        </span>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-2">
+                          {course.title}
+                        </h3>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed line-clamp-3 mb-4">
+                          {course.description}
+                        </p>
+                      </div>
+
+                      <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        {/* Enroll Button */}
+                        <button
+                          onClick={() => onEnrollClick && onEnrollClick(course)}
+                          className="w-full py-3 px-4 bg-slate-900 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-semibold rounded-xl hover:-translate-y-0.5 active:translate-y-0 transition-all shadow-md hover:shadow-blue-500/20 cursor-pointer text-center"
+                        >
+                          Enroll Now
+                        </button>
+                      </div>
                     </div>
                   </div>
-
-                  {/* Card Content */}
-                  <div className="p-6 flex-1 flex flex-col justify-between">
-                    <div>
-                      <span className="inline-block text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-1 rounded-md mb-3">
-                        {course.category || "Web Dev"}
-                      </span>
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-white line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-2">
-                        {course.title}
-                      </h3>
-                      <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed line-clamp-3 mb-4">
-                        {course.description}
-                      </p>
-                    </div>
-
-                    <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                      {/* Enroll Button */}
-                      <button
-                        onClick={onEnrollClick}
-                        className="w-full py-3 px-4 bg-slate-900 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-semibold rounded-xl hover:-translate-y-0.5 active:translate-y-0 transition-all shadow-md hover:shadow-blue-500/20 cursor-pointer text-center"
-                      >
-                        Enroll Now
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       </div>
     </section>

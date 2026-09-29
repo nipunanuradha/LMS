@@ -86,10 +86,12 @@ export default function Footer() {
         {/* Bottom copyright */}
         <div className="mt-12 pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-600">
           <p>&copy; {currentYear} ICT Academy. All rights reserved.</p>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4">
             <a href="/privacy-policy" className="hover:text-slate-400">Privacy Policy</a>
             <span>•</span>
             <a href="/terms-of-service" className="hover:text-slate-400">Terms of Service</a>
+            <span>•</span>
+            <a href="/refund-policy" className="hover:text-slate-400">Refund Policy</a>
           </div>
         </div>
       </div>

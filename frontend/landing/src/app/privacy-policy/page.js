@@ -39,10 +39,11 @@ export default function PrivacyPolicy() {
               We collect information that you provide directly to us when registering for a course, creating an account on our Student LMS, or contacting us for support. This includes:
             </p>
             <ul className="list-disc pl-6 space-y-2 marker:text-blue-500 dark:marker:text-blue-400">
-              <li><strong className="text-slate-900 dark:text-slate-100">Personal details:</strong> Name, date of birth, gender, and national identity card (NIC) number.</li>
-              <li><strong className="text-slate-900 dark:text-slate-100">Contact information:</strong> Email address, mobile phone number, and physical billing/postal address.</li>
-              <li><strong className="text-slate-900 dark:text-slate-100">Academic records:</strong> Courses enrolled, course progress, grades, assignments, and certification statuses.</li>
-              <li><strong className="text-slate-900 dark:text-slate-100">Technical data:</strong> IP address, browser type, and system logs when you interact with our LMS platform.</li>
+              <li><strong className="text-slate-900 dark:text-slate-100">Personal details:</strong> Full name, date of birth, gender, and national identity card (NIC) number.</li>
+              <li><strong className="text-slate-900 dark:text-slate-100">Contact information:</strong> Email address, mobile phone number, district, and province.</li>
+              <li><strong className="text-slate-900 dark:text-slate-100">Academic & LMS records:</strong> Courses enrolled, monthly modular access records, attendance, video playback logs, quiz and assignment results.</li>
+              <li><strong className="text-slate-900 dark:text-slate-100">Payment & Transaction records:</strong> Transaction references, payment dates, amounts paid, payment method (e.g. Card or Bank Transfer), and invoice numbers. <em>(Note: Sensitive card details such as full 16-digit card numbers, PINs, and CVV security codes are handled directly by certified bank gateways and are NEVER stored or seen by ICT Academy).</em></li>
+              <li><strong className="text-slate-900 dark:text-slate-100">Technical logs:</strong> IP address, device fingerprints, operating system, and browser information recorded for security verification and preventing account sharing.</li>
             </ul>
           </section>
 
@@ -57,10 +58,11 @@ export default function PrivacyPolicy() {
               ICT Academy utilizes the collected data for various purposes in order to provide and improve our educational services:
             </p>
             <ul className="list-disc pl-6 space-y-2 marker:text-blue-500 dark:marker:text-blue-400">
-              <li>To manage your enrollment and authorize access to your personal Student LMS dashboard.</li>
-              <li>To track your academic progress, issue certifications, and evaluate assignments.</li>
-              <li>To send vital administrative updates, announcements, and promotional newsletters (which you can opt-out of at any time).</li>
-              <li>To analyze LMS system performance, fix technical bugs, and improve the overall learning experience.</li>
+              <li>To authenticate your student login and unlock access to paid course months and learning materials.</li>
+              <li>To process course fee payments, generate official receipts, and manage billing records.</li>
+              <li>To evaluate exams, calculate rankings, track course completion, and issue verifiable certificates.</li>
+              <li>To send essential SMS or email alerts regarding class schedules, payment confirmations, and system updates.</li>
+              <li>To enforce copyright protection, deter unauthorized account sharing or video piracy, and maintain platform security.</li>
             </ul>
           </section>
 
@@ -69,16 +71,14 @@ export default function PrivacyPolicy() {
           <section className="space-y-4">
             <h2 className="font-display font-bold text-xl text-slate-900 dark:text-white flex items-center gap-2">
               <FileText className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-              3. Information Sharing & Disclosure
+              3. Payment Processing & Third-Party Gateways
             </h2>
             <p className="leading-relaxed">
-              We highly value your privacy and do not sell or rent your personal information to third parties. We may disclose your information only under the following circumstances:
+              Online credit card and debit card transactions on ICT Academy are handled by accredited, PCI-DSS Level 1 compliant financial payment aggregators and licensed Sri Lankan banking partners.
             </p>
-            <ul className="list-disc pl-6 space-y-2 marker:text-blue-500 dark:marker:text-blue-400">
-              <li><strong className="text-slate-900 dark:text-slate-100">Service Providers:</strong> With trusted third-party services that host our systems, process online payments, or distribute emails.</li>
-              <li><strong className="text-slate-900 dark:text-slate-100">Legal Compliance:</strong> If required to do so by Sri Lankan law or in response to valid requests by public authorities.</li>
-              <li><strong className="text-slate-900 dark:text-slate-100">Corporate Partners:</strong> If you are enrolled through an employer-sponsored or institutional program, we may share progress reports with them.</li>
-            </ul>
+            <p className="leading-relaxed">
+              When processing an online payment, your financial details are securely transmitted via 256-bit TLS encryption directly from your browser to the payment processor. ICT Academy strictly complies with the Personal Data Protection Act (PDPA) No. 9 of 2022 of Sri Lanka.
+            </p>
           </section>
 
           <hr className="border-slate-100 dark:border-slate-800" />
@@ -86,13 +86,10 @@ export default function PrivacyPolicy() {
           <section className="space-y-4">
             <h2 className="font-display font-bold text-xl text-slate-900 dark:text-white flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-              4. Data Security & Retention
+              4. Data Protection & Student Rights
             </h2>
             <p className="leading-relaxed">
-              We employ industry-standard encryption and security measures to protect your personal information against unauthorized access, loss, or alteration.
-            </p>
-            <p className="leading-relaxed">
-              Your account credentials and student records are stored on secure cloud servers. We retain your personal data for as long as your student account is active or as needed to provide you services and maintain official academic registry archives.
+              We employ strict industry-standard security practices, encrypted databases, and role-based permissions to safeguard your data. Students possess the right to review their registered profile details, request corrections, or request account deactivation subject to academic record retention policies.
             </p>
           </section>
 

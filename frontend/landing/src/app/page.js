@@ -13,10 +13,12 @@ import LoginModal from "./components/LoginModal";
 
 export default function Home() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
 
   useEffect(() => {
     const handlePageShow = () => {
       setIsLoginModalOpen(false);
+      setSelectedCourse(null);
     };
     window.addEventListener("pageshow", handlePageShow);
 
@@ -36,10 +38,20 @@ export default function Home() {
     };
   }, []);
 
+  const handleEnrollClick = (course) => {
+    setSelectedCourse(course);
+    setIsLoginModalOpen(true);
+  };
+
+  const handleNavbarLoginClick = () => {
+    setSelectedCourse(null);
+    setIsLoginModalOpen(true);
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Navigation Header */}
-      <Navbar onLoginClick={() => setIsLoginModalOpen(true)} />
+      <Navbar onLoginClick={handleNavbarLoginClick} />
 
       <main className="flex-1">
         {/* Hero Banner Section */}
@@ -49,7 +61,7 @@ export default function Home() {
         <About />
 
         {/* Dynamic Courses Listing */}
-        <CourseGrid onEnrollClick={() => setIsLoginModalOpen(true)} />
+        <CourseGrid onEnrollClick={handleEnrollClick} />
 
         {/* Reviews & Social Proof */}
         <Testimonials />
@@ -67,7 +79,11 @@ export default function Home() {
       {/* Global Authenticator Modal */}
       <LoginModal
         isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
+        selectedCourse={selectedCourse}
+        onClose={() => {
+          setIsLoginModalOpen(false);
+          setSelectedCourse(null);
+        }}
       />
     </div>
   );

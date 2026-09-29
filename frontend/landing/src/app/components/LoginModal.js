@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GraduationCap, Eye, EyeOff, X, ArrowLeft } from "lucide-react";
 import { API_URL, ADMIN_URL, STUDENT_URL } from "../config";
 
-export default function LoginModal({ isOpen, onClose }) {
-  const [isLogin, setIsLogin] = useState(true);
+export default function LoginModal({ isOpen, onClose, selectedCourse }) {
+  // If clicked Enroll on a course, default to registration, else login
+  const [isLogin, setIsLogin] = useState(!selectedCourse);
 
   // Login form state
   const [phone, setPhone] = useState("");
@@ -24,6 +25,16 @@ export default function LoginModal({ isOpen, onClose }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // When modal opens or selectedCourse changes, adjust isLogin
+  useEffect(() => {
+    if (selectedCourse) {
+      setIsLogin(false);
+    } else {
+      setIsLogin(true);
+    }
+    setError("");
+  }, [selectedCourse, isOpen]);
+
   if (!isOpen) return null;
 
   const handleLoginSubmit = async (e) => {
@@ -35,7 +46,11 @@ export default function LoginModal({ isOpen, onClose }) {
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone_number: phone, password }),
+        body: JSON.stringify({
+          phone_number: phone,
+          password,
+          course_id: selectedCourse ? selectedCourse.id : undefined
+        }),
       });
 
       const data = await response.json();
@@ -46,7 +61,8 @@ export default function LoginModal({ isOpen, onClose }) {
         if (data.user.role === "admin") {
           window.location.href = `${ADMIN_URL}/?token=${data.token}&admin_isLoggedIn=true&user=${userStr}`;
         } else {
-          window.location.href = `${STUDENT_URL}/?token=${data.token}&user=${userStr}`;
+          const courseQuery = selectedCourse ? `&course_id=${selectedCourse.id}` : "";
+          window.location.href = `${STUDENT_URL}/?token=${data.token}&user=${userStr}${courseQuery}`;
         }
       } else {
         setError(data.message || "Invalid login credentials. Please check and try again.");
@@ -74,7 +90,8 @@ export default function LoginModal({ isOpen, onClose }) {
           phone_number: signupData.phone,
           district: signupData.district,
           province: signupData.province,
-          password: passwordToSet
+          password: passwordToSet,
+          course_id: selectedCourse ? selectedCourse.id : undefined
         }),
       });
 
@@ -123,15 +140,24 @@ export default function LoginModal({ isOpen, onClose }) {
             <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-2xl shadow-lg shadow-blue-500/20 mb-4">
               <GraduationCap className="w-7 h-7 text-white" />
             </div>
+            {selectedCourse && (
+              <div className="mb-2">
+                <span className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 rounded-full text-xs font-semibold">
+                  Course: {selectedCourse.title}
+                </span>
+              </div>
+            )}
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
-              {generatedPassword ? "Registration Successful!" : isLogin ? "LMS Portal Login" : "Student Registration"}
+              {generatedPassword ? "Registration Successful!" : isLogin ? "Student Login" : "Student Registration"}
             </h3>
             <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
               {generatedPassword
                 ? "Please remember & save your credentials"
-                : isLogin
-                  ? "Access your lessons, recordings, and course material"
-                  : "Create an account to start your learning journey"}
+                : selectedCourse
+                  ? (isLogin ? "Sign in to access and unlock your course" : "Register to enroll into this course and unlock monthly lessons")
+                  : isLogin
+                    ? "Access your lessons, recordings, and course material"
+                    : "Create an account to start your learning journey"}
             </p>
           </div>
 
@@ -330,11 +356,6 @@ export default function LoginModal({ isOpen, onClose }) {
             </form>
           )}
 
-          <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
-            <p className="text-xs text-slate-400">
-              Demo logins: Admin (077xxxxx77 / demo123) or Student (077xxxx67 / demo123)
-            </p>
-          </div>
         </div>
       </div>
     </div>

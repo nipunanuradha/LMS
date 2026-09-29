@@ -11,22 +11,22 @@ function CourseThumbnail({ course }) {
   const [imgError, setImgError] = React.useState(false);
 
   const patterns = {
-    "#2563EB": <><circle cx="140" cy="50" r="60" fill="rgba(255,255,255,0.06)"/><circle cx="40" cy="90" r="40" fill="rgba(255,255,255,0.04)"/><rect x="160" y="10" width="80" height="80" rx="8" fill="rgba(255,255,255,0.05)" transform="rotate(20 200 50)"/></>,
-    "#059669": <><circle cx="20" cy="20" r="50" fill="rgba(255,255,255,0.06)"/><rect x="100" y="30" width="100" height="60" rx="30" fill="rgba(255,255,255,0.05)"/></>,
-    "#7C3AED": <><polygon points="180,0 240,90 120,90" fill="rgba(255,255,255,0.07)"/><circle cx="30" cy="80" r="45" fill="rgba(255,255,255,0.05)"/></>,
-    "#D97706": <><rect x="120" y="-10" width="100" height="100" rx="12" fill="rgba(255,255,255,0.06)" transform="rotate(35 170 40)"/><circle cx="20" cy="70" r="35" fill="rgba(255,255,255,0.05)"/></>,
-    "#DC2626": <><circle cx="220" cy="0" r="70" fill="rgba(255,255,255,0.06)"/><rect x="0" y="50" width="80" height="40" rx="8" fill="rgba(255,255,255,0.05)"/></>,
-    "#0891B2": <><circle cx="200" cy="90" r="55" fill="rgba(255,255,255,0.06)"/><circle cx="40" cy="10" r="30" fill="rgba(255,255,255,0.05)"/></>,
+    "#2563EB": <><circle cx="140" cy="50" r="60" fill="rgba(255,255,255,0.06)" /><circle cx="40" cy="90" r="40" fill="rgba(255,255,255,0.04)" /><rect x="160" y="10" width="80" height="80" rx="8" fill="rgba(255,255,255,0.05)" transform="rotate(20 200 50)" /></>,
+    "#059669": <><circle cx="20" cy="20" r="50" fill="rgba(255,255,255,0.06)" /><rect x="100" y="30" width="100" height="60" rx="30" fill="rgba(255,255,255,0.05)" /></>,
+    "#7C3AED": <><polygon points="180,0 240,90 120,90" fill="rgba(255,255,255,0.07)" /><circle cx="30" cy="80" r="45" fill="rgba(255,255,255,0.05)" /></>,
+    "#D97706": <><rect x="120" y="-10" width="100" height="100" rx="12" fill="rgba(255,255,255,0.06)" transform="rotate(35 170 40)" /><circle cx="20" cy="70" r="35" fill="rgba(255,255,255,0.05)" /></>,
+    "#DC2626": <><circle cx="220" cy="0" r="70" fill="rgba(255,255,255,0.06)" /><rect x="0" y="50" width="80" height="40" rx="8" fill="rgba(255,255,255,0.05)" /></>,
+    "#0891B2": <><circle cx="200" cy="90" r="55" fill="rgba(255,255,255,0.06)" /><circle cx="40" cy="10" r="30" fill="rgba(255,255,255,0.05)" /></>,
   };
 
   if ((course.thumbnail_url || course.thumbnail) && !imgError) {
     return (
       <div style={{ width: "100%", aspectRatio: "16/9", borderRadius: "10px 10px 0 0", overflow: "hidden", position: "relative", flexShrink: 0 }}>
-        <img 
-          src={getImageUrl(course.thumbnail_url || course.thumbnail)} 
-          alt={course.title} 
+        <img
+          src={getImageUrl(course.thumbnail_url || course.thumbnail)}
+          alt={course.title}
           onError={() => setImgError(true)}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
         <div style={{ position: "absolute", top: 10, left: 10 }}>
           <CategoryBadge cat={category} accent={accent} />
@@ -69,11 +69,11 @@ export default function CoursesPage({ courses, setCourses, setModal, globalSearc
   };
 
   const filteredCourses = globalSearch
-    ? courses.filter(c => 
-        (c.title || "").toLowerCase().includes(globalSearch.toLowerCase()) ||
-        (c.category || "").toLowerCase().includes(globalSearch.toLowerCase()) ||
-        (c.description || c.desc || "").toLowerCase().includes(globalSearch.toLowerCase())
-      )
+    ? courses.filter(c =>
+      (c.title || "").toLowerCase().includes(globalSearch.toLowerCase()) ||
+      (c.category || "").toLowerCase().includes(globalSearch.toLowerCase()) ||
+      (c.description || c.desc || "").toLowerCase().includes(globalSearch.toLowerCase())
+    )
     : courses;
 
   return (
@@ -108,9 +108,30 @@ export default function CoursesPage({ courses, setCourses, setModal, globalSearc
                 <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6, flex: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                   {description}
                 </p>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "6px 0" }}>
+                  {course.offer_price && Number(course.offer_price) > 0 ? (
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: "#16A34A" }}>
+                        Rs. {Number(course.offer_price).toLocaleString()}
+                      </span>
+                      <span style={{ fontSize: 11, color: "var(--text-muted)", textDecoration: "line-through" }}>
+                        Rs. {Number(course.price).toLocaleString()}
+                      </span>
+                      {course.discount_badge && (
+                        <span style={{ background: "#DCFCE7", color: "#166534", fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, textTransform: "uppercase" }}>
+                          {course.discount_badge}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+                      Rs. {Number(course.price || 0).toLocaleString()} <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-muted)" }}>/ mo</span>
+                    </span>
+                  )}
+                </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14, paddingTop: 14, borderTop: "1.5px solid var(--border-color)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--text-secondary)", fontSize: 13 }}>
-                    <svg style={{ width: 15, height: 15 }} viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                    <svg style={{ width: 15, height: 15 }} viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></svg>
                     <span style={{ fontWeight: 600, color: accent }}>{course.students || 0}</span>
                     <span style={{ color: "var(--text-muted)" }}>students</span>
                   </div>

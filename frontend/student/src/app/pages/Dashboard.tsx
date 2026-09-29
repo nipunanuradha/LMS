@@ -9,11 +9,11 @@ function CourseThumbnail({ thumbnail, title, accent, category }: { thumbnail: st
   const [imgError, setImgError] = useState(false);
   if (thumbnail && !imgError) {
     return (
-      <img 
-        src={thumbnail} 
-        alt={title} 
+      <img
+        src={thumbnail}
+        alt={title}
         onError={() => setImgError(true)}
-        className="w-full h-full object-cover" 
+        className="w-full h-full object-cover"
       />
     );
   }
@@ -42,9 +42,9 @@ export function Dashboard() {
 
     const fetchCourses = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/student/${loggedInUser.id}/courses`);
-        const data = await response.json();
-        if (response.ok) {
+        const enrolledRes = await fetch(`${API_URL}/api/student/${loggedInUser.id}/courses`);
+        if (enrolledRes.ok) {
+          const data = await enrolledRes.json();
           setCourses(data);
         }
       } catch (err) {
@@ -58,7 +58,7 @@ export function Dashboard() {
   const handleLogout = () => {
     localStorage.removeItem("currentUser");
     localStorage.removeItem("token");
-    window.location.href = LANDING_URL;
+    navigate("/");
   };
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {
@@ -114,7 +114,7 @@ export function Dashboard() {
             </div>
             <span className="font-semibold text-foreground">ICT Academy With Anuradha Athukorala</span>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <button
@@ -167,85 +167,140 @@ export function Dashboard() {
           )}
         </div>
 
-        <div>
-          <h2 className="mb-6 text-xl font-bold text-foreground">My Enrolled Courses</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.map((course) => {
-              const expiryDate = course.expiry_date || course.expiryDate;
-              const daysRemaining = getDaysRemaining(expiryDate);
-              const isExpiringSoon = daysRemaining <= 7 && daysRemaining > 0;
-              const isExpired = daysRemaining < 0;
+        {/* My Enrolled / Active Courses */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-bold text-foreground">My Enrolled Courses</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Courses you have active subscription or month access for</p>
+            </div>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+              {courses.length} Active
+            </span>
+          </div>
 
-              const accents = ["#2563EB", "#059669", "#7C3AED", "#D97706", "#DC2626", "#0891B2"];
-              const accent = course.accent || accents[course.id % accents.length] || "#2563EB";
-              const category = course.category || "Web Dev";
-              const thumbnail = getImageUrl(course.thumbnail_url || course.thumbnail);
+          {courses.length === 0 ? (
+            <div className="p-8 text-center bg-card rounded-2xl border border-dashed border-border">
+              <p className="text-muted-foreground text-sm">You haven't enrolled or paid for any courses yet.</p>
+              <p className="text-xs text-muted-foreground mt-1">Explore available courses below to start learning month-by-month!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {courses.map((course) => {
+                const expiryDate = course.expiry_date || course.expiryDate;
+                const daysRemaining = getDaysRemaining(expiryDate);
+                const isExpiringSoon = daysRemaining <= 7 && daysRemaining > 0;
+                const isExpired = daysRemaining < 0;
 
-              return (
-                <Link
-                  key={course.id}
-                  to={`/course/${course.id}`}
-                  className="bg-card rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-6 border border-border hover:border-blue-500/50 flex flex-col group"
-                >
-                  {/* Thumbnail Section */}
-                  <div className="w-full h-40 bg-muted rounded-xl mb-4 overflow-hidden relative shrink-0">
-                    <CourseThumbnail 
-                      thumbnail={thumbnail} 
-                      title={course.title} 
-                      accent={accent} 
-                      category={category} 
-                    />
-                  </div>
+                const accents = ["#2563EB", "#059669", "#7C3AED", "#D97706", "#DC2626", "#0891B2"];
+                const accent = course.accent || accents[course.id % accents.length] || "#2563EB";
+                const category = course.category || "Web Dev";
+                const thumbnail = getImageUrl(course.thumbnail_url || course.thumbnail);
 
-                  {/* Card Content Section */}
-                  <div className="flex flex-col flex-1">
-                    <h3 className="mb-4 font-semibold text-lg text-card-foreground group-hover:text-blue-500 transition-colors">{course.title}</h3>
+                return (
+                  <Link
+                    key={course.id}
+                    to={`/course/${course.id}`}
+                    className="bg-card rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-6 border border-border hover:border-blue-500/50 flex flex-col group"
+                  >
+                    {/* Thumbnail Section */}
+                    <div className="w-full h-40 bg-muted rounded-xl mb-4 overflow-hidden relative shrink-0">
+                      <CourseThumbnail
+                        thumbnail={thumbnail}
+                        title={course.title}
+                        accent={accent}
+                        category={category}
+                      />
+                    </div>
 
-                    <div className="mt-auto">
-                      <div
-                        className={`flex items-center gap-2 ${isExpired
-                          ? "text-red-500"
-                          : isExpiringSoon
-                            ? "text-orange-500"
-                            : "text-muted-foreground"
-                          }`}
-                      >
-                        <Clock className="w-4 h-4" />
-                        <span className="text-sm">
-                          {isExpired ? (
-                            "Access expired"
-                          ) : (
-                            <>
-                              <span className="font-semibold text-foreground">{daysRemaining}</span> day
-                              {daysRemaining !== 1 ? "s" : ""} remaining
-                            </>
-                          )}
-                        </span>
-                      </div>
+                    {/* Card Content Section */}
+                    <div className="flex flex-col flex-1">
+                      <h3 className="mb-4 font-semibold text-lg text-card-foreground group-hover:text-blue-500 transition-colors">{course.title}</h3>
 
-                      {!isExpired && (
-                        <div className="mt-3 bg-muted rounded-full h-2 overflow-hidden">
-                          <div
-                            className={`h-full ${isExpiringSoon ? "bg-gradient-to-r from-orange-500 to-red-500" : "bg-gradient-to-r from-blue-500 to-green-500"
-                              }`}
-                            style={{
-                              width: `${Math.min(100, (daysRemaining / 90) * 100)}%`,
-                            }}
-                          />
-                        </div>
-                      )}
+                      <div className="mt-auto">
+                        {expiryDate ? (
+                          <>
+                            <div
+                              className={`flex items-center gap-2 ${isExpired
+                                ? "text-red-500"
+                                : isExpiringSoon
+                                  ? "text-orange-500"
+                                  : "text-muted-foreground"
+                                }`}
+                            >
+                              <Clock className="w-4 h-4" />
+                              <span className="text-sm">
+                                {isExpired ? (
+                                  course.has_purchased_month ? "Month expired" : "Enrollment expired"
+                                ) : (
+                                  <>
+                                    <span className="font-semibold text-foreground">{daysRemaining}</span> day
+                                    {daysRemaining !== 1 ? "s" : ""} {course.has_purchased_month ? "for next month payment" : "to enroll / purchase months"}
+                                  </>
+                                )}
+                              </span>
+                            </div>
 
-                      <div className="mt-4 text-xs text-muted-foreground">
-                        Expires: {expiryDate ? new Date(expiryDate).toLocaleDateString() : "N/A"}
+                            {!isExpired && (
+                              <div className="mt-3 bg-muted rounded-full h-2 overflow-hidden">
+                                <div
+                                  className={`h-full ${isExpiringSoon ? "bg-gradient-to-r from-orange-500 to-red-500" : "bg-gradient-to-r from-blue-500 to-green-500"
+                                    }`}
+                                  style={{
+                                    width: `${Math.min(100, (daysRemaining / 30) * 100)}%`,
+                                  }}
+                                />
+                              </div>
+                            )}
+
+                            <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                              <span>Next Due / Window: {new Date(expiryDate).toLocaleDateString()}</span>
+                              {Boolean(course.has_purchased_month) && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                  ✓ Active Month
+                                </span>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="pt-2">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/40">
+                              ✓ Lifetime Month Access
+                            </span>
+                            <div className="mt-3 text-xs text-muted-foreground">
+                              Permanent access to your purchased months
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       </main>
+
+      {/* Student Portal Footer with Legal & Compliance Links */}
+      <footer className="mt-auto border-t border-border bg-card/40 py-6 px-4 sm:px-8 transition-colors">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
+          <p>&copy; {new Date().getFullYear()} ICT Academy. All rights reserved.</p>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link to="/terms-of-service" className="hover:text-foreground transition-colors">
+              Terms of Service
+            </Link>
+            <span>•</span>
+            <Link to="/privacy-policy" className="hover:text-foreground transition-colors">
+              Privacy Policy
+            </Link>
+            <span>•</span>
+            <Link to="/refund-policy" className="hover:text-foreground transition-colors">
+              Refund Policy
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

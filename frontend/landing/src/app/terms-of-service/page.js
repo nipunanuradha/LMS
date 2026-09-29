@@ -63,13 +63,32 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="font-display font-bold text-xl text-slate-900 dark:text-white flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-              3. Intellectual Property Rights
+              3. Course Fees, Monthly Payments & Currency
+            </h2>
+            <p className="leading-relaxed">
+              All course fees and monthly modular tuition fees are listed in <strong>Sri Lankan Rupees (LKR)</strong> unless explicitly stated otherwise.
+            </p>
+            <ul className="list-disc pl-6 space-y-2 marker:text-blue-500 dark:marker:text-blue-400">
+              <li><strong>Pricing & Taxes:</strong> ICT Academy reserves the right to modify course prices at any time. Any fee updates will not impact months or courses already paid for.</li>
+              <li><strong>Payment Processing:</strong> Payments made online (via Credit/Debit Cards, Internet Banking, or integrated payment gateways) are processed through secure, PCI-DSS compliant third-party payment providers. We do not store full card numbers or sensitive CVV codes on our servers.</li>
+              <li><strong>Monthly Access Provisioning:</strong> Each course month operates as an individual educational unit. Payment for a designated month unlocks that month's lecture recordings, materials, code, and class sessions. Payment must be cleared prior to gaining access.</li>
+              <li><strong>Billing Disputes & Receipts:</strong> Electronic invoices and payment receipts are issued upon successful transaction. Any discrepancies must be notified to our billing desk within 7 calendar days of receipt.</li>
+              <li><strong>Refunds:</strong> All payments are subject to our published <a href="/refund-policy" className="text-blue-600 dark:text-blue-400 font-semibold underline">Refund & Cancellation Policy</a>.</li>
+            </ul>
+          </section>
+
+          <hr className="border-slate-100 dark:border-slate-800" />
+
+          <section className="space-y-4">
+            <h2 className="font-display font-bold text-xl text-slate-900 dark:text-white flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+              4. Intellectual Property Rights & Content Protection
             </h2>
             <p className="leading-relaxed">
               All learning materials, including but not limited to videos, slides, source code, quizzes, assignments, textbooks, and documentation hosted on the ICT Academy landing site and LMS portal, are the intellectual property of ICT Academy.
             </p>
             <p className="leading-relaxed">
-              You are granted a limited, personal, non-transferable license to view and download these materials solely for your own educational purposes. You may not distribute, reproduce, sell, resell, or publicly display any of the course content without written consent from our management.
+              You are granted a limited, personal, non-transferable, non-exclusive license to view and download these materials solely for your own educational purposes. You may not distribute, reproduce, screen-record, sell, resell, or publicly display any of the course content without express written consent from our management. Violation of this clause will lead to instant account revocation, legal action, and forfeiture of all fees.
             </p>
           </section>
 
@@ -78,7 +97,7 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="font-display font-bold text-xl text-slate-900 dark:text-white flex items-center gap-2">
               <BadgeCheck className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-              4. Code of Conduct & Academic Integrity
+              5. Code of Conduct & Academic Integrity
             </h2>
             <p className="leading-relaxed">
               Students of ICT Academy are held to high standards of honesty and academic integrity. By utilizing our LMS:
@@ -94,10 +113,10 @@ export default function TermsOfService() {
 
           <section className="space-y-4">
             <h2 className="font-display font-bold text-xl text-slate-900 dark:text-white">
-              5. Governing Law
+              6. Limitation of Liability
             </h2>
             <p className="leading-relaxed">
-              These terms shall be governed by and construed in accordance with the laws of the Democratic Socialist Republic of Sri Lanka. Any disputes arising from these terms or educational services shall be subject to the exclusive jurisdiction of the courts of Sri Lanka.
+              ICT Academy strives to provide uninterrupted service, but we do not warrant that the website or LMS portal will be error-free or uninterrupted at all times. Under no circumstances shall ICT Academy, its directors, or tutors be liable for any indirect, consequential, or incidental damages arising out of the use or inability to use the platform.
             </p>
           </section>
 
@@ -105,7 +124,18 @@ export default function TermsOfService() {
 
           <section className="space-y-4">
             <h2 className="font-display font-bold text-xl text-slate-900 dark:text-white">
-              6. Contact Information
+              7. Governing Law & Dispute Resolution
+            </h2>
+            <p className="leading-relaxed">
+              These terms shall be governed by and construed in accordance with the laws of the Democratic Socialist Republic of Sri Lanka. Any disputes arising from these terms, online payments, or educational services shall be subject to the exclusive jurisdiction of the courts Sri Lanka.
+            </p>
+          </section>
+
+          <hr className="border-slate-100 dark:border-slate-800" />
+
+          <section className="space-y-4">
+            <h2 className="font-display font-bold text-xl text-slate-900 dark:text-white">
+              8. Contact Information
             </h2>
             <p className="leading-relaxed">
               For any questions concerning the Terms of Service, please contact us:

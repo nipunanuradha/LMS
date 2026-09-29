@@ -15,18 +15,26 @@ export function Login() {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     const userParam = params.get("user");
-    
+    const courseIdParam = params.get("course_id") || params.get("course");
+
     if (token && userParam) {
       localStorage.setItem("token", token);
       localStorage.setItem("currentUser", decodeURIComponent(userParam));
-      navigate("/dashboard");
+      if (courseIdParam) {
+        navigate(`/course/${courseIdParam}`);
+      } else {
+        navigate("/dashboard");
+      }
     } else {
       const currentUser = localStorage.getItem("currentUser");
       if (currentUser) {
-        navigate("/dashboard");
-      } else {
-        window.location.href = `${LANDING_URL}/?login=true`;
+        if (courseIdParam) {
+          navigate(`/course/${courseIdParam}`);
+        } else {
+          navigate("/dashboard");
+        }
       }
+      // If not logged in, remain on this Student Login page so students can login directly!
     }
   }, [navigate]);
 
@@ -34,11 +42,18 @@ export function Login() {
     e.preventDefault();
     setError("");
 
+    const params = new URLSearchParams(window.location.search);
+    const courseIdParam = params.get("course_id") || params.get("course");
+
     try {
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone_number: phone, password }),
+        body: JSON.stringify({
+          phone_number: phone,
+          password,
+          course_id: courseIdParam ? parseInt(courseIdParam) : undefined
+        }),
       });
 
       const data = await response.json();
@@ -52,7 +67,11 @@ export function Login() {
           const userStr = encodeURIComponent(JSON.stringify(data.user));
           window.location.href = `${ADMIN_URL}/?token=${data.token}&admin_isLoggedIn=true&user=${userStr}`;
         } else {
-          navigate("/dashboard");
+          if (courseIdParam) {
+            navigate(`/course/${courseIdParam}`);
+          } else {
+            navigate("/dashboard");
+          }
         }
       } else {
         setError(data.message || "Invalid login credentials");
@@ -132,15 +151,35 @@ export function Login() {
 
             <div className="text-center text-sm pt-2">
               <span className="text-muted-foreground">Don't have an account? </span>
-              <Link to="/register" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
+              <Link
+                to={(() => {
+                  const p = new URLSearchParams(window.location.search);
+                  const cid = p.get("course_id") || p.get("course");
+                  return cid ? `/register?course_id=${cid}` : "/register";
+                })()}
+                className="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
+              >
                 Register here
               </Link>
             </div>
 
-            <div className="mt-6 pt-6 border-t border-border">
+            <div className="mt-6 pt-6 border-t border-border space-y-3">
               <p className="text-xs text-muted-foreground text-center">
                 Please enter your registered phone number & password.
               </p>
+              <div className="flex justify-center items-center gap-3 text-[11px] text-muted-foreground">
+                <Link to="/terms-of-service" className="hover:text-foreground hover:underline">
+                  Terms
+                </Link>
+                <span>•</span>
+                <Link to="/privacy-policy" className="hover:text-foreground hover:underline">
+                  Privacy
+                </Link>
+                <span>•</span>
+                <Link to="/refund-policy" className="hover:text-foreground hover:underline">
+                  Refunds
+                </Link>
+              </div>
             </div>
           </div>
         </form>
