@@ -2372,6 +2372,127 @@ app.post('/api/admin/notifications/clear', async (req, res) => {
     }
 });
 
+// Get all active chat conversations with latest message info for admin or current user
+app.get('/api/admin/conversations', async (req, res) => {
+    try {
+        const user = await getAuthenticatedUser(req);
+        if (!user) {
+            return res.status(401).json({ message: 'Unauthorized or token expired' });
+        }
+
+        const currentUserId = user.id;
+
+        // Step 1: get latest message per chat partner
+        const [pairs] = await pool.execute(`
+            SELECT 
+                CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END AS other_user_id,
+                MAX(id) AS last_msg_id
+            FROM messages
+            WHERE sender_id = ? OR receiver_id = ?
+            GROUP BY other_user_id
+        `, [currentUserId, currentUserId, currentUserId]);
+
+        if (!pairs || pairs.length === 0) {
+            return res.json([]);
+        }
+
+        const msgIds = pairs.map(p => p.last_msg_id);
+        const userIds = pairs.map(p => p.other_user_id);
+
+        const [msgs] = await pool.query(
+            'SELECT id, sender_id, receiver_id, message, created_at FROM messages WHERE id IN (?)',
+            [msgIds]
+        );
+
+        const [users] = await pool.query(
+            'SELECT id, full_name, phone_number, role FROM users WHERE id IN (?)',
+            [userIds]
+        );
+
+        const [unreads] = await pool.execute(`
+            SELECT sender_id, COUNT(*) as count 
+            FROM messages 
+            WHERE receiver_id = ? 
+            GROUP BY sender_id
+        `, [currentUserId]);
+        const unreadMap = new Map(unreads.map(u => [u.sender_id, u.count]));
+
+        const userMap = new Map(users.map(u => [u.id, u]));
+        const msgMap = new Map(msgs.map(m => [m.id, m]));
+
+        const result = pairs.map(p => {
+            const u = userMap.get(p.other_user_id) || {};
+            const m = msgMap.get(p.last_msg_id) || {};
+            return {
+                id: p.other_user_id,
+                full_name: u.full_name || 'User',
+                phone_number: u.phone_number || '',
+                role: u.role || 'student',
+                last_message: m.message || '',
+                last_message_at: m.created_at || null,
+                last_sender_id: m.sender_id || null,
+                unread_count: unreadMap.get(p.other_user_id) || 0
+            };
+        }).sort((a, b) => new Date(b.last_message_at) - new Date(a.last_message_at));
+
+        res.json(result);
+    } catch (err) {
+        console.error('Error fetching conversations:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Post a message (from student to admin OR admin to student)
+app.post('/api/admin/messages', async (req, res) => {
+    try {
+        const user = await getAuthenticatedUser(req);
+        if (!user) {
+            return res.status(401).json({ message: 'Unauthorized or token expired' });
+        }
+
+        const { to, message } = req.body;
+        if (!to || !message || !message.trim()) {
+            return res.status(400).json({ error: 'Recipient and message content are required' });
+        }
+
+        const [result] = await pool.execute(
+            'INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)',
+            [user.id, to, message.trim()]
+        );
+
+        const msgPayload = {
+            id: result.insertId,
+            sender_id: Number(user.id),
+            receiver_id: Number(to),
+            message: message.trim(),
+            created_at: new Date().toISOString()
+        };
+
+        // Broadcast to receiver via socket if connected
+        const receiverSocketId = userSockets.get(Number(to));
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit('private_message', msgPayload);
+        }
+
+        // Also broadcast to any other sockets of sender
+        const senderSocketId = userSockets.get(Number(user.id));
+        if (senderSocketId) {
+            io.to(senderSocketId).emit('private_message', msgPayload);
+        }
+
+        // If a student sends to an admin, generate admin in-app notification
+        const [[receiver]] = await pool.execute('SELECT role, full_name FROM users WHERE id = ?', [to]);
+        if (receiver && receiver.role === 'admin') {
+            await createNotification(`New message from ${user.full_name}: "${message.trim().substring(0, 30)}..."`, 'info');
+        }
+
+        res.status(201).json({ success: true, message: msgPayload });
+    } catch (err) {
+        console.error('Error sending message:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Get message history between current user and another user
 app.get('/api/admin/messages/:other_user_id', async (req, res) => {
     try {

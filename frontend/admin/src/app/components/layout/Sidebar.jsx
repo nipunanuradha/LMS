@@ -4,6 +4,7 @@ import { Ic } from "../ui/icons";
 
 const NAV = [
   { id: "dashboard", label: "Dashboard", icon: Ic.grid },
+  { id: "messages", label: "Messages", icon: Ic.chat },
   { id: "students", label: "Students", icon: Ic.users },
   { id: "admins", label: "Admins", icon: Ic.users },
   { id: "courses", label: "Courses", icon: Ic.book },

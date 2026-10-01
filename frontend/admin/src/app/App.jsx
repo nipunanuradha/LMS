@@ -7,6 +7,7 @@ import CoursesPage from "./pages/Coursespage";
 import RevenuePage from "./pages/Revenuepage";
 import SettingsPage from "./pages/Settingspage";
 import InquiriesPage from "./pages/InquiriesPage";
+import MessagesPage from "./pages/MessagesPage";
 import ModalManager from "./components/modals/ModalManager";
 import AdminChatWidget from "./components/AdminChatWidget";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -217,7 +218,16 @@ function AdminLayout() {
     return null;
   }
 
-  const pageNames = { dashboard: "Dashboard", students: "Student Management", admins: "Admin Management", courses: "Course Management", revenue: "Revenue & Enrollments", inquiries: "Contact Inquiries", settings: "Settings" };
+  const pageNames = { 
+    dashboard: "Dashboard", 
+    messages: "Student Messages & Support",
+    students: "Student Management", 
+    admins: "Admin Management", 
+    courses: "Course Management", 
+    revenue: "Revenue & Enrollments", 
+    inquiries: "Contact Inquiries", 
+    settings: "Settings" 
+  };
 
   return (
     <>
@@ -242,6 +252,7 @@ function AdminLayout() {
           </div>
           <main style={{ flex: 1, overflow: "auto", padding: "24px 28px" }}>
             {page === "dashboard" && <DashboardPage students={students} courses={courses} setModal={setModal} />}
+            {page === "messages" && <MessagesPage students={students} />}
             {page === "students" && <StudentsPage students={students.filter(s => !s.role || s.role === 'student')} setStudents={setStudents} setModal={setModal} type="student" globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} />}
             {page === "admins" && <StudentsPage students={students.filter(s => s.role === 'admin')} setStudents={setStudents} setModal={setModal} type="admin" globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} />}
             {page === "courses" && <CoursesPage courses={courses} setCourses={setCourses} setModal={setModal} globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} />}

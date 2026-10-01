@@ -203,11 +203,47 @@ export default function ChatWidget() {
   }, [selectedAdmin, apiUrl]);
 
   // Send message
-  const send = () => {
+  const send = async () => {
     if (!text.trim() || !selectedAdmin) return;
-    const payload = { to: selectedAdmin.id, message: text.trim() };
-    socketRef.current?.emit('private_message', payload);
+    const msgText = text.trim();
     setText('');
+
+    const token = localStorage.getItem('token');
+    const currentUserStr = localStorage.getItem('currentUser');
+    const currentUserId = currentUserStr ? JSON.parse(currentUserStr).id : 0;
+
+    const payload = { to: selectedAdmin.id, message: msgText };
+
+    // Optimistically emit via socket for real-time delivery
+    socketRef.current?.emit('private_message', payload);
+
+    // Persist via REST API for guaranteed delivery & DB storage
+    try {
+      const res = await fetch(`${apiUrl}/api/admin/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          'x-user-id': String(currentUserId || '')
+        },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.message) {
+          setMessages((prev) => {
+            const list = Array.isArray(prev) ? prev : [];
+            const exists = list.some(
+              (m) => (data.message.id && m.id === data.message.id) ||
+                     (m.sender_id === data.message.sender_id && m.message === data.message.message && Math.abs(new Date(m.created_at).getTime() - new Date(data.message.created_at).getTime()) < 3000)
+            );
+            return exists ? list : [...list, data.message];
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error persisting message:', err);
+    }
   };
 
   // Toast notification auto-dismiss timer
