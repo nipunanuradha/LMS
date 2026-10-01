@@ -451,7 +451,6 @@ export function CourseDetails() {
   // Payment Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [payTargetMonth, setPayTargetMonth] = useState<any>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "bank">("card");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentSuccessMsg, setPaymentSuccessMsg] = useState<string | null>(null);
 
@@ -738,45 +737,10 @@ export function CourseDetails() {
     }
   };
 
-  // Handle direct simulated / manual bank payment
+  // Handle secure payment via PayHere gateway
   const handleConfirmPayment = async () => {
     if (!currentUserObj || !payTargetMonth) return;
-    if (paymentMethod === "card") {
-      await handlePayHerePayment();
-      return;
-    }
-
-    setIsProcessingPayment(true);
-    try {
-      const res = await fetch(`${API_URL}/api/student/process-monthly-payment`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: currentUserObj.id,
-          course_id: parseInt(courseId as string),
-          course_month_id: payTargetMonth.id,
-          payment_method: "Bank Transfer Confirmation",
-          amount: parseFloat(payTargetMonth.monthly_price) || 0
-        })
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setPaymentSuccessMsg(`Payment completed successfully for ${payTargetMonth.title}! Access has been unlocked.`);
-        await fetchMonthAccess(currentUserObj, payTargetMonth.id);
-        setTimeout(() => {
-          setShowPaymentModal(false);
-          setPaymentSuccessMsg(null);
-        }, 1800);
-      } else {
-        alert(data.error || "Payment failed. Please try again.");
-      }
-    } catch (err) {
-      console.error("Payment submission failed:", err);
-      alert("Network error. Could not process payment.");
-    } finally {
-      setIsProcessingPayment(false);
-    }
+    await handlePayHerePayment();
   };
 
   useEffect(() => {
@@ -1504,55 +1468,25 @@ export function CourseDetails() {
                     </div>
                   </div>
 
-                  {/* Payment Method Selector */}
-                  <div>
-                    <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
-                      Select Payment Method
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod("card")}
-                        className={`p-3 rounded-xl border text-left flex flex-col gap-1 transition-all cursor-pointer ${paymentMethod === "card"
-                          ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-100"
-                          : "border-border bg-card text-muted-foreground hover:bg-muted"
-                          }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold">💳 Credit / Debit Card</span>
-                        </div>
-                        <span className="text-[11px] text-muted-foreground">Instant Activation</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod("bank")}
-                        className={`p-3 rounded-xl border text-left flex flex-col gap-1 transition-all cursor-pointer ${paymentMethod === "bank"
-                          ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-100"
-                          : "border-border bg-card text-muted-foreground hover:bg-muted"
-                          }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold">🏦 Bank Transfer</span>
-                        </div>
-                        <span className="text-[11px] text-muted-foreground">Direct Confirmation</span>
-                      </button>
+                  {/* Payment Method Info */}
+                  <div className="p-3.5 rounded-xl border border-blue-600/40 bg-blue-50/60 dark:bg-blue-950/40 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-base">💳</span>
+                      <div>
+                        <div className="text-xs font-bold text-foreground">Online Payment (Cards & Wallets)</div>
+                        <div className="text-[11px] text-muted-foreground">Visa, MasterCard, Frimi, Genie, eZ Cash</div>
+                      </div>
                     </div>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-600/10 text-blue-600 dark:text-blue-400">
+                      Instant
+                    </span>
                   </div>
 
                   {/* Payment Info banner */}
-                  <div className="text-[11px] text-muted-foreground bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/40 p-3 rounded-xl flex items-start gap-2">
+                  <div className="text-[11px] text-muted-foreground bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-900/40 p-3 rounded-xl flex items-start gap-2">
                     <Sparkles className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                     <span>
-                      {paymentMethod === "card" ? (
-                        <>
-                          <strong>PayHere Secure Gateway:</strong> Pay instantly using Visa, MasterCard, Frimi, Genie, or eZ Cash. 256-bit SSL encrypted & secure.
-                        </>
-                      ) : (
-                        <>
-                          <strong>Direct Bank Transfer:</strong> Instantly confirm and register access for <strong>{payTargetMonth.title}</strong> after manual bank transfer.
-                        </>
-                      )}
+                      <strong>PayHere Secure Gateway:</strong> Pay instantly using Visa, MasterCard, Frimi, Genie, or eZ Cash. 256-bit SSL encrypted & secure.
                     </span>
                   </div>
 
@@ -1606,9 +1540,7 @@ export function CourseDetails() {
                     >
                       {isProcessingPayment
                         ? "Connecting Gateway..."
-                        : paymentMethod === "card"
-                          ? `Pay with PayHere (Rs. ${Number(payTargetMonth.monthly_price).toLocaleString()})`
-                          : `Confirm & Pay Rs. ${Number(payTargetMonth.monthly_price).toLocaleString()}`}
+                        : `Pay with PayHere (Rs. ${Number(payTargetMonth.monthly_price).toLocaleString()})`}
                     </button>
                   </div>
                 </>
