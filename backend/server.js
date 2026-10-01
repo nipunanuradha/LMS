@@ -288,6 +288,12 @@ async function connectDB() {
                 // Ignore error
             }
             try {
+                // Ensure unique constraint on payhere_order_id so duplicate webhooks cannot insert duplicates
+                await pool.execute(`ALTER TABLE payments ADD UNIQUE KEY unique_payhere_order_id (payhere_order_id)`);
+            } catch (e) {
+                // Ignore error if index already exists
+            }
+            try {
                 await pool.execute(`ALTER TABLE payments ADD COLUMN payment_payload TEXT NULL`);
             } catch (e) {
                 // Ignore error
@@ -876,12 +882,16 @@ async function fulfillMonthlyPayment({ enrollmentId, userId, courseId, courseMon
         resolvedEnrollmentId = enrollment ? enrollment.id : null;
     }
 
-    // 2. Insert or update payment record
+    // 2. Insert or update payment record (with idempotency check)
     let paymentId;
     if (payhereOrderId) {
-        const [existingPay] = await pool.execute('SELECT id FROM payments WHERE payhere_order_id = ?', [payhereOrderId]);
+        const [existingPay] = await pool.execute('SELECT id, status FROM payments WHERE payhere_order_id = ?', [payhereOrderId]);
         if (existingPay.length > 0) {
             paymentId = existingPay[0].id;
+            // Idempotency: If this order has already been marked as success, return early
+            if (existingPay[0].status === 'success') {
+                return { paymentId, resolvedEnrollmentId, alreadyProcessed: true };
+            }
             await pool.execute(`
                 UPDATE payments 
                 SET status = 'success', transaction_id = ?, amount = ?, payment_method = ?, payment_payload = ?, paid_at = CURRENT_TIMESTAMP
@@ -1053,6 +1063,28 @@ app.post('/api/student/payhere/initiate', async (req, res) => {
 // ----------------------------------------------------
 // PayHere IPN Webhook (Instant Payment Notification)
 // ----------------------------------------------------
+// In-memory rate limiter for payment status polling (max 1 request per second per order_id / IP)
+const paymentStatusPollTracker = new Map();
+function isPaymentStatusRateLimited(key) {
+    const now = Date.now();
+    const lastRequest = paymentStatusPollTracker.get(key);
+    if (lastRequest && now - lastRequest < 1000) {
+        return true;
+    }
+    paymentStatusPollTracker.set(key, now);
+    // Periodically clean up tracker entries older than 5 minutes
+    if (paymentStatusPollTracker.size > 2000) {
+        for (const [k, timestamp] of paymentStatusPollTracker.entries()) {
+            if (now - timestamp > 300000) paymentStatusPollTracker.delete(k);
+        }
+    }
+    return false;
+}
+
+// ----------------------------------------------------
+// PayHere IPN Webhook (Instant Payment Notification)
+// ONLY path that grants course access upon payment verification
+// ----------------------------------------------------
 app.post('/api/payhere/notify', async (req, res) => {
     try {
         const {
@@ -1069,28 +1101,30 @@ app.post('/api/payhere/notify', async (req, res) => {
             status_message
         } = req.body;
 
-        console.log(`[PayHere IPN Received] Order: ${order_id}, Status: ${status_code}, Amount: ${payhere_amount} ${payhere_currency}`);
-
         const merchantSecret = (process.env.PAYHERE_MERCHANT_SECRET || '').trim();
         const configuredMerchantId = (process.env.PAYHERE_MERCHANT_ID || '').trim();
 
-        if (merchant_id !== configuredMerchantId) {
-            console.error('[PayHere IPN] Merchant ID mismatch. Rejecting webhook.');
-            return res.status(400).send('Merchant mismatch');
-        }
-
-        // Validate PayHere MD5 signature:
+        // 1. Signature Verification:
         // md5sig = strtoupper(md5(merchant_id + order_id + payhere_amount + payhere_currency + status_code + strtoupper(md5(merchant_secret))))
         const hashedSecret = crypto.createHash('md5').update(merchantSecret).digest('hex').toUpperCase();
         const checkString = `${merchant_id}${order_id}${payhere_amount}${payhere_currency}${status_code}${hashedSecret}`;
         const localMd5 = crypto.createHash('md5').update(checkString).digest('hex').toUpperCase();
+        const isHashValid = localMd5 === (md5sig || '').toUpperCase();
 
-        if (localMd5 !== (md5sig || '').toUpperCase()) {
-            console.error('[PayHere IPN] Security check failed: Signature MD5 mismatch. Rejecting notification.');
+        // 2. Audit Logging (without sensitive cardholder data)
+        console.log(`[PayHere IPN Received] Order: ${order_id}, Status: ${status_code}, Amount: ${payhere_amount} ${payhere_currency}, HashValid: ${isHashValid}, Method: ${method || 'N/A'}`);
+
+        if (merchant_id !== configuredMerchantId) {
+            console.error(`[PayHere IPN] Merchant ID mismatch. Expected: ${configuredMerchantId}, Received: ${merchant_id}`);
+            return res.status(400).send('Merchant mismatch');
+        }
+
+        if (!isHashValid) {
+            console.error(`[PayHere IPN] Security check failed: Signature MD5 mismatch for order ${order_id}. Rejecting.`);
             return res.status(400).send('Invalid signature');
         }
 
-        // Fetch payment by order_id
+        // 3. Fetch payment by order_id
         const [payments] = await pool.execute('SELECT * FROM payments WHERE payhere_order_id = ?', [order_id]);
         if (payments.length === 0) {
             console.error(`[PayHere IPN] Order ${order_id} not found in database.`);
@@ -1099,38 +1133,109 @@ app.post('/api/payhere/notify', async (req, res) => {
 
         const payment = payments[0];
 
-        // Status code 2 = Success, 0 = Pending, -1 = Canceled, -2 = Failed, -3 = Chargedback
-        if (parseInt(status_code) === 2) {
-            // Success
-            await fulfillMonthlyPayment({
-                enrollmentId: payment.enrollment_id,
-                userId: payment.user_id,
-                courseId: payment.course_id,
-                courseMonthId: payment.course_month_id,
-                amount: parseFloat(payhere_amount),
-                paymentMethod: method ? `PayHere (${method})` : 'PayHere',
-                transactionId: payment_id || order_id,
-                payhereOrderId: order_id,
-                payload: req.body
-            });
-            console.log(`[PayHere IPN] Order ${order_id} successfully paid and verified! Access unlocked.`);
-        } else {
-            const failStatus = parseInt(status_code) === 0 ? 'pending' : 'failed';
-            await pool.execute(
-                'UPDATE payments SET status = ?, transaction_id = ?, payment_payload = ? WHERE id = ?',
-                [failStatus, payment_id || null, JSON.stringify(req.body), payment.id]
-            );
-            console.log(`[PayHere IPN] Order ${order_id} status updated to: ${failStatus} (${status_message || status_code})`);
+        // 4. Verify Amount against DB expected fee for that course_month_id
+        if (payment.course_month_id) {
+            const [[courseMonth]] = await pool.execute('SELECT monthly_price FROM course_months WHERE id = ?', [payment.course_month_id]);
+            if (!courseMonth) {
+                console.error(`[PayHere IPN] Course month ${payment.course_month_id} not found for order ${order_id}`);
+                return res.status(400).send('Course month not found');
+            }
+
+            const expectedAmount = parseFloat(courseMonth.monthly_price) || 0.00;
+            const receivedAmount = parseFloat(payhere_amount) || 0.00;
+
+            // Difference check up to 2 decimal places
+            if (Math.abs(expectedAmount - receivedAmount) > 0.01) {
+                console.error(`[PayHere IPN] Amount mismatch for order ${order_id}. Expected: ${expectedAmount}, Received: ${receivedAmount}`);
+                await pool.execute(
+                    "UPDATE payments SET status = 'failed', transaction_id = ?, payment_payload = ? WHERE id = ?",
+                    [payment_id || null, JSON.stringify({ error: 'amount_mismatch', expectedAmount, receivedAmount, ipn_body: req.body }), payment.id]
+                );
+                return res.status(400).send('Amount mismatch');
+            }
         }
 
+        // 5. Respond 200 OK immediately so PayHere doesn't retry or timeout
         res.status(200).send('OK');
+
+        // 6. Process fulfillment asynchronously after responding
+        (async () => {
+            try {
+                // Status code 2 = Success, 0 = Pending, -1 = Canceled, -2 = Failed, -3 = Chargedback
+                if (String(status_code) === '2') {
+                    await fulfillMonthlyPayment({
+                        enrollmentId: payment.enrollment_id,
+                        userId: payment.user_id,
+                        courseId: payment.course_id,
+                        courseMonthId: payment.course_month_id,
+                        amount: parseFloat(payhere_amount),
+                        paymentMethod: method ? `PayHere (${method})` : 'PayHere',
+                        transactionId: payment_id || order_id,
+                        payhereOrderId: order_id,
+                        payload: req.body
+                    });
+                    console.log(`[PayHere IPN] Order ${order_id} successfully paid and verified! Access unlocked.`);
+                } else {
+                    const failStatus = String(status_code) === '0' ? 'pending' : 'failed';
+                    await pool.execute(
+                        'UPDATE payments SET status = ?, transaction_id = ?, payment_payload = ? WHERE id = ?',
+                        [failStatus, payment_id || null, JSON.stringify(req.body), payment.id]
+                    );
+                    console.log(`[PayHere IPN] Order ${order_id} status updated to: ${failStatus} (${status_message || status_code})`);
+                }
+            } catch (asyncErr) {
+                console.error(`[PayHere IPN Async Processing Error for Order ${order_id}]:`, asyncErr);
+            }
+        })();
+
     } catch (err) {
         console.error('[PayHere IPN Error]:', err);
-        res.status(500).send(err.message);
+        if (!res.headersSent) {
+            res.status(500).send(err.message);
+        }
     }
 });
 
-// Check payment status by order_id (Frontend Polling / Return Verification)
+// Check payment status endpoint for frontend polling (GET /api/payhere/payment-status?order_id=XXX)
+// Includes rate limiting (max 1 request per second per order_id / IP)
+app.get('/api/payhere/payment-status', async (req, res) => {
+    try {
+        const orderId = (req.query.order_id || req.query.orderId || '').trim();
+        if (!orderId) {
+            return res.status(400).json({ error: 'order_id query parameter is required' });
+        }
+
+        const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+        const rateLimitKey = `${orderId}_${clientIp}`;
+
+        if (isPaymentStatusRateLimited(rateLimitKey)) {
+            return res.status(429).json({ error: 'Too many requests. Please wait a second before polling again.' });
+        }
+
+        const [rows] = await pool.execute(
+            'SELECT id, user_id, course_id, course_month_id, amount, status, transaction_id, paid_at FROM payments WHERE payhere_order_id = ?',
+            [orderId]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        const payment = rows[0];
+        res.json({
+            success: true,
+            status: payment.status,
+            order_id: orderId,
+            paid_at: payment.paid_at,
+            course_id: payment.course_id,
+            course_month_id: payment.course_month_id
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Backward compatibility alias for order-status route
 app.get('/api/payhere/order-status/:orderId', async (req, res) => {
     try {
         const { orderId } = req.params;
@@ -1143,13 +1248,15 @@ app.get('/api/payhere/order-status/:orderId', async (req, res) => {
             return res.status(404).json({ error: 'Order not found' });
         }
 
-        res.json({ success: true, payment: rows[0] });
+        res.json({ success: true, payment: rows[0], status: rows[0].status });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// Client-side PayHere onCompleted verification & instant course unlocking (Handles both Sandbox and Live)
+// Repurposed /api/payhere/confirm-success:
+// NEVER fulfills access or marks payment as success based on client data.
+// Only records or ensures a 'pending' payment tracking record if not yet created.
 app.post('/api/payhere/confirm-success', async (req, res) => {
     try {
         const { order_id, user_id, course_id, course_month_id } = req.body;
@@ -1157,37 +1264,28 @@ app.post('/api/payhere/confirm-success', async (req, res) => {
             return res.status(400).json({ error: 'order_id and user_id are required' });
         }
 
-        // Find existing payment for this order_id
         const [payments] = await pool.execute(
-            'SELECT * FROM payments WHERE payhere_order_id = ? AND user_id = ?',
-            [order_id, user_id]
+            'SELECT id, status FROM payments WHERE payhere_order_id = ?',
+            [order_id]
         );
 
-        if (payments.length === 0) {
-            return res.status(404).json({ error: 'Matching payment order not found' });
+        if (payments.length === 0 && course_id && course_month_id) {
+            // Track as pending only
+            await pool.execute(`
+                INSERT INTO payments (user_id, course_id, course_month_id, amount, payment_method, status, payhere_order_id)
+                VALUES (?, ?, ?, 0.00, 'PayHere Card/Online', 'pending', ?)
+            `, [user_id, course_id, course_month_id, order_id]);
         }
 
-        const payment = payments[0];
-        const effectiveCourseId = payment.course_id || course_id;
-        const effectiveMonthId = payment.course_month_id || course_month_id;
-
-        // Fulfill access and mark payment as success
-        await fulfillMonthlyPayment({
-            enrollmentId: payment.enrollment_id,
-            userId: payment.user_id,
-            courseId: effectiveCourseId,
-            courseMonthId: effectiveMonthId,
-            amount: parseFloat(payment.amount),
-            paymentMethod: payment.payment_method || 'PayHere Online',
-            transactionId: payment.transaction_id || order_id,
-            payhereOrderId: order_id,
-            payload: { confirmed_via: 'client_payhere_completion', timestamp: new Date().toISOString() }
+        // Return current status from DB without granting unlock
+        const currentStatus = payments.length > 0 ? payments[0].status : 'pending';
+        res.json({
+            success: true,
+            status: currentStatus,
+            message: 'Client callback received. Payment fulfillment is verified strictly via PayHere IPN webhook.'
         });
-
-        console.log(`[PayHere Client Confirmation] Order ${order_id} unlocked successfully for User ${user_id}!`);
-        res.json({ success: true, message: 'Payment confirmed and course access unlocked successfully.' });
     } catch (err) {
-        console.error('[PayHere Confirm Success Error]:', err);
+        console.error('[PayHere Confirm Tracking Error]:', err);
         res.status(500).json({ error: err.message });
     }
 });

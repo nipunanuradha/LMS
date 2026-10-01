@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router";
-import { ArrowLeft, Bell, Video, FileText, ExternalLink as ExternalLinkIcon, Download, Check, Eye, Maximize, Minimize, Volume2, VolumeX, Gauge, SlidersHorizontal, ChevronDown, Lock, Unlock, CreditCard, Calendar, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
+import { ArrowLeft, Bell, Video, FileText, ExternalLink as ExternalLinkIcon, Download, Check, Eye, Maximize, Minimize, Volume2, VolumeX, Gauge, SlidersHorizontal, ChevronDown, Lock, Unlock, CreditCard, Calendar, CheckCircle2, AlertCircle, Sparkles, Loader2 } from "lucide-react";
 import {
   mockCourses,
   mockRecordings,
@@ -452,7 +452,9 @@ export function CourseDetails() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [payTargetMonth, setPayTargetMonth] = useState<any>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [paymentSuccessMsg, setPaymentSuccessMsg] = useState<string | null>(null);
+  const [paymentTimeoutInfo, setPaymentTimeoutInfo] = useState<{ orderId: string; message: string } | null>(null);
 
   const recordings = dbRecordings;
   const notices = dbNotices;
@@ -674,39 +676,68 @@ export function CourseDetails() {
 
       // PayHere Callbacks
       (window as any).payhere.onCompleted = async function (orderId: string) {
-        console.log("PayHere payment completed:", orderId);
-        setPaymentSuccessMsg(`Payment completed for ${payTargetMonth.title}! Verifying & unlocking access...`);
+        console.log("PayHere payment completed in client:", orderId);
+        setIsProcessingPayment(true);
+        setIsVerifyingPayment(true);
+        setPaymentTimeoutInfo(null);
+        setPaymentSuccessMsg(null);
 
-        try {
-          // 1. Immediately request backend confirmation & course month unlocking
-          const confirmRes = await fetch(`${API_URL}/api/payhere/confirm-success`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              order_id: orderId,
-              user_id: currentUserObj?.id,
-              course_id: courseId,
-              course_month_id: payTargetMonth.id
-            })
-          });
+        // Notify backend of client completion for pending tracking (does NOT fulfill access)
+        fetch(`${API_URL}/api/payhere/confirm-success`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            order_id: orderId,
+            user_id: currentUserObj?.id,
+            course_id: courseId,
+            course_month_id: payTargetMonth.id
+          })
+        }).catch((err) => console.warn("Pending payment tracking notification note:", err));
 
-          if (!confirmRes.ok) {
-            console.warn("Direct confirmation status:", confirmRes.status);
+        // Poll backend GET /api/payhere/payment-status?order_id=XXX
+        // Every 2 seconds up to 10 attempts (20 seconds max)
+        const maxAttempts = 10;
+        let attempts = 0;
+        let verified = false;
+
+        const pollInterval = setInterval(async () => {
+          attempts++;
+          try {
+            const statusRes = await fetch(`${API_URL}/api/payhere/payment-status?order_id=${encodeURIComponent(orderId)}`);
+            if (statusRes.ok) {
+              const statusData = await statusRes.json();
+              if (statusData.status === "success") {
+                clearInterval(pollInterval);
+                verified = true;
+                setIsVerifyingPayment(false);
+
+                // Refresh month access & unlocked course materials
+                await fetchMonthAccess(currentUserObj, payTargetMonth.id);
+                fetchContentForMonth(payTargetMonth.id, true);
+
+                setPaymentSuccessMsg(`🎉 Success! Access for ${payTargetMonth.title} has been unlocked.`);
+                setTimeout(() => {
+                  setShowPaymentModal(false);
+                  setPaymentSuccessMsg(null);
+                  setIsProcessingPayment(false);
+                }, 2000);
+                return;
+              }
+            }
+          } catch (pollErr) {
+            console.warn(`Payment status poll attempt ${attempts} failed:`, pollErr);
           }
-        } catch (confirmErr) {
-          console.error("Direct payment confirmation error:", confirmErr);
-        }
 
-        // 2. Refresh month access & unlocked course materials
-        await fetchMonthAccess(currentUserObj, payTargetMonth.id);
-        fetchContentForMonth(payTargetMonth.id, true);
-
-        setPaymentSuccessMsg(`🎉 Success! Access for ${payTargetMonth.title} has been unlocked.`);
-        setTimeout(() => {
-          setShowPaymentModal(false);
-          setPaymentSuccessMsg(null);
-          setIsProcessingPayment(false);
-        }, 1500);
+          if (attempts >= maxAttempts && !verified) {
+            clearInterval(pollInterval);
+            setIsVerifyingPayment(false);
+            setIsProcessingPayment(false);
+            setPaymentTimeoutInfo({
+              orderId,
+              message: "Payment is being confirmed and may take a minute. Please refresh shortly — if it doesn't unlock within 5 minutes, contact support with your order ID:"
+            });
+          }
+        }, 2000);
       };
 
       (window as any).payhere.onDismissed = function () {
@@ -1431,7 +1462,45 @@ export function CourseDetails() {
 
             {/* Modal Body */}
             <div className="p-6 space-y-5">
-              {paymentSuccessMsg ? (
+              {isVerifyingPayment ? (
+                <div className="text-center py-8 space-y-4">
+                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto animate-pulse">
+                    <Loader2 className="w-8 h-8 animate-spin" />
+                  </div>
+                  <h4 className="text-lg font-bold text-foreground">Verifying your payment...</h4>
+                  <p className="text-xs text-muted-foreground max-w-xs mx-auto leading-relaxed">
+                    Please wait a moment while we verify the official confirmation from PayHere and securely unlock your access.
+                  </p>
+                </div>
+              ) : paymentTimeoutInfo ? (
+                <div className="text-center py-6 space-y-4">
+                  <div className="w-14 h-14 bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center mx-auto">
+                    <AlertCircle className="w-8 h-8" />
+                  </div>
+                  <h4 className="text-base font-bold text-foreground">Payment Verification in Progress</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed px-2">
+                    {paymentTimeoutInfo.message}
+                  </p>
+                  <div className="bg-muted p-3 rounded-lg border border-border inline-block">
+                    <span className="text-[11px] text-muted-foreground block mb-0.5">Your Order Reference ID:</span>
+                    <code className="text-xs font-mono font-bold text-foreground select-all bg-background px-2 py-1 rounded border border-border">
+                      {paymentTimeoutInfo.orderId}
+                    </code>
+                  </div>
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowPaymentModal(false);
+                        setPaymentTimeoutInfo(null);
+                      }}
+                      className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs transition-colors cursor-pointer"
+                    >
+                      Close & Check Later
+                    </button>
+                  </div>
+                </div>
+              ) : paymentSuccessMsg ? (
                 <div className="text-center py-6 space-y-3">
                   <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto">
                     <CheckCircle2 className="w-8 h-8" />
