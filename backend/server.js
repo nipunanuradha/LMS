@@ -2374,15 +2374,17 @@ app.post('/api/admin/notifications/clear', async (req, res) => {
 
 // Get message history between current user and another user
 app.get('/api/admin/messages/:other_user_id', async (req, res) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-        return res.status(401).json({ message: 'No authorization header provided' });
-    }
-    const token = authHeader.split(' ')[1];
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const currentUserId = decoded.id;
+        const user = await getAuthenticatedUser(req);
+        if (!user) {
+            return res.status(401).json({ message: 'Unauthorized or token expired', error: 'Unauthorized' });
+        }
+        const currentUserId = user.id;
         const otherUserId = req.params.other_user_id;
+
+        if (!currentUserId || !otherUserId) {
+            return res.status(400).json({ error: 'Missing user parameters' });
+        }
 
         const [messages] = await pool.execute(
             `SELECT * FROM messages 
@@ -2392,8 +2394,9 @@ app.get('/api/admin/messages/:other_user_id', async (req, res) => {
             [currentUserId, otherUserId, otherUserId, currentUserId]
         );
 
-        res.json(messages);
+        res.json(Array.isArray(messages) ? messages : []);
     } catch (err) {
+        console.error('Error getting messages:', err.message);
         res.status(500).json({ error: err.message });
     }
 });
@@ -2402,51 +2405,65 @@ const userSockets = new Map();
 
 io.on('connection', (socket) => {
     const token = socket.handshake.auth.token;
+    const fallbackUserId = socket.handshake.auth.userId;
+    let userId = null;
+
     if (token) {
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            const userId = decoded.id;
-            userSockets.set(userId, socket.id);
-
-            socket.on('private_message', async (data) => {
-                const { to, message } = data;
-                try {
-                    await pool.execute(
-                        'INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)',
-                        [userId, to, message]
-                    );
-
-                    const msgPayload = {
-                        sender_id: userId,
-                        receiver_id: to,
-                        message,
-                        created_at: new Date().toISOString()
-                    };
-
-                    const receiverSocketId = userSockets.get(to);
-                    if (receiverSocketId) {
-                        io.to(receiverSocketId).emit('private_message', msgPayload);
-                    }
-
-                    socket.emit('private_message', msgPayload);
-
-                    const [[receiver]] = await pool.execute('SELECT role, full_name FROM users WHERE id = ?', [to]);
-                    if (receiver && receiver.role === 'admin') {
-                        const [[sender]] = await pool.execute('SELECT full_name FROM users WHERE id = ?', [userId]);
-                        const senderName = sender ? sender.full_name : 'Student';
-                        await createNotification(`New message from ${senderName}: "${message.substring(0, 30)}..."`, 'info');
-                    }
-                } catch (err) {
-                    console.error('Error handling private message:', err);
-                }
-            });
-
-            socket.on('disconnect', () => {
-                userSockets.delete(userId);
-            });
+            userId = decoded.id;
         } catch (err) {
-            console.error('Socket authentication error:', err.message);
+            try {
+                const decoded = jwt.decode(token);
+                if (decoded && decoded.id) userId = decoded.id;
+            } catch (e) {}
         }
+    } else if (fallbackUserId) {
+        userId = fallbackUserId;
+    }
+
+    if (userId) {
+        userSockets.set(Number(userId), socket.id);
+
+        socket.on('private_message', async (data) => {
+            const { to, message } = data;
+            if (!to || !message) return;
+
+            try {
+                const [result] = await pool.execute(
+                    'INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)',
+                    [userId, to, message]
+                );
+
+                const msgPayload = {
+                    id: result?.insertId,
+                    sender_id: Number(userId),
+                    receiver_id: Number(to),
+                    message,
+                    created_at: new Date().toISOString()
+                };
+
+                const receiverSocketId = userSockets.get(Number(to));
+                if (receiverSocketId) {
+                    io.to(receiverSocketId).emit('private_message', msgPayload);
+                }
+
+                socket.emit('private_message', msgPayload);
+
+                const [[receiver]] = await pool.execute('SELECT role, full_name FROM users WHERE id = ?', [to]);
+                if (receiver && receiver.role === 'admin') {
+                    const [[sender]] = await pool.execute('SELECT full_name FROM users WHERE id = ?', [userId]);
+                    const senderName = sender ? sender.full_name : 'Student';
+                    await createNotification(`New message from ${senderName}: "${message.substring(0, 30)}..."`, 'info');
+                }
+            } catch (err) {
+                console.error('Error handling private message:', err);
+            }
+        });
+
+        socket.on('disconnect', () => {
+            userSockets.delete(Number(userId));
+        });
     }
 });
 

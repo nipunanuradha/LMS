@@ -62,14 +62,24 @@ export default function AdminChatWidget({ students = [] }) {
   useEffect(() => {
     if (!selectedStudent) return;
     const token = localStorage.getItem('token');
-    if (!token) return;
+    const currentUserStr = localStorage.getItem('currentUser') || localStorage.getItem('user');
+    let currentUserId = '';
+    try {
+      if (currentUserStr) currentUserId = JSON.parse(currentUserStr).id;
+    } catch (e) {}
 
     fetch(`${apiUrl}/api/admin/messages/${selectedStudent.id}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'x-user-id': String(currentUserId || '')
+      },
     })
-      .then((r) => r.json())
-      .then((data) => setMessages(data))
-      .catch(() => setMessages([]));
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setMessages(Array.isArray(data) ? data : []))
+      .catch((err) => {
+        console.error('Failed to load messages:', err);
+        setMessages([]);
+      });
   }, [selectedStudent]);
 
   const send = () => {
@@ -263,7 +273,7 @@ export default function AdminChatWidget({ students = [] }) {
 
                   {/* Messages list */}
                   <div style={{ flex: 1, padding: 12, overflowY: 'auto', background: '#f8fafc', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {messages.length === 0 ? (
+                    {(!Array.isArray(messages) || messages.length === 0) ? (
                       <div style={{ color: '#94a3b8', fontSize: 12, textAlign: 'center', marginTop: 20 }}>No messages yet. Send a greeting!</div>
                     ) : (
                       messages.map((m, i) => {

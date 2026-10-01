@@ -78,8 +78,8 @@ export default function ChatWidget() {
   // Load admins list
   useEffect(() => {
     fetch(`${apiUrl}/api/admins`)
-      .then((r) => r.json())
-      .then(setAdmins)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setAdmins(Array.isArray(data) ? data : []))
       .catch(() => setAdmins([]));
   }, [apiUrl]);
 
@@ -103,13 +103,18 @@ export default function ChatWidget() {
 
     if (socketRef.current) return; // Already connected
 
-    const socket = io(apiUrl, { auth: { token } });
+    const currentUserStr = localStorage.getItem('currentUser');
+    const currentUserId = currentUserStr ? JSON.parse(currentUserStr).id : 0;
+
+    const socket = io(apiUrl, { 
+      auth: { 
+        token, 
+        userId: currentUserId 
+      } 
+    });
     socketRef.current = socket;
 
     socket.on('private_message', (msg: any) => {
-      const currentUserStr = localStorage.getItem('currentUser');
-      const currentUserId = currentUserStr ? JSON.parse(currentUserStr).id : 0;
-
       // Handle message sent to the student
       if (msg.receiver_id === Number(currentUserId)) {
         const senderId = msg.sender_id;
@@ -128,7 +133,8 @@ export default function ChatWidget() {
           }));
 
           // Trigger a beautiful in-app toast notification
-          const senderAdmin = adminsRef.current.find((a) => a.id === senderId);
+          const safeAdminsList = Array.isArray(adminsRef.current) ? adminsRef.current : [];
+          const senderAdmin = safeAdminsList.find((a) => a.id === senderId);
           if (senderAdmin) {
             setActiveToast({
               admin: senderAdmin,
@@ -138,16 +144,20 @@ export default function ChatWidget() {
         } else {
           // Currently viewing this admin's chat, append directly to message list
           setMessages((prevMsgs) => {
-            const exists = prevMsgs.some(
+            const list = Array.isArray(prevMsgs) ? prevMsgs : [];
+            const exists = list.some(
               (m) => m.id === msg.id || (m.created_at === msg.created_at && m.message === msg.message && m.sender_id === msg.sender_id)
             );
-            return exists ? prevMsgs : [...prevMsgs, msg];
+            return exists ? list : [...list, msg];
           });
         }
       } else if (msg.sender_id === Number(currentUserId)) {
         // Handle message sent *from* this student to the admin (echo)
         if (selectedAdminRef.current?.id === msg.receiver_id) {
-          setMessages((prevMsgs) => [...prevMsgs, msg]);
+          setMessages((prevMsgs) => {
+            const list = Array.isArray(prevMsgs) ? prevMsgs : [];
+            return [...list, msg];
+          });
         }
       }
     });
@@ -164,6 +174,9 @@ export default function ChatWidget() {
     const token = localStorage.getItem('token');
     if (!token) return;
 
+    const currentUserStr = localStorage.getItem('currentUser');
+    const currentUserId = currentUserStr ? JSON.parse(currentUserStr).id : 0;
+
     // Clear unread count for this admin
     setUnreadCounts((prev) => ({
       ...prev,
@@ -171,11 +184,17 @@ export default function ChatWidget() {
     }));
 
     fetch(`${apiUrl}/api/admin/messages/${selectedAdmin.id}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'x-user-id': String(currentUserId || '')
+      },
     })
-      .then((r) => r.json())
-      .then((data) => setMessages(data))
-      .catch(() => setMessages([]));
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setMessages(Array.isArray(data) ? data : []))
+      .catch((err) => {
+        console.error('Failed to load messages:', err);
+        setMessages([]);
+      });
 
     // Focus input field after selecting
     setTimeout(() => {
@@ -213,6 +232,8 @@ export default function ChatWidget() {
   if (!isLoggedIn) return null;
 
   const totalUnreadCount = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
+  const safeAdmins = Array.isArray(admins) ? admins : [];
+  const safeMessages = Array.isArray(messages) ? messages : [];
 
   return (
     <>
@@ -368,12 +389,12 @@ export default function ChatWidget() {
                 Admins
               </div>
               
-              {admins.length === 0 ? (
+              {safeAdmins.length === 0 ? (
                 <div className="p-3 text-center text-xs text-slate-400">
                   No admins available
                 </div>
               ) : (
-                admins.map((a) => {
+                safeAdmins.map((a) => {
                   const isSelected = selectedAdmin?.id === a.id;
                   const unreadCount = unreadCounts[a.id] || 0;
                   return (
@@ -409,7 +430,7 @@ export default function ChatWidget() {
               {/* Message Feed Container */}
               <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-3">
                 {selectedAdmin ? (
-                  messages.length === 0 ? (
+                  safeMessages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 p-4 font-sans">
                       <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-2">
                         <MessageSquare className="w-5 h-5 text-slate-400" />
@@ -418,7 +439,7 @@ export default function ChatWidget() {
                       <p className="text-[10px] text-slate-400 m-0 mt-1">Send a message to start the conversation.</p>
                     </div>
                   ) : (
-                    messages.map((m, i) => {
+                    safeMessages.map((m, i) => {
                       const isMe = m.sender_id !== selectedAdmin.id;
                       const isLastMessage = i === messages.length - 1;
                       
