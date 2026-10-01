@@ -1149,6 +1149,50 @@ app.get('/api/payhere/order-status/:orderId', async (req, res) => {
     }
 });
 
+// Client-side PayHere onCompleted verification & instant course unlocking (Handles both Sandbox and Live)
+app.post('/api/payhere/confirm-success', async (req, res) => {
+    try {
+        const { order_id, user_id, course_id, course_month_id } = req.body;
+        if (!order_id || !user_id) {
+            return res.status(400).json({ error: 'order_id and user_id are required' });
+        }
+
+        // Find existing payment for this order_id
+        const [payments] = await pool.execute(
+            'SELECT * FROM payments WHERE payhere_order_id = ? AND user_id = ?',
+            [order_id, user_id]
+        );
+
+        if (payments.length === 0) {
+            return res.status(404).json({ error: 'Matching payment order not found' });
+        }
+
+        const payment = payments[0];
+        const effectiveCourseId = payment.course_id || course_id;
+        const effectiveMonthId = payment.course_month_id || course_month_id;
+
+        // Fulfill access and mark payment as success
+        await fulfillMonthlyPayment({
+            enrollmentId: payment.enrollment_id,
+            userId: payment.user_id,
+            courseId: effectiveCourseId,
+            courseMonthId: effectiveMonthId,
+            amount: parseFloat(payment.amount),
+            paymentMethod: payment.payment_method || 'PayHere Online',
+            transactionId: payment.transaction_id || order_id,
+            payhereOrderId: order_id,
+            payload: { confirmed_via: 'client_payhere_completion', timestamp: new Date().toISOString() }
+        });
+
+        console.log(`[PayHere Client Confirmation] Order ${order_id} unlocked successfully for User ${user_id}!`);
+        res.json({ success: true, message: 'Payment confirmed and course access unlocked successfully.' });
+    } catch (err) {
+        console.error('[PayHere Confirm Success Error]:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
 // Process monthly payment simulation (Direct Manual Bank Transfer Confirmation)
 app.post('/api/student/process-monthly-payment', async (req, res) => {
     const { user_id, course_id, course_month_id, payment_method, amount, notes } = req.body;

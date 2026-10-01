@@ -675,45 +675,38 @@ export function CourseDetails() {
       // PayHere Callbacks
       (window as any).payhere.onCompleted = async function (orderId: string) {
         console.log("PayHere payment completed:", orderId);
-        setPaymentSuccessMsg(`Payment completed successfully for ${payTargetMonth.title}! Verifying & unlocking access...`);
+        setPaymentSuccessMsg(`Payment completed for ${payTargetMonth.title}! Verifying & unlocking access...`);
 
-        // Poll backend order-status to verify fulfillment
-        let retries = 0;
-        const checkStatus = async () => {
-          try {
-            const statusRes = await fetch(`${API_URL}/api/payhere/order-status/${orderId}`);
-            if (statusRes.ok) {
-              const statusData = await statusRes.json();
-              if (statusData.payment && statusData.payment.status === "success") {
-                await fetchMonthAccess(currentUserObj, payTargetMonth.id);
-                setPaymentSuccessMsg(`Payment verified! ${payTargetMonth.title} access has been unlocked.`);
-                setTimeout(() => {
-                  setShowPaymentModal(false);
-                  setPaymentSuccessMsg(null);
-                  setIsProcessingPayment(false);
-                }, 1500);
-                return;
-              }
-            }
-          } catch (e) {
-            console.error("Status check poll error:", e);
+        try {
+          // 1. Immediately request backend confirmation & course month unlocking
+          const confirmRes = await fetch(`${API_URL}/api/payhere/confirm-success`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              order_id: orderId,
+              user_id: currentUserObj?.id,
+              course_id: courseId,
+              course_month_id: payTargetMonth.id
+            })
+          });
+
+          if (!confirmRes.ok) {
+            console.warn("Direct confirmation status:", confirmRes.status);
           }
+        } catch (confirmErr) {
+          console.error("Direct payment confirmation error:", confirmErr);
+        }
 
-          retries++;
-          if (retries < 6) {
-            setTimeout(checkStatus, 1500);
-          } else {
-            // Reload access anyway
-            await fetchMonthAccess(currentUserObj, payTargetMonth.id);
-            setTimeout(() => {
-              setShowPaymentModal(false);
-              setPaymentSuccessMsg(null);
-              setIsProcessingPayment(false);
-            }, 1000);
-          }
-        };
+        // 2. Refresh month access & unlocked course materials
+        await fetchMonthAccess(currentUserObj, payTargetMonth.id);
+        fetchContentForMonth(payTargetMonth.id, true);
 
-        setTimeout(checkStatus, 1000);
+        setPaymentSuccessMsg(`🎉 Success! Access for ${payTargetMonth.title} has been unlocked.`);
+        setTimeout(() => {
+          setShowPaymentModal(false);
+          setPaymentSuccessMsg(null);
+          setIsProcessingPayment(false);
+        }, 1500);
       };
 
       (window as any).payhere.onDismissed = function () {
