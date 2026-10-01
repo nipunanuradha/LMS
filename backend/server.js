@@ -803,13 +803,22 @@ app.get('/api/student/:userId/courses/:courseId/month-access', async (req, res) 
               )
         `, [courseId, year, userId, userId]);
 
-        // Direct payments for specific months
+        // Direct payments for specific months (successful and pending)
         const [monthPayments] = await pool.execute(`
-            SELECT course_month_id, status, paid_at FROM payments 
-            WHERE user_id = ? AND course_id = ? AND status = 'success' AND course_month_id IS NOT NULL
+            SELECT course_month_id, status, paid_at, payhere_order_id FROM payments 
+            WHERE user_id = ? AND course_id = ? AND course_month_id IS NOT NULL
         `, [userId, courseId]);
 
-        const paidMonthIds = new Set(monthPayments.map(p => p.course_month_id));
+        const paidMonthIds = new Set();
+        const pendingMonthMap = new Map(); // course_month_id -> { order_id }
+
+        monthPayments.forEach(p => {
+            if (p.status === 'success') {
+                paidMonthIds.add(p.course_month_id);
+            } else if (p.status === 'pending') {
+                pendingMonthMap.set(p.course_month_id, { orderId: p.payhere_order_id });
+            }
+        });
         const now = new Date();
         accessRows.forEach(row => {
             if (row.id && row.status === 'paid') {
@@ -838,10 +847,15 @@ app.get('/api/student/:userId/courses/:courseId/month-access', async (req, res) 
         const result = months.map(m => {
             // Month is unlocked ONLY if this specific month has been paid for, or if user is admin
             const isPaid = isAdmin || paidMonthIds.has(m.id);
+            const isPending = !isPaid && pendingMonthMap.has(m.id);
+            const pendingInfo = isPending ? pendingMonthMap.get(m.id) : null;
+
             return {
                 ...m,
                 is_unlocked: !!isPaid,
-                access_status: isPaid ? 'paid' : 'locked'
+                is_pending: !!isPending,
+                pending_order_id: pendingInfo ? pendingInfo.orderId : null,
+                access_status: isPaid ? 'paid' : (isPending ? 'pending_unlock' : 'locked')
             };
         });
 

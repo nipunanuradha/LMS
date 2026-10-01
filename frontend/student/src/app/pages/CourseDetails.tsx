@@ -857,6 +857,10 @@ export function CourseDetails() {
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-300/40">
                     <Unlock className="w-3.5 h-3.5" /> Unlocked
                   </span>
+                ) : selectedMonthData.is_pending ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300/60 animate-pulse">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Pending Unlocking
+                  </span>
                 ) : (
                   <button
                     onClick={() => {
@@ -888,6 +892,7 @@ export function CourseDetails() {
             {months.map((m) => {
               const isSelected = m.id === selectedMonthId;
               const isUnlocked = m.is_unlocked;
+              const isPending = !!m.is_pending && !isUnlocked;
               return (
                 <button
                   key={m.id}
@@ -904,19 +909,29 @@ export function CourseDetails() {
                     ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20"
                     : isUnlocked
                       ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/50"
-                      : "bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+                      : isPending
+                        ? "bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 border-amber-300 dark:border-amber-700/60 hover:bg-amber-100"
+                        : "bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:text-foreground"
                     }`}
-                  title={isUnlocked ? `${m.title} is Unlocked` : `Click to pay for ${m.title}`}
+                  title={isUnlocked ? `${m.title} is Unlocked` : isPending ? `${m.title} - Payment Verification Pending Unlocking` : `Click to pay for ${m.title}`}
                 >
                   {isUnlocked ? (
                     <Unlock className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`} />
+                  ) : isPending ? (
+                    <Loader2 className={`w-3.5 h-3.5 shrink-0 animate-spin ${isSelected ? "text-white" : "text-amber-600 dark:text-amber-400"}`} />
                   ) : (
                     <Lock className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-white" : "text-amber-500"}`} />
                   )}
                   <span className="font-semibold">{m.title.split(" ")[0]}</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded font-normal ${isSelected ? "bg-white/20 text-white" : isUnlocked ? "bg-emerald-200/60 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-100" : "bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300"
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded font-normal ${isSelected
+                    ? "bg-white/20 text-white"
+                    : isUnlocked
+                      ? "bg-emerald-200/60 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-100"
+                      : isPending
+                        ? "bg-amber-200/80 dark:bg-amber-900/80 text-amber-950 dark:text-amber-200 font-semibold"
+                        : "bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300"
                     }`}>
-                    {isUnlocked ? "Paid" : `Rs. ${Number(m.monthly_price).toLocaleString()}`}
+                    {isUnlocked ? "Paid" : isPending ? "Pending Unlocking" : `Rs. ${Number(m.monthly_price).toLocaleString()}`}
                   </span>
                 </button>
               );
@@ -926,43 +941,89 @@ export function CourseDetails() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* If month is locked, show Lock Overlay with Direct Payment CTA */}
+        {/* If month is locked, show Lock Overlay or Pending Unlocking Notice */}
         {!isCurrentMonthUnlocked ? (
-          <div className="bg-card rounded-2xl shadow-sm border border-border p-8 text-center max-w-xl mx-auto my-6 animate-fadeIn">
-            <div className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4 border border-amber-300 dark:border-amber-800">
-              <Lock className="w-8 h-8" />
-            </div>
-            <h2 className="text-xl font-bold text-foreground mb-2">
-              {selectedMonthData?.title} is Locked
-            </h2>
-            <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-              You haven't unlocked the recordings and study materials for <strong>{selectedMonthData?.title}</strong> yet. Complete the monthly payment to get instant lifetime access for this month's content.
-            </p>
-
-            <div className="bg-muted/40 p-4 rounded-xl border border-border max-w-sm mx-auto mb-6 text-left space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Month:</span>
-                <span className="font-semibold text-foreground">{selectedMonthData?.title}</span>
+          selectedMonthData?.is_pending ? (
+            <div className="bg-card rounded-2xl shadow-sm border border-amber-200 dark:border-amber-900/50 p-8 text-center max-w-xl mx-auto my-6 animate-fadeIn">
+              <div className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4 border border-amber-300 dark:border-amber-700 animate-pulse">
+                <Loader2 className="w-8 h-8 animate-spin" />
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Class Fee:</span>
-                <span className="font-bold text-blue-600 text-base">
-                  Rs. {Number(selectedMonthData?.monthly_price || 0).toLocaleString()}
-                </span>
+              <div className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300/50 mb-3">
+                Payment Verification in Progress
+              </div>
+              <h2 className="text-xl font-bold text-foreground mb-2">
+                {selectedMonthData?.title} — Pending Unlocking
+              </h2>
+              <p className="text-muted-foreground text-sm leading-relaxed mb-5">
+                We have received your payment initiation for <strong>{selectedMonthData?.title}</strong>. Our system is verifying the transaction with PayHere. Your access will unlock automatically as soon as confirmation arrives.
+              </p>
+
+              {selectedMonthData?.pending_order_id && (
+                <div className="bg-muted/50 p-3.5 rounded-xl border border-border max-w-sm mx-auto mb-5 text-left text-xs">
+                  <span className="text-muted-foreground block text-[11px] mb-1">Order Reference:</span>
+                  <code className="font-mono font-bold text-foreground break-all">{selectedMonthData.pending_order_id}</code>
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-sm mx-auto">
+                <button
+                  onClick={async () => {
+                    if (currentUserObj) {
+                      await fetchMonthAccess(currentUserObj, selectedMonthData.id);
+                    }
+                  }}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs shadow-sm transition-all cursor-pointer"
+                >
+                  <Eye className="w-3.5 h-3.5" /> Re-check Status
+                </button>
+                <button
+                  onClick={() => {
+                    setPayTargetMonth(selectedMonthData);
+                    setShowPaymentModal(true);
+                  }}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-border text-foreground hover:bg-muted font-medium text-xs transition-colors cursor-pointer"
+                >
+                  <CreditCard className="w-3.5 h-3.5" /> Retry Payment
+                </button>
               </div>
             </div>
+          ) : (
+            <div className="bg-card rounded-2xl shadow-sm border border-border p-8 text-center max-w-xl mx-auto my-6 animate-fadeIn">
+              <div className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4 border border-amber-300 dark:border-amber-800">
+                <Lock className="w-8 h-8" />
+              </div>
+              <h2 className="text-xl font-bold text-foreground mb-2">
+                {selectedMonthData?.title} is Locked
+              </h2>
+              <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+                You haven't unlocked the recordings and study materials for <strong>{selectedMonthData?.title}</strong> yet. Complete the monthly payment to get instant lifetime access for this month's content.
+              </p>
 
-            <button
-              onClick={() => {
-                setPayTargetMonth(selectedMonthData);
-                setShowPaymentModal(true);
-              }}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-md shadow-blue-500/25 transition-all cursor-pointer w-full max-w-sm"
-            >
-              <CreditCard className="w-4 h-4" />
-              Pay for {selectedMonthData?.title} (Rs. {Number(selectedMonthData?.monthly_price || 0).toLocaleString()})
-            </button>
-          </div>
+              <div className="bg-muted/40 p-4 rounded-xl border border-border max-w-sm mx-auto mb-6 text-left space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Month:</span>
+                  <span className="font-semibold text-foreground">{selectedMonthData?.title}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Class Fee:</span>
+                  <span className="font-bold text-blue-600 text-base">
+                    Rs. {Number(selectedMonthData?.monthly_price || 0).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setPayTargetMonth(selectedMonthData);
+                  setShowPaymentModal(true);
+                }}
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-md shadow-blue-500/25 transition-all cursor-pointer w-full max-w-sm"
+              >
+                <CreditCard className="w-4 h-4" />
+                Pay for {selectedMonthData?.title} (Rs. {Number(selectedMonthData?.monthly_price || 0).toLocaleString()})
+              </button>
+            </div>
+          )
         ) : (
           <div className="bg-card rounded-2xl shadow-xs border border-border overflow-hidden transition-colors">
             <div className="border-b border-border">
