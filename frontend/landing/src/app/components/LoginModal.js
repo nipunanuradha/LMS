@@ -185,11 +185,12 @@ export default function LoginModal({ isOpen, onClose, selectedCourse }) {
               </div>
               <button
                 onClick={() => {
+                  const registeredPhone = signupData.phone;
                   setGeneratedPassword("");
                   setIsLogin(true);
-                  setPhone(signupData.phone);
+                  setPhone(registeredPhone);
                 }}
-                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-md"
+                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-md cursor-pointer"
               >
                 Go to Login
               </button>

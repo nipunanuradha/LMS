@@ -6,6 +6,9 @@ const getAdminUrl = () => {
 
   if (typeof window !== 'undefined') {
     const { hostname, origin } = window.location;
+    if (hostname.includes('anuradhaathukorala.site') || hostname.includes('vercel.app')) {
+      return 'https://admin.anuradhaathukorala.site';
+    }
     if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
       return origin.replace(/landing/g, 'admin').replace(/student/g, 'admin');
     }
@@ -19,6 +22,9 @@ const getStudentUrl = () => {
 
   if (typeof window !== 'undefined') {
     const { hostname, origin } = window.location;
+    if (hostname.includes('anuradhaathukorala.site') || hostname.includes('vercel.app')) {
+      return 'https://student.anuradhaathukorala.site';
+    }
     if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
       return origin.replace(/landing/g, 'student').replace(/admin/g, 'student');
     }

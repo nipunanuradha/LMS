@@ -8,6 +8,9 @@ const getLandingUrl = () => {
 
   if (typeof window !== 'undefined') {
     const { hostname, origin } = window.location;
+    if (hostname.includes('anuradhaathukorala.site') || hostname.includes('vercel.app')) {
+      return 'https://www.anuradhaathukorala.site';
+    }
     if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
       return origin.replace(/admin/g, 'landing').replace(/student/g, 'landing');
     }
