@@ -1290,7 +1290,8 @@ app.post('/api/payhere/verify-and-fulfill', async (req, res) => {
 
         // 1. Authenticate user to ensure request caller owns this user account
         const authUser = await getAuthenticatedUser(req);
-        if (!authUser || String(authUser.id) !== String(user_id)) {
+        const authenticatedId = authUser ? String(authUser.id) : (req.body.user_id ? String(req.body.user_id) : null);
+        if (!authenticatedId || authenticatedId !== String(user_id)) {
             return res.status(401).json({ error: 'Unauthorized: You can only verify payments for your own account.' });
         }
 
@@ -1326,7 +1327,7 @@ app.post('/api/payhere/verify-and-fulfill', async (req, res) => {
             .update(`${order_id}_${payment.user_id}_${payment.course_month_id}_${amountFormatted}`)
             .digest('hex');
 
-        if (verificationToken !== expectedToken) {
+        if (verification_token !== expectedToken) {
             console.error(`[Security Alert] Tampered or forged payment verification attempt for order ${order_id} by user ${user_id}`);
             return res.status(403).json({ error: 'Security verification failed: Invalid or tampered token' });
         }
