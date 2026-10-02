@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router";
-import { ArrowLeft, Bell, Video, FileText, ExternalLink as ExternalLinkIcon, Download, Check, Eye, Maximize, Minimize, Volume2, VolumeX, Gauge, SlidersHorizontal, ChevronDown, Lock, Unlock, CreditCard, Calendar, CheckCircle2, AlertCircle, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, Bell, Video, FileText, ExternalLink as ExternalLinkIcon, Download, Check, Eye, Maximize, Minimize, Volume2, VolumeX, Gauge, SlidersHorizontal, ChevronDown, Lock, Unlock, CreditCard, Calendar, CheckCircle2, AlertCircle, Sparkles, Loader2, LogOut } from "lucide-react";
 import {
   mockCourses,
   mockRecordings,
@@ -9,7 +9,7 @@ import {
   mockExternalLinks,
   getDaysRemaining,
 } from "../utils/mockData";
-import { API_URL } from "../config";
+import { API_URL, LANDING_URL } from "../config";
 import { ThemeToggle } from "../components/ThemeToggle";
 
 type TabType = "recordings" | "notes" | "links" | "notices";
@@ -448,6 +448,14 @@ export function CourseDetails() {
   const [hasFullEnrollment, setHasFullEnrollment] = useState(false);
   const [currentUserObj, setCurrentUserObj] = useState<any>(null);
 
+  // Logout Modal State
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const confirmLogout = () => {
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("token");
+    window.location.href = LANDING_URL;
+  };
+
   // Payment Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [payTargetMonth, setPayTargetMonth] = useState<any>(null);
@@ -826,7 +834,16 @@ export function CourseDetails() {
               <ArrowLeft className="w-5 h-5" />
               Back to Dashboard
             </Link>
-            <ThemeToggle />
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+              <button
+                onClick={() => setShowLogoutConfirm(true)}
+                className="flex items-center gap-1.5 text-muted-foreground hover:text-red-500 dark:hover:text-red-400 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-sm cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline font-medium">Logout</span>
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1668,6 +1685,41 @@ export function CourseDetails() {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto">
+              <LogOut className="w-6 h-6" />
+            </div>
+            
+            <div className="text-center space-y-1">
+              <h3 className="text-lg font-bold text-foreground">Do you want to log out?</h3>
+              <p className="text-sm text-muted-foreground">
+                You will be signed out from your student account and returned to the main home page.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="w-full py-2.5 px-4 rounded-xl border border-border bg-accent/50 hover:bg-accent text-foreground font-medium text-sm transition-all cursor-pointer"
+              >
+                No
+              </button>
+              <button
+                type="button"
+                onClick={confirmLogout}
+                className="w-full py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-semibold text-sm transition-all shadow-md shadow-red-600/20 cursor-pointer"
+              >
+                Yes, Log Out
+              </button>
             </div>
           </div>
         </div>

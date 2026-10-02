@@ -83,6 +83,14 @@ export function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background text-foreground transition-colors duration-200 relative">
+      <div className="absolute top-4 left-4">
+        <a
+          href={LANDING_URL}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg hover:bg-accent"
+        >
+          ← Back to Home
+        </a>
+      </div>
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
