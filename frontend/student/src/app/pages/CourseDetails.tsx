@@ -690,21 +690,46 @@ export function CourseDetails() {
         setPaymentTimeoutInfo(null);
         setPaymentSuccessMsg(null);
 
-        // Notify backend of client completion for pending tracking (does NOT fulfill access)
-        fetch(`${API_URL}/api/payhere/confirm-success`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            order_id: orderId,
-            user_id: currentUserObj?.id,
-            course_id: courseId,
-            course_month_id: payTargetMonth.id
-          })
-        }).catch((err) => console.warn("Pending payment tracking notification note:", err));
+        const token = localStorage.getItem("token");
 
-        // Poll backend GET /api/payhere/payment-status?order_id=XXX
-        // Every 2 seconds up to 10 attempts (20 seconds max)
-        const maxAttempts = 10;
+        // 1. Immediately call the secure verification endpoint with the verification_token
+        try {
+          const verifyRes = await fetch(`${API_URL}/api/payhere/verify-and-fulfill`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+              "x-user-id": String(currentUserObj?.id || "")
+            },
+            body: JSON.stringify({
+              order_id: orderId,
+              user_id: currentUserObj?.id,
+              verification_token: initData.verification_token
+            })
+          });
+
+          if (verifyRes.ok) {
+            const verifyData = await verifyRes.json();
+            if (verifyData.status === "success" || verifyData.success) {
+              setIsVerifyingPayment(false);
+              await fetchMonthAccess(currentUserObj, payTargetMonth.id);
+              fetchContentForMonth(payTargetMonth.id, true);
+
+              setPaymentSuccessMsg(`🎉 Success! Access for ${payTargetMonth.title} has been unlocked.`);
+              setTimeout(() => {
+                setShowPaymentModal(false);
+                setPaymentSuccessMsg(null);
+                setIsProcessingPayment(false);
+              }, 2000);
+              return;
+            }
+          }
+        } catch (verifyErr) {
+          console.warn("Immediate verification attempt error, falling back to polling:", verifyErr);
+        }
+
+        // 2. Fallback polling (in case verification needed a retry or IPN arrived)
+        const maxAttempts = 8;
         let attempts = 0;
         let verified = false;
 
@@ -742,10 +767,10 @@ export function CourseDetails() {
             setIsProcessingPayment(false);
             setPaymentTimeoutInfo({
               orderId,
-              message: "Payment is being confirmed and may take a minute. Please refresh shortly — if it doesn't unlock within 5 minutes, contact support with your order ID:"
+              message: "Payment is being confirmed and may take a moment. Please refresh shortly — if it doesn't unlock within 5 minutes, contact support with your order ID:"
             });
           }
-        }, 2000);
+        }, 1500);
       };
 
       (window as any).payhere.onDismissed = function () {

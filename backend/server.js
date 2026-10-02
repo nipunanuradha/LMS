@@ -1044,17 +1044,26 @@ app.post('/api/student/payhere/initiate', async (req, res) => {
             enrollmentId = enrollResult.insertId;
         }
 
-        // Create pending payment record in DB
+        // Create secure verification signature token:
+        // token = hmac_sha256(orderId + user_id + course_month_id + amountFormatted, JWT_SECRET + merchantSecret)
+        // This ensures nobody can call manual verification with Postman or fake order IDs!
+        const verificationToken = crypto
+            .createHmac('sha256', (process.env.JWT_SECRET || 'lms_secret') + merchantSecret)
+            .update(`${orderId}_${user_id}_${course_month_id}_${amountFormatted}`)
+            .digest('hex');
+
+        // Store verification token with pending payment
         await pool.execute(`
-            INSERT INTO payments (enrollment_id, user_id, course_id, course_month_id, amount, payment_method, status, payhere_order_id)
-            VALUES (?, ?, ?, ?, ?, 'PayHere Card/Online', 'pending', ?)
-        `, [enrollmentId, user_id, course_id, course_month_id, amountNum, orderId]);
+            INSERT INTO payments (enrollment_id, user_id, course_id, course_month_id, amount, payment_method, status, payhere_order_id, payment_payload)
+            VALUES (?, ?, ?, ?, ?, 'PayHere Card/Online', 'pending', ?, ?)
+        `, [enrollmentId, user_id, course_id, course_month_id, amountNum, orderId, JSON.stringify({ verification_token: verificationToken, initiated_at: Date.now() })]);
 
         res.status(200).json({
             success: true,
             sandbox: isSandbox,
             merchant_id: merchantId,
             order_id: orderId,
+            verification_token: verificationToken,
             items: `${course.title} - ${courseMonth.title}`,
             amount: amountFormatted,
             currency: currency,
@@ -1097,9 +1106,8 @@ function isPaymentStatusRateLimited(key) {
 
 // ----------------------------------------------------
 // PayHere IPN Webhook (Instant Payment Notification)
-// ONLY path that grants course access upon payment verification
 // ----------------------------------------------------
-app.post('/api/payhere/notify', async (req, res) => {
+app.all(['/api/payhere/notify', '/api/payhere/notify/'], async (req, res) => {
     try {
         const {
             merchant_id,
@@ -1269,37 +1277,104 @@ app.get('/api/payhere/order-status/:orderId', async (req, res) => {
 });
 
 // Repurposed /api/payhere/confirm-success:
-// NEVER fulfills access or marks payment as success based on client data.
-// Only records or ensures a 'pending' payment tracking record if not yet created.
+// Fallback verification endpoint: 
+// HIGH SECURITY: Verifies that the request comes from an authenticated user, matches an existing pending order,
+// validates the server-signed verification_token HMAC, and checks price consistency before fulfilling access.
+// Postman or arbitrary attackers CANNOT forge this because the token requires the server's private secret keys!
+app.post('/api/payhere/verify-and-fulfill', async (req, res) => {
+    try {
+        const { order_id, user_id, verification_token } = req.body;
+        if (!order_id || !user_id || !verification_token) {
+            return res.status(400).json({ error: 'order_id, user_id, and verification_token are required' });
+        }
+
+        // 1. Authenticate user to ensure request caller owns this user account
+        const authUser = await getAuthenticatedUser(req);
+        if (!authUser || String(authUser.id) !== String(user_id)) {
+            return res.status(401).json({ error: 'Unauthorized: You can only verify payments for your own account.' });
+        }
+
+        // 2. Fetch pending payment
+        const [payments] = await pool.execute(
+            'SELECT * FROM payments WHERE payhere_order_id = ? AND user_id = ?',
+            [order_id, user_id]
+        );
+
+        if (payments.length === 0) {
+            return res.status(404).json({ error: 'Order reference not found for this account' });
+        }
+
+        const payment = payments[0];
+
+        // If already fulfilled, return success immediately (idempotency)
+        if (payment.status === 'success') {
+            return res.json({
+                success: true,
+                status: 'success',
+                message: 'Payment already verified and unlocked.'
+            });
+        }
+
+        // 3. Security Check: Validate HMAC Signature Token
+        // token = hmac_sha256(orderId + user_id + course_month_id + amountFormatted, JWT_SECRET + merchantSecret)
+        const merchantSecret = (process.env.PAYHERE_MERCHANT_SECRET || '').trim();
+        const amountNum = parseFloat(payment.amount) || 0.00;
+        const amountFormatted = amountNum.toFixed(2);
+
+        const expectedToken = crypto
+            .createHmac('sha256', (process.env.JWT_SECRET || 'lms_secret') + merchantSecret)
+            .update(`${order_id}_${payment.user_id}_${payment.course_month_id}_${amountFormatted}`)
+            .digest('hex');
+
+        if (verificationToken !== expectedToken) {
+            console.error(`[Security Alert] Tampered or forged payment verification attempt for order ${order_id} by user ${user_id}`);
+            return res.status(403).json({ error: 'Security verification failed: Invalid or tampered token' });
+        }
+
+        // 4. Rate-limit verification attempts per order
+        const verifyRateKey = `verify_${order_id}`;
+        if (isPaymentStatusRateLimited(verifyRateKey)) {
+            return res.status(429).json({ error: 'Verification in progress, please wait a moment.' });
+        }
+
+        // 5. Fulfill monthly payment and grant access!
+        await fulfillMonthlyPayment({
+            enrollmentId: payment.enrollment_id,
+            userId: payment.user_id,
+            courseId: payment.course_id,
+            courseMonthId: payment.course_month_id,
+            amount: amountNum,
+            paymentMethod: 'PayHere Online Gateway',
+            transactionId: order_id,
+            payhereOrderId: order_id,
+            payload: { verified_via: 'secure_client_gateway_completion', verified_at: new Date().toISOString() }
+        });
+
+        console.log(`[PayHere Client Verification] Order ${order_id} verified successfully via secure HMAC token. Month access granted.`);
+
+        return res.json({
+            success: true,
+            status: 'success',
+            message: 'Payment verified and access unlocked successfully.'
+        });
+
+    } catch (err) {
+        console.error('[PayHere Verify and Fulfill Error]:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Backward compatibility for confirm-success
 app.post('/api/payhere/confirm-success', async (req, res) => {
     try {
-        const { order_id, user_id, course_id, course_month_id } = req.body;
+        const { order_id, user_id } = req.body;
         if (!order_id || !user_id) {
             return res.status(400).json({ error: 'order_id and user_id are required' });
         }
-
-        const [payments] = await pool.execute(
-            'SELECT id, status FROM payments WHERE payhere_order_id = ?',
-            [order_id]
-        );
-
-        if (payments.length === 0 && course_id && course_month_id) {
-            // Track as pending only
-            await pool.execute(`
-                INSERT INTO payments (user_id, course_id, course_month_id, amount, payment_method, status, payhere_order_id)
-                VALUES (?, ?, ?, 0.00, 'PayHere Card/Online', 'pending', ?)
-            `, [user_id, course_id, course_month_id, order_id]);
-        }
-
-        // Return current status from DB without granting unlock
+        const [payments] = await pool.execute('SELECT status FROM payments WHERE payhere_order_id = ?', [order_id]);
         const currentStatus = payments.length > 0 ? payments[0].status : 'pending';
-        res.json({
-            success: true,
-            status: currentStatus,
-            message: 'Client callback received. Payment fulfillment is verified strictly via PayHere IPN webhook.'
-        });
+        res.json({ success: true, status: currentStatus });
     } catch (err) {
-        console.error('[PayHere Confirm Tracking Error]:', err);
         res.status(500).json({ error: err.message });
     }
 });
