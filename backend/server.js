@@ -1235,7 +1235,7 @@ app.get('/api/payhere/payment-status', async (req, res) => {
         }
 
         const [rows] = await pool.execute(
-            'SELECT id, user_id, course_id, course_month_id, amount, status, transaction_id, paid_at FROM payments WHERE payhere_order_id = ?',
+            'SELECT id, user_id, course_id, course_month_id, amount, status, transaction_id, paid_at, payment_payload FROM payments WHERE payhere_order_id = ?',
             [orderId]
         );
 
@@ -1244,13 +1244,24 @@ app.get('/api/payhere/payment-status', async (req, res) => {
         }
 
         const payment = rows[0];
+        let failureReason = null;
+        if (payment.status === 'failed' && payment.payment_payload) {
+            try {
+                const parsed = typeof payment.payment_payload === 'string' ? JSON.parse(payment.payment_payload) : payment.payment_payload;
+                failureReason = parsed?.status_message || parsed?.error || null;
+            } catch (e) {
+                // ignore json parse error
+            }
+        }
+
         res.json({
             success: true,
             status: payment.status,
             order_id: orderId,
             paid_at: payment.paid_at,
             course_id: payment.course_id,
-            course_month_id: payment.course_month_id
+            course_month_id: payment.course_month_id,
+            failure_reason: failureReason
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -1307,12 +1318,21 @@ app.post('/api/payhere/verify-and-fulfill', async (req, res) => {
 
         const payment = payments[0];
 
-        // If already fulfilled, return success immediately (idempotency)
+        // If already fulfilled and approved by PayHere IPN, return success immediately (idempotency)
         if (payment.status === 'success') {
             return res.json({
                 success: true,
                 status: 'success',
-                message: 'Payment already verified and unlocked.'
+                message: 'Payment verified and access unlocked.'
+            });
+        }
+
+        // If PayHere IPN already marked the payment as failed (e.g. Insufficient Funds, Limit Exceeded, etc.)
+        if (payment.status === 'failed') {
+            return res.status(400).json({
+                success: false,
+                status: 'failed',
+                error: 'Payment was declined or failed (e.g. Insufficient Funds, Limit Exceeded, or Card Error). Course access was not granted.'
             });
         }
 
@@ -1338,25 +1358,12 @@ app.post('/api/payhere/verify-and-fulfill', async (req, res) => {
             return res.status(429).json({ error: 'Verification in progress, please wait a moment.' });
         }
 
-        // 5. Fulfill monthly payment and grant access!
-        await fulfillMonthlyPayment({
-            enrollmentId: payment.enrollment_id,
-            userId: payment.user_id,
-            courseId: payment.course_id,
-            courseMonthId: payment.course_month_id,
-            amount: amountNum,
-            paymentMethod: 'PayHere Online Gateway',
-            transactionId: order_id,
-            payhereOrderId: order_id,
-            payload: { verified_via: 'secure_client_gateway_completion', verified_at: new Date().toISOString() }
-        });
-
-        console.log(`[PayHere Client Verification] Order ${order_id} verified successfully via secure HMAC token. Month access granted.`);
-
+        // 5. Check if the payment was actually confirmed by PayHere IPN webhook
+        // We do NOT self-fulfill if status is still pending or not verified by gateway
         return res.json({
-            success: true,
-            status: 'success',
-            message: 'Payment verified and access unlocked successfully.'
+            success: false,
+            status: payment.status || 'pending',
+            message: 'Payment verification is pending gateway confirmation from PayHere.'
         });
 
     } catch (err) {

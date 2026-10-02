@@ -463,6 +463,7 @@ export function CourseDetails() {
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [paymentSuccessMsg, setPaymentSuccessMsg] = useState<string | null>(null);
   const [paymentTimeoutInfo, setPaymentTimeoutInfo] = useState<{ orderId: string; message: string } | null>(null);
+  const [paymentDeclinedInfo, setPaymentDeclinedInfo] = useState<{ orderId: string; reason: string } | null>(null);
 
   const recordings = dbRecordings;
   const notices = dbNotices;
@@ -688,60 +689,23 @@ export function CourseDetails() {
         setIsProcessingPayment(true);
         setIsVerifyingPayment(true);
         setPaymentTimeoutInfo(null);
+        setPaymentDeclinedInfo(null);
         setPaymentSuccessMsg(null);
 
-        const token = localStorage.getItem("token");
-
-        // 1. Immediately call the secure verification endpoint with the verification_token
-        try {
-          const verifyRes = await fetch(`${API_URL}/api/payhere/verify-and-fulfill`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-              "x-user-id": String(currentUserObj?.id || "")
-            },
-            body: JSON.stringify({
-              order_id: orderId,
-              user_id: currentUserObj?.id,
-              verification_token: initData.verification_token
-            })
-          });
-
-          if (verifyRes.ok) {
-            const verifyData = await verifyRes.json();
-            if (verifyData.status === "success" || verifyData.success) {
-              setIsVerifyingPayment(false);
-              await fetchMonthAccess(currentUserObj, payTargetMonth.id);
-              fetchContentForMonth(payTargetMonth.id, true);
-
-              setPaymentSuccessMsg(`🎉 Success! Access for ${payTargetMonth.title} has been unlocked.`);
-              setTimeout(() => {
-                setShowPaymentModal(false);
-                setPaymentSuccessMsg(null);
-                setIsProcessingPayment(false);
-              }, 2000);
-              return;
-            }
-          }
-        } catch (verifyErr) {
-          console.warn("Immediate verification attempt error, falling back to polling:", verifyErr);
-        }
-
-        // 2. Fallback polling (in case verification needed a retry or IPN arrived)
-        const maxAttempts = 8;
+        // Poll payment status to verify gateway IPN confirmation
+        const maxAttempts = 12;
         let attempts = 0;
-        let verified = false;
+        let finished = false;
 
-        const pollInterval = setInterval(async () => {
+        const checkStatus = async () => {
           attempts++;
           try {
             const statusRes = await fetch(`${API_URL}/api/payhere/payment-status?order_id=${encodeURIComponent(orderId)}`);
             if (statusRes.ok) {
               const statusData = await statusRes.json();
+              
               if (statusData.status === "success") {
-                clearInterval(pollInterval);
-                verified = true;
+                finished = true;
                 setIsVerifyingPayment(false);
 
                 // Refresh month access & unlocked course materials
@@ -754,21 +718,51 @@ export function CourseDetails() {
                   setPaymentSuccessMsg(null);
                   setIsProcessingPayment(false);
                 }, 2000);
-                return;
+                return true;
+              }
+
+              if (statusData.status === "failed") {
+                finished = true;
+                setIsVerifyingPayment(false);
+                setIsProcessingPayment(false);
+                const reason = statusData.failure_reason || "Payment was declined by your bank or card issuer (e.g. Insufficient Funds, Limit Exceeded, or Network Error).";
+                setPaymentDeclinedInfo({
+                  orderId,
+                  reason
+                });
+                return true;
               }
             }
           } catch (pollErr) {
             console.warn(`Payment status poll attempt ${attempts} failed:`, pollErr);
           }
 
-          if (attempts >= maxAttempts && !verified) {
-            clearInterval(pollInterval);
+          if (attempts >= maxAttempts && !finished) {
+            finished = true;
             setIsVerifyingPayment(false);
             setIsProcessingPayment(false);
             setPaymentTimeoutInfo({
               orderId,
-              message: "Payment is being confirmed and may take a moment. Please refresh shortly — if it doesn't unlock within 5 minutes, contact support with your order ID:"
+              message: "Payment is being processed by the bank. If it was successful, access will unlock shortly upon page refresh."
             });
+            return true;
+          }
+
+          return false;
+        };
+
+        // Run initial check immediately
+        const resolvedImmediately = await checkStatus();
+        if (resolvedImmediately) return;
+
+        const pollInterval = setInterval(async () => {
+          if (finished) {
+            clearInterval(pollInterval);
+            return;
+          }
+          const isDone = await checkStatus();
+          if (isDone) {
+            clearInterval(pollInterval);
           }
         }, 1500);
       };
@@ -1574,6 +1568,48 @@ export function CourseDetails() {
                   <p className="text-xs text-muted-foreground max-w-xs mx-auto leading-relaxed">
                     Please wait a moment while we verify the official confirmation from PayHere and securely unlock your access.
                   </p>
+                </div>
+              ) : paymentDeclinedInfo ? (
+                <div className="text-center py-6 space-y-4">
+                  <div className="w-14 h-14 bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto">
+                    <AlertCircle className="w-8 h-8" />
+                  </div>
+                  <h4 className="text-base font-bold text-red-600 dark:text-red-400">Payment Declined</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed px-2">
+                    {paymentDeclinedInfo.reason}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/80 px-4">
+                    Course access remains locked. Please check your bank card balance or try again using another debit/credit card or payment method.
+                  </p>
+                  <div className="bg-muted p-2.5 rounded-lg border border-border inline-block">
+                    <span className="text-[10px] text-muted-foreground block mb-0.5">Order Reference:</span>
+                    <code className="text-[11px] font-mono font-bold text-foreground select-all bg-background px-2 py-0.5 rounded border border-border">
+                      {paymentDeclinedInfo.orderId}
+                    </code>
+                  </div>
+                  <div className="pt-2 flex justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPaymentDeclinedInfo(null);
+                        setIsProcessingPayment(false);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs transition-colors cursor-pointer"
+                    >
+                      Try Again
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowPaymentModal(false);
+                        setPaymentDeclinedInfo(null);
+                        setIsProcessingPayment(false);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-medium text-xs transition-colors cursor-pointer"
+                    >
+                      Close
+                    </button>
+                  </div>
                 </div>
               ) : paymentTimeoutInfo ? (
                 <div className="text-center py-6 space-y-4">
