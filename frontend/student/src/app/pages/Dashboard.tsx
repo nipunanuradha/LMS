@@ -32,6 +32,22 @@ export function Dashboard() {
   const [courses, setCourses] = useState<any[]>([]);
 
   useEffect(() => {
+    // Check if arrived with token/user query parameters
+    const params = new URLSearchParams(window.location.search);
+    const tokenParam = params.get("token");
+    const userParam = params.get("user");
+
+    if (tokenParam && userParam) {
+      try {
+        localStorage.setItem("token", tokenParam);
+        localStorage.setItem("currentUser", decodeURIComponent(userParam));
+        // Clean URL params from address bar
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } catch (e) {
+        console.error("Error setting session tokens:", e);
+      }
+    }
+
     const currentUser = localStorage.getItem("currentUser");
     if (!currentUser) {
       navigate("/");

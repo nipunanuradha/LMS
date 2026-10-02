@@ -61,8 +61,11 @@ export default function LoginModal({ isOpen, onClose, selectedCourse }) {
         if (data.user.role === "admin") {
           window.location.href = `${ADMIN_URL}/?token=${data.token}&admin_isLoggedIn=true&user=${userStr}`;
         } else {
-          const courseQuery = selectedCourse ? `&course_id=${selectedCourse.id}` : "";
-          window.location.href = `${STUDENT_URL}/?token=${data.token}&user=${userStr}${courseQuery}`;
+          if (selectedCourse) {
+            window.location.href = `${STUDENT_URL}/?token=${data.token}&user=${userStr}&course_id=${selectedCourse.id}`;
+          } else {
+            window.location.href = `${STUDENT_URL}/dashboard?token=${data.token}&user=${userStr}`;
+          }
         }
       } else {
         setError(data.message || "Invalid login credentials. Please check and try again.");
