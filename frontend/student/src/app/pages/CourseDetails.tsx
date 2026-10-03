@@ -129,7 +129,9 @@ export function CourseDetails() {
           }
           if (typeof data.info.playerState === "number") {
             // 1: PLAYING, 2: PAUSED, 3: BUFFERING
-            isPlayingRef.current = data.info.playerState === 1 || data.info.playerState === 3;
+            const isPlaying = data.info.playerState === 1 || data.info.playerState === 3;
+            isPlayingRef.current = isPlaying;
+            window.dispatchEvent(new CustomEvent("lms-video-playback", { detail: { isPlaying } }));
           }
         }
 
@@ -139,9 +141,11 @@ export function CourseDetails() {
         }
         if (data.event === "play") {
           isPlayingRef.current = true;
+          window.dispatchEvent(new CustomEvent("lms-video-playback", { detail: { isPlaying: true } }));
         }
         if (data.event === "pause") {
           isPlayingRef.current = false;
+          window.dispatchEvent(new CustomEvent("lms-video-playback", { detail: { isPlaying: false } }));
         }
       } catch (e) {
         // ignore
