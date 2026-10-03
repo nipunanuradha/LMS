@@ -1359,26 +1359,36 @@ app.post('/api/payhere/verify-and-fulfill', async (req, res) => {
             return res.status(429).json({ error: 'Verification in progress, please wait a moment.' });
         }
 
-        // 5. If PayHere IPN has not reached backend yet (e.g. local dev, firewall, or cloud webhook delay),
-        // but the client has successfully completed checkout (verified by HMAC secret token and authenticated user matching),
-        // fulfill the access securely so student does not get locked out!
-        console.log(`[PayHere Verification Fallback] Fulfilling order ${order_id} via secure token verification for user ${user_id}`);
-        await fulfillMonthlyPayment({
-            enrollmentId: payment.enrollment_id,
-            userId: payment.user_id,
-            courseId: payment.course_id,
-            courseMonthId: payment.course_month_id,
-            amount: parseFloat(payment.amount),
-            paymentMethod: 'PayHere (Completed)',
-            transactionId: order_id,
-            payhereOrderId: order_id,
-            payload: { verified_via: 'client_hmac_verification', timestamp: Date.now() }
-        });
+        // 5. Strict Security Rule: NEVER self-fulfill unconfirmed or declined payments.
+        // Course access must ONLY be unlocked if PayHere's official IPN webhook has confirmed status_code 2 (success).
+        if (payment.status === 'success') {
+            return res.json({
+                success: true,
+                status: 'success',
+                message: 'Payment verified and access unlocked successfully!'
+            });
+        }
 
+        if (payment.status === 'failed') {
+            let reason = 'Payment was declined or failed (e.g. Insufficient Funds, Limit Exceeded, or Bank Error). Course access was not granted.';
+            if (payment.payment_payload) {
+                try {
+                    const parsed = typeof payment.payment_payload === 'string' ? JSON.parse(payment.payment_payload) : payment.payment_payload;
+                    if (parsed?.status_message) reason = parsed.status_message;
+                } catch (e) {}
+            }
+            return res.status(400).json({
+                success: false,
+                status: 'failed',
+                error: reason
+            });
+        }
+
+        // Status is still pending: PayHere IPN has not confirmed yet
         return res.json({
-            success: true,
-            status: 'success',
-            message: 'Payment verified and access unlocked successfully!'
+            success: false,
+            status: payment.status || 'pending',
+            message: 'Payment verification is still pending gateway confirmation from PayHere.'
         });
 
     } catch (err) {
