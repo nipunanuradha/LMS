@@ -1413,8 +1413,14 @@ app.post('/api/payhere/confirm-success', async (req, res) => {
 });
 
 
-// Process monthly payment simulation (Direct Manual Bank Transfer Confirmation)
+// Admin-only manual payment confirmation (Direct Bank Transfer Verification)
 app.post('/api/student/process-monthly-payment', async (req, res) => {
+    // High Security: Only admins can manually approve/record offline bank payments
+    const authUser = await getAuthenticatedUser(req);
+    if (!authUser || authUser.role !== 'admin') {
+        return res.status(403).json({ error: 'Access denied: Only administrators can manually approve course payments.' });
+    }
+
     const { user_id, course_id, course_month_id, payment_method, amount, notes } = req.body;
     if (!user_id || !course_id || !course_month_id) {
         return res.status(400).json({ error: 'user_id, course_id, and course_month_id are required' });
