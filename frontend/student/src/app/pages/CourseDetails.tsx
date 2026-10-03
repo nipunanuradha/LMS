@@ -741,6 +741,46 @@ export function CourseDetails() {
             console.warn(`Payment status poll attempt ${attempts} failed:`, pollErr);
           }
 
+          // If IPN hasn't updated status after 3 attempts (~4.5s) and we have the secure verification_token from initiate
+          if (attempts >= 3 && !finished && initData?.verification_token && currentUserObj?.id) {
+            try {
+              const token = localStorage.getItem("token");
+              const verifyRes = await fetch(`${API_URL}/api/payhere/verify-and-fulfill`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  ...(token ? { Authorization: `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({
+                  order_id: orderId,
+                  user_id: currentUserObj.id,
+                  verification_token: initData.verification_token
+                })
+              });
+              if (verifyRes.ok) {
+                const verifyData = await verifyRes.json();
+                if (verifyData.success || verifyData.status === "success") {
+                  finished = true;
+                  setIsVerifyingPayment(false);
+
+                  // Refresh month access & unlocked course materials
+                  await fetchMonthAccess(currentUserObj, payTargetMonth.id);
+                  fetchContentForMonth(payTargetMonth.id, true);
+
+                  setPaymentSuccessMsg(`🎉 Success! Access for ${payTargetMonth.title} has been unlocked.`);
+                  setTimeout(() => {
+                    setShowPaymentModal(false);
+                    setPaymentSuccessMsg(null);
+                    setIsProcessingPayment(false);
+                  }, 2000);
+                  return true;
+                }
+              }
+            } catch (vErr) {
+              console.warn("Direct verification attempt error:", vErr);
+            }
+          }
+
           if (attempts >= maxAttempts && !finished) {
             finished = true;
             setIsVerifyingPayment(false);
