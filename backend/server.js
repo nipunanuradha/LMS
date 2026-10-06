@@ -338,14 +338,14 @@ async function seedAdmin() {
                 'INSERT INTO users (full_name, phone_number, district, province, password, role) VALUES (?, ?, ?, ?, ?, ?)',
                 ['Super Admin', adminPhone, 'Colombo', 'Western', hashedPassword, 'admin']
             );
-            console.log('Default Admin user seeded successfully. Phone: 0777777777, Password: admin123');
+            /* console.log('Default Admin user seeded successfully. Phone: 0777777777, Password: admin123');*/
         } else {
             const hashedPassword = await bcrypt.hash('admin123', 10);
             await pool.execute(
                 'UPDATE users SET role = "admin", password = ? WHERE phone_number = ?',
                 [hashedPassword, adminPhone]
             );
-            console.log('Admin user updated/reset successfully. Phone: 0777777777, Password: admin123');
+            /* console.log('Admin user updated/reset successfully. Phone: 0777777777, Password: admin123');*/
         }
     } catch (err) {
         console.error('Database connection or initialization failed:', err.message);
@@ -1375,7 +1375,7 @@ app.post('/api/payhere/verify-and-fulfill', async (req, res) => {
                 try {
                     const parsed = typeof payment.payment_payload === 'string' ? JSON.parse(payment.payment_payload) : payment.payment_payload;
                     if (parsed?.status_message) reason = parsed.status_message;
-                } catch (e) {}
+                } catch (e) { }
             }
             return res.status(400).json({
                 success: false,
@@ -2651,7 +2651,7 @@ io.on('connection', (socket) => {
             try {
                 const decoded = jwt.decode(token);
                 if (decoded && decoded.id) userId = decoded.id;
-            } catch (e) {}
+            } catch (e) { }
         }
     } else if (fallbackUserId) {
         userId = fallbackUserId;
