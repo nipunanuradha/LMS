@@ -36,12 +36,12 @@ export default function PrivacyPolicy() {
               1. Information We Collect
             </h2>
             <p className="leading-relaxed">
-              We collect information that you provide directly to us when registering for a course, creating an account on our Student LMS, or contacting us for support. This includes:
+              We collect information that you provide directly to us when registering for a Classes, creating an account on our Student LMS, or contacting us for support. This includes:
             </p>
             <ul className="list-disc pl-6 space-y-2 marker:text-blue-500 dark:marker:text-blue-400">
               <li><strong className="text-slate-900 dark:text-slate-100">Personal details:</strong> Full name, date of birth, gender, and national identity card (NIC) number.</li>
               <li><strong className="text-slate-900 dark:text-slate-100">Contact information:</strong> Email address, mobile phone number, district, and province.</li>
-              <li><strong className="text-slate-900 dark:text-slate-100">Academic & LMS records:</strong> Courses enrolled, monthly modular access records, attendance, video playback logs, quiz and assignment results.</li>
+              <li><strong className="text-slate-900 dark:text-slate-100">Academic & LMS records:</strong> Classes enrolled, monthly modular access records, attendance, video playback logs, quiz and assignment results.</li>
               <li><strong className="text-slate-900 dark:text-slate-100">Payment & Transaction records:</strong> Transaction references, payment dates, amounts paid, payment method (e.g. Card or Bank Transfer), and invoice numbers. <em>(Note: Sensitive card details such as full 16-digit card numbers, PINs, and CVV security codes are handled directly by certified bank gateways and are NEVER stored or seen by ICT Academy).</em></li>
               <li><strong className="text-slate-900 dark:text-slate-100">Technical logs:</strong> IP address, device fingerprints, operating system, and browser information recorded for security verification and preventing account sharing.</li>
             </ul>
@@ -58,10 +58,10 @@ export default function PrivacyPolicy() {
               ICT Academy utilizes the collected data for various purposes in order to provide and improve our educational services:
             </p>
             <ul className="list-disc pl-6 space-y-2 marker:text-blue-500 dark:marker:text-blue-400">
-              <li>To authenticate your student login and unlock access to paid course months and learning materials.</li>
-              <li>To process course fee payments, generate official receipts, and manage billing records.</li>
-              <li>To evaluate exams, calculate rankings, track course completion, and issue verifiable certificates.</li>
-              <li>To send essential SMS or email alerts regarding class schedules, payment confirmations, and system updates.</li>
+              <li>To authenticate your student login and unlock access to paid Classes and learning materials.</li>
+              <li>To process Class fee payments, generate official receipts, and manage billing records.</li>
+              <li>To evaluate exams, calculate rankings, track Class completion, and issue verifiable certificates.</li>
+              <li>To send essential SMS or email alerts regarding Class schedules, payment confirmations, and system updates.</li>
               <li>To enforce copyright protection, deter unauthorized account sharing or video piracy, and maintain platform security.</li>
             </ul>
           </section>

@@ -23,7 +23,7 @@ export default function RefundPolicy() {
             Refund & Cancellation Policy
           </h1>
           <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto text-base">
-            Effective Date: May 30, 2026. This policy outlines our terms and guidelines regarding course fee payments, monthly access subscriptions, and refund eligibility.
+            Effective Date: May 30, 2026. This policy outlines our terms and guidelines regarding Classes fee payments, monthly access subscriptions, and refund eligibility.
           </p>
         </div>
 
@@ -33,13 +33,13 @@ export default function RefundPolicy() {
           <section className="space-y-4">
             <h2 className="font-display font-bold text-xl text-slate-900 dark:text-white flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-              1. Digital Content & Monthly Course Fees
+              1. Digital Content & Monthly Classes Fees
             </h2>
             <p className="leading-relaxed">
               ICT Academy provides digital educational services, including live interactive online sessions, on-demand video lecture recordings, downloadable PDF lecture notes, code repositories, and online examination assessments.
             </p>
             <p className="leading-relaxed">
-              Course fees on ICT Academy LMS are billed either as monthly modular access fees or full-course payments. Because instant digital access to copyrighted learning materials, video recordings, and cloud server resources is provisioned immediately upon transaction confirmation, payments are generally considered non-refundable once digital access has been granted, except under the circumstances outlined below.
+              Classes fees on ICT Academy LMS are billed either as monthly modular access fees or full-Classes payments. Because instant digital access to copyrighted learning materials, video recordings, and cloud server resources is provisioned immediately upon transaction confirmation, payments are generally considered non-refundable once digital access has been granted, except under the circumstances outlined below.
             </p>
           </section>
 
@@ -55,13 +55,13 @@ export default function RefundPolicy() {
             </p>
             <ul className="list-disc pl-6 space-y-2 marker:text-blue-500 dark:marker:text-blue-400">
               <li>
-                <strong className="text-slate-900 dark:text-slate-100">Duplicate Payment / Overcharge:</strong> If your card or bank account was debited more than once for the same course or monthly fee due to a payment gateway timeout or technical failure.
+                <strong className="text-slate-900 dark:text-slate-100">Duplicate Payment / Overcharge:</strong> If your card or bank account was debited more than once for the same classes or monthly fee due to a payment gateway timeout or technical failure.
               </li>
               <li>
-                <strong className="text-slate-900 dark:text-slate-100">Course Cancellation by Academy:</strong> If ICT Academy cancels a scheduled course or tutorial program prior to the start of lectures and is unable to provide a suitable alternative batch.
+                <strong className="text-slate-900 dark:text-slate-100">Classes Cancellation by Academy:</strong> If ICT Academy cancels a scheduled classes or tutorial program prior to the start of lectures and is unable to provide a suitable alternative batch.
               </li>
               <li>
-                <strong className="text-slate-900 dark:text-slate-100">Technical Inaccessibility:</strong> If an active paid student experiences documented, verified technical system errors originating entirely from our servers that prevent any access to course materials for more than 7 consecutive business days, and our support engineering team cannot resolve the issue.
+                <strong className="text-slate-900 dark:text-slate-100">Technical Inaccessibility:</strong> If an active paid student experiences documented, verified technical system errors originating entirely from our servers that prevent any access to Classes materials for more than 7 consecutive business days, and our support engineering team cannot resolve the issue.
               </li>
             </ul>
           </section>
@@ -80,7 +80,7 @@ export default function RefundPolicy() {
               <li>Change of personal preference, schedule conflicts, lack of time, or inability to attend live online classes after payment has been completed. (All live classes are recorded and archived for on-demand playback).</li>
               <li>Student's personal device limitations, lack of compatible software, poor internet connectivity, or power interruptions on the student's end.</li>
               <li>Failure to submit assignments, sit for examinations, or achieve a passing grade.</li>
-              <li>Disciplinary termination or account suspension resulting from academic dishonesty, harassment, or violation of our Terms of Service (such as sharing credentials or unauthorized distribution of course videos).</li>
+              <li>Disciplinary termination or account suspension resulting from academic dishonesty, harassment, or violation of our Terms of Service (such as sharing credentials or unauthorized distribution of class videos).</li>
               <li>Refund requests submitted more than 7 calendar days after the payment transaction date.</li>
             </ul>
           </section>
@@ -100,7 +100,7 @@ export default function RefundPolicy() {
                 <strong>Step 1:</strong> Email our finance desk at <span className="text-blue-600 dark:text-blue-400 font-semibold">academyict3@gmail.com</span> within <strong>7 calendar days</strong> of the transaction.
               </p>
               <p>
-                <strong>Step 2:</strong> Clearly provide your Registered Student Name, Registered Phone Number, Course Name, Selected Month, Transaction ID, Payment Slip/Receipt, and an explanation of the issue.
+                <strong>Step 2:</strong> Clearly provide your Registered Student Name, Registered Phone Number, Classes Name, Selected Month, Transaction ID, Payment Slip/Receipt, and an explanation of the issue.
               </p>
               <p>
                 <strong>Step 3:</strong> Our administrative review board will review the system audit logs and respond within <strong>3 to 5 business days</strong>.

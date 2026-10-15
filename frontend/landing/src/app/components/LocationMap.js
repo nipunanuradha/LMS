@@ -27,7 +27,7 @@ export default function LocationMap() {
         <div className="text-center max-w-2xl mx-auto mb-14">
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-blue-100/80 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-xs font-semibold uppercase tracking-wider mb-3">
             <MapPin className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            Find Our Campus
+            Find Our Academy
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight font-display">
             Visit Us at{" "}
@@ -60,7 +60,7 @@ export default function LocationMap() {
                   <MapPin className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">Campus Address</h4>
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">Academy Address</h4>
                   <p className="text-sm text-slate-700 dark:text-slate-300 mt-0.5 leading-relaxed font-medium">
                     {address}
                   </p>

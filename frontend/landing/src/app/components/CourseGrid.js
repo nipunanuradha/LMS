@@ -101,10 +101,10 @@ export default function CourseGrid({ onEnrollClick }) {
             Our Curriculum
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight font-display">
-            Explore Professional Tech Courses
+            Explore Our Class
           </h2>
           <p className="text-slate-600 dark:text-slate-300 text-lg leading-relaxed">
-            Gain in-demand skills and accelerate your career path with our structured, production-ready modules & lessons.
+            Learn O/L & A/L ICT clearly. Get exam-ready and score higher marks.
           </p>
         </div>
 

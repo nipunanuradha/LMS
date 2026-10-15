@@ -63,7 +63,7 @@ export default function ContactForm() {
               </span>
             </h2>
             <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-base sm:text-lg">
-              Want to enroll, learn about course structures, or request corporate training packages? Leave us a message and our counselor will call you within 24 hours.
+              Want to enroll, learn about classes or request information? Leave us a message and our team will call you within 24 hours.
             </p>
 
             <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">

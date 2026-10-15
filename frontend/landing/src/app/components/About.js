@@ -20,7 +20,7 @@ export default function About() {
     },
     {
       title: "Exam & Career Success",
-      description: "Prepare with simulated exams, customized certification guides, and job placement assistance. Our curriculum is tailored for instant career readiness.",
+      description: "Prepare with simulated exams, getting the best results in exams, and guidance to get placed in higher education",
       icon: Award,
       color: "from-purple-500 to-pink-500",
       accentBg: "bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400",
@@ -30,7 +30,7 @@ export default function About() {
   return (
     <section id="about" className="py-24 bg-white dark:bg-slate-900/60 relative transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold uppercase tracking-wider">

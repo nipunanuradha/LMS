@@ -10,7 +10,7 @@ export default function Navbar({ onLoginClick }) {
   const links = [
     { name: "Home", href: "/#home" },
     { name: "About", href: "/#about" },
-    { name: "Courses", href: "/#courses" },
+    { name: "Classes", href: "/#courses" },
     { name: "Stories", href: "/#Stories" },
     { name: "Contact", href: "/#contact" },
   ];

@@ -21,7 +21,7 @@ export default function Footer() {
               </span>
             </a>
             <p className="text-sm text-slate-500 leading-relaxed">
-              Pioneering tech education and standard certification training in Sri Lanka. Connecting ambitions to actions.
+              ICT Academy providing IT education for O/L and A/L students, with practical experience and exam preparation.
             </p>
             {/* Social Icons */}
             <div className="flex gap-4">
