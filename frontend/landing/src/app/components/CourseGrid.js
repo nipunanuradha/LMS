@@ -131,7 +131,7 @@ export default function CourseGrid({ onEnrollClick }) {
           </div>
         ) : (
           <div className={courses.length > 6 ? "max-h-[1050px] overflow-y-auto custom-scrollbar px-4 py-3 -mx-4 -my-3" : ""}>
-            <div className="grid md:grid-cols-3 gap-8 p-1 items-start">
+            <div className="grid md:grid-cols-3 gap-8 p-1">
               {courses.map((course) => {
                 const colors = [
                   "from-blue-600 to-indigo-600",
@@ -145,7 +145,7 @@ export default function CourseGrid({ onEnrollClick }) {
                 return (
                   <div
                     key={course.id}
-                    className="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden"
+                    className="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden"
                   >
                     {/* Thumbnail / Accent Image */}
                     <div className="w-full h-48 relative shrink-0 overflow-hidden bg-slate-100 dark:bg-slate-800">
@@ -191,14 +191,14 @@ export default function CourseGrid({ onEnrollClick }) {
 
                     {/* Card Content */}
                     <div className="p-6 flex-1 flex flex-col justify-between">
-                      <div>
-                        <span className="inline-block text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-1 rounded-md mb-3">
+                      <div className="flex-1 flex flex-col">
+                        <span className="inline-block self-start text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-1 rounded-md mb-3">
                           {course.category || "Web Dev"}
                         </span>
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-2">
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white line-clamp-2 min-h-[3.5rem] group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-2">
                           {course.title}
                         </h3>
-                        <div>
+                        <div className="flex-1">
                           <p className={`text-slate-500 dark:text-slate-400 text-sm leading-relaxed ${isExpanded ? "" : "line-clamp-3"}`}>
                             {course.description}
                           </p>
