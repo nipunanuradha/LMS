@@ -82,6 +82,15 @@ export default function CourseGrid({ onEnrollClick }) {
     fetchCourses();
   }, []);
 
+  const [expandedIds, setExpandedIds] = useState({});
+
+  const toggleExpand = (id) => {
+    setExpandedIds((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
   const formatLKR = (amount) => {
     return new Intl.NumberFormat("en-LK", {
       style: "currency",
@@ -122,7 +131,7 @@ export default function CourseGrid({ onEnrollClick }) {
           </div>
         ) : (
           <div className={courses.length > 6 ? "max-h-[1050px] overflow-y-auto custom-scrollbar px-4 py-3 -mx-4 -my-3" : ""}>
-            <div className="grid md:grid-cols-3 gap-8 p-1">
+            <div className="grid md:grid-cols-3 gap-8 p-1 items-start">
               {courses.map((course) => {
                 const colors = [
                   "from-blue-600 to-indigo-600",
@@ -130,6 +139,8 @@ export default function CourseGrid({ onEnrollClick }) {
                   "from-indigo-600 to-purple-600"
                 ];
                 const randomGradient = colors[course.id % colors.length] || colors[0];
+                const isExpanded = !!expandedIds[course.id];
+                const isLongDescription = course.description && course.description.length > 90;
 
                 return (
                   <div
@@ -160,11 +171,19 @@ export default function CourseGrid({ onEnrollClick }) {
                               <span className="text-[11px] text-slate-400 line-through font-normal">
                                 {formatLKR(course.price)}
                               </span>
+                              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                                / mo
+                              </span>
                             </>
                           ) : (
-                            <span className="text-blue-600 dark:text-blue-400">
-                              {formatLKR(course.price)}
-                            </span>
+                            <>
+                              <span className="text-blue-600 dark:text-blue-400">
+                                {formatLKR(course.price)}
+                              </span>
+                              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                                / mo
+                              </span>
+                            </>
                           )}
                         </div>
                       </div>
@@ -179,12 +198,23 @@ export default function CourseGrid({ onEnrollClick }) {
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-2">
                           {course.title}
                         </h3>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed line-clamp-3 mb-4">
-                          {course.description}
-                        </p>
+                        <div>
+                          <p className={`text-slate-500 dark:text-slate-400 text-sm leading-relaxed ${isExpanded ? "" : "line-clamp-3"}`}>
+                            {course.description}
+                          </p>
+                          {isLongDescription && (
+                            <button
+                              type="button"
+                              onClick={() => toggleExpand(course.id)}
+                              className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mt-1 inline-flex items-center gap-1 focus:outline-none cursor-pointer transition-colors"
+                            >
+                              {isExpanded ? "Show Less" : "Read More"}
+                            </button>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                      <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800 mt-4">
                         {/* Enroll Button */}
                         <button
                           onClick={() => onEnrollClick && onEnrollClick(course)}
