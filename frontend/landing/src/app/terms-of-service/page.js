@@ -36,7 +36,7 @@ export default function TermsOfService() {
               1. Acceptance of Terms
             </h2>
             <p className="leading-relaxed">
-              By accessing, browsing, or registering for courses at ICT Academy (online or offline), and by utilizing the Student Learning Management System (LMS) portal, you agree to be bound by these Terms of Service and all applicable laws and regulations in Sri Lanka.
+              By accessing, browsing, or registering for classes at ICT Academy (online or offline), and by utilizing the Student Learning Management System (LMS) portal, you agree to be bound by these Terms of Service and all applicable laws and regulations in Sri Lanka.
             </p>
           </section>
 
@@ -48,7 +48,7 @@ export default function TermsOfService() {
               2. Student Account Registration
             </h2>
             <p className="leading-relaxed">
-              To access course materials, assignments, and certifications, you must create a Student Account. You agree to:
+              To access classes materials, assignments, and certifications, you must create a Student Account. You agree to:
             </p>
             <ul className="list-disc pl-6 space-y-2 marker:text-blue-500 dark:marker:text-blue-400">
               <li>Provide accurate, current, and complete personal and academic information during registration.</li>
@@ -63,15 +63,15 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="font-display font-bold text-xl text-slate-900 dark:text-white flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-              3. Course Fees, Monthly Payments & Currency
+              3. Classes Fees, Monthly Payments & Currency
             </h2>
             <p className="leading-relaxed">
-              All course fees and monthly modular tuition fees are listed in <strong>Sri Lankan Rupees (LKR)</strong> unless explicitly stated otherwise.
+              All classes fees and monthly modular tuition fees are listed in <strong>Sri Lankan Rupees (LKR)</strong> unless explicitly stated otherwise.
             </p>
             <ul className="list-disc pl-6 space-y-2 marker:text-blue-500 dark:marker:text-blue-400">
-              <li><strong>Pricing & Taxes:</strong> ICT Academy reserves the right to modify course prices at any time. Any fee updates will not impact months or courses already paid for.</li>
+              <li><strong>Pricing & Taxes:</strong> ICT Academy reserves the right to modify classes prices at any time. Any fee updates will not impact months or classes already paid for.</li>
               <li><strong>Payment Processing:</strong> Payments made online (via Credit/Debit Cards, Internet Banking, or integrated payment gateways) are processed through secure, PCI-DSS compliant third-party payment providers. We do not store full card numbers or sensitive CVV codes on our servers.</li>
-              <li><strong>Monthly Access Provisioning:</strong> Each course month operates as an individual educational unit. Payment for a designated month unlocks that month's lecture recordings, materials, code, and class sessions. Payment must be cleared prior to gaining access.</li>
+              <li><strong>Monthly Access Provisioning:</strong> Each classes month operates as an individual educational unit. Payment for a designated month unlocks that month's lecture recordings, materials, code, and class sessions. Payment must be cleared prior to gaining access.</li>
               <li><strong>Billing Disputes & Receipts:</strong> Electronic invoices and payment receipts are issued upon successful transaction. Any discrepancies must be notified to our billing desk within 7 calendar days of receipt.</li>
               <li><strong>Refunds:</strong> All payments are subject to our published <a href="/refund-policy" className="text-blue-600 dark:text-blue-400 font-semibold underline">Refund & Cancellation Policy</a>.</li>
             </ul>
@@ -88,7 +88,7 @@ export default function TermsOfService() {
               All learning materials, including but not limited to videos, slides, source code, quizzes, assignments, textbooks, and documentation hosted on the ICT Academy landing site and LMS portal, are the intellectual property of ICT Academy.
             </p>
             <p className="leading-relaxed">
-              You are granted a limited, personal, non-transferable, non-exclusive license to view and download these materials solely for your own educational purposes. You may not distribute, reproduce, screen-record, sell, resell, or publicly display any of the course content without express written consent from our management. Violation of this clause will lead to instant account revocation, legal action, and forfeiture of all fees.
+              You are granted a limited, personal, non-transferable, non-exclusive license to view and download these materials solely for your own educational purposes. You may not distribute, reproduce, screen-record, sell, resell, or publicly display any of the classes content without express written consent from our management. Violation of this clause will lead to instant account revocation, legal action, and forfeiture of all fees.
             </p>
           </section>
 
@@ -104,7 +104,7 @@ export default function TermsOfService() {
             </p>
             <ul className="list-disc pl-6 space-y-2 marker:text-blue-500 dark:marker:text-blue-400">
               <li>You agree that all submitted quizzes, examinations, coding assignments, and projects are strictly your own work.</li>
-              <li>Plagiarism, cheat codes, or sharing assessment questions/answers is strictly prohibited and can result in immediate termination of course access without refund.</li>
+              <li>Plagiarism, cheat codes, or sharing assessment questions/answers is strictly prohibited and can result in immediate termination of classes access without refund.</li>
               <li>You must respect instructors and peers in community forums, chat portals, and virtual classroom sessions.</li>
             </ul>
           </section>
