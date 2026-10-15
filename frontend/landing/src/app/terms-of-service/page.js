@@ -63,7 +63,7 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="font-display font-bold text-xl text-slate-900 dark:text-white flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-              3. monthly Fees, Monthly Payments & Currency
+              3. Classes Fees, Monthly Payments & Currency
             </h2>
             <p className="leading-relaxed">
               All classes fees and monthly modular tuition fees are listed in <strong>Sri Lankan Rupees (LKR)</strong> unless explicitly stated otherwise.
