@@ -707,7 +707,7 @@ export function CourseDetails() {
             const statusRes = await fetch(`${API_URL}/api/payhere/payment-status?order_id=${encodeURIComponent(orderId)}`);
             if (statusRes.ok) {
               const statusData = await statusRes.json();
-              
+
               if (statusData.status === "success") {
                 finished = true;
                 setIsVerifyingPayment(false);
@@ -819,7 +819,7 @@ export function CourseDetails() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">Loading course details...</p>
+        <p className="text-gray-600">Loading classes details...</p>
       </div>
     );
   }
@@ -827,7 +827,7 @@ export function CourseDetails() {
   if (!course) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">Course not found</p>
+        <p className="text-gray-600">classes not found</p>
       </div>
     );
   }
@@ -1547,7 +1547,7 @@ export function CourseDetails() {
                   <CreditCard className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-foreground text-base">Course Month Payment</h3>
+                  <h3 className="font-bold text-foreground text-base">Class Month Payment</h3>
                   <p className="text-xs text-muted-foreground">{payTargetMonth.title}</p>
                 </div>
               </div>
@@ -1583,7 +1583,7 @@ export function CourseDetails() {
                     {paymentDeclinedInfo.reason}
                   </p>
                   <p className="text-[11px] text-muted-foreground/80 px-4">
-                    Course access remains locked. Please check your bank card balance or try again using another debit/credit card or payment method.
+                    Class access remains locked. Please check your bank card balance or try again using another debit/credit card or payment method.
                   </p>
                   <div className="bg-muted p-2.5 rounded-lg border border-border inline-block">
                     <span className="text-[10px] text-muted-foreground block mb-0.5">Order Reference:</span>
@@ -1658,7 +1658,7 @@ export function CourseDetails() {
                   {/* Bill Summary */}
                   <div className="bg-muted/40 p-4 rounded-xl border border-border space-y-2">
                     <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Course:</span>
+                      <span>Class:</span>
                       <span className="font-medium text-foreground">{course.title}</span>
                     </div>
                     <div className="flex justify-between text-xs text-muted-foreground">
@@ -1762,7 +1762,7 @@ export function CourseDetails() {
             <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto">
               <LogOut className="w-6 h-6" />
             </div>
-            
+
             <div className="text-center space-y-1">
               <h3 className="text-lg font-bold text-foreground">Do you want to log out?</h3>
               <p className="text-sm text-muted-foreground">

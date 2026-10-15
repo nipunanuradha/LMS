@@ -100,7 +100,7 @@ export function Login() {
             <GraduationCap className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-2xl font-bold text-foreground">Welcome Back</h2>
-          <p className="text-muted-foreground mt-2">Login to access your courses</p>
+          <p className="text-muted-foreground mt-2">Login to access your classes</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-card rounded-2xl shadow-xl p-8 border border-border">

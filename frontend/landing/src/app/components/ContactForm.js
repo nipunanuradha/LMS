@@ -158,7 +158,7 @@ export default function ContactForm() {
                       value={formData.subject}
                       onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-950 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="e.g. Course Enrollment Enquiry"
+                      placeholder="e.g. Classes Enrollment Enquiry"
                     />
                   </div>
                 </div>

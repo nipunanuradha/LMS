@@ -71,7 +71,7 @@ export function Registration() {
             <GraduationCap className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-2xl font-bold text-foreground">Student Registration</h2>
-          <p className="text-muted-foreground mt-2">Create your account to access courses</p>
+          <p className="text-muted-foreground mt-2">Create your account to access classes</p>
         </div>
 
         {!generatedPassword ? (

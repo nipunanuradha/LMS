@@ -58,7 +58,7 @@ export default function Hero() {
                 href="#courses"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-base font-semibold bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/35 hover:-translate-y-0.5 active:translate-y-0 transition-all"
               >
-                Explore Courses
+                Explore Classes
                 <ArrowRight className="w-5 h-5" />
               </a>
               <a

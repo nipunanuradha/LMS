@@ -13,7 +13,7 @@ const outfit = Outfit({
 
 export const metadata = {
   title: "ICT Academy | High-Quality Tech Education & LMS Portal",
-  description: "Level up your technical skills with our professional certifications, expert mentors, and hands-on labs. Explore courses and access your student LMS portal.",
+  description: "Level up your technical skills with our professional certifications, expert mentors, and hands-on labs. Explore classes and access your student LMS portal.",
   icons: {
     icon: "/favicon.svg",
   },
@@ -43,7 +43,7 @@ export default function RootLayout({ children }) {
     "name": "ICT Academy",
     "url": "https://ict-academy-sooty.vercel.app",
     "logo": "https://ict-academy-sooty.vercel.app/favicon.svg",
-    "description": "Level up your technical skills with our professional certifications, expert mentors, and hands-on labs. Explore courses and access your student LMS portal.",
+    "description": "Level up your technical skills with our professional certifications, expert mentors, and hands-on labs. Explore classes and access your student LMS portal.",
     "address": {
       "@type": "PostalAddress",
       "streetAddress": "98 High Level Rd, Nawagamuwa",

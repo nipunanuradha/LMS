@@ -23,7 +23,7 @@ export function RefundPolicy() {
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">Refund & Cancellation Policy</h1>
           <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-            Effective Date: May 30, 2026. Important terms concerning online course fee transactions, monthly modular access, and refund claims.
+            Effective Date: May 30, 2026. Important terms concerning online Classes fee transactions, monthly modular access, and refund claims.
           </p>
         </div>
 
@@ -34,7 +34,7 @@ export function RefundPolicy() {
               1. Digital Access & Non-Refundable Policy
             </h2>
             <p>
-              Course enrollments and monthly fees grant instant digital access to copyrighted lecture videos, study notes, live sessions, and coding resources. Because access is provisioned immediately upon transaction confirmation, payments are generally <strong>non-refundable</strong> once digital access has been granted.
+              Class enrollments and monthly fees grant instant digital access to copyrighted lecture videos, study notes, live sessions, and coding resources. Because access is provisioned immediately upon transaction confirmation, payments are generally <strong>non-refundable</strong> once digital access has been granted.
             </p>
           </section>
 
@@ -78,7 +78,7 @@ export function RefundPolicy() {
               4. How to Request a Refund
             </h2>
             <p>
-              Formal refund requests must be submitted within <strong>7 calendar days</strong> of the transaction date by emailing <span className="font-semibold text-foreground">academyict3@gmail.com</span> with your Student Name, Phone Number, Course Name, and Bank Transaction Slip. Approved refunds will be credited back to the original payment source within 7-14 business days.
+              Formal refund requests must be submitted within <strong>7 calendar days</strong> of the transaction date by emailing <span className="font-semibold text-foreground">academyict3@gmail.com</span> with your Student Name, Phone Number, Class Name, and Bank Transaction Slip. Approved refunds will be credited back to the original payment source within 7-14 business days.
             </p>
           </section>
 

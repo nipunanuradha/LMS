@@ -34,7 +34,7 @@ export function PrivacyPolicy() {
               1. Information We Collect
             </h2>
             <p>
-              When you enroll or create an LMS profile, we store your name, contact phone number, province, district, enrolled courses, and exam performance.
+              When you enroll or create an LMS profile, we store your name, contact phone number, province, district, enrolled classes, and exam performance.
             </p>
           </section>
 
@@ -58,7 +58,7 @@ export function PrivacyPolicy() {
               3. Data Usage & Disclosure
             </h2>
             <p>
-              Your data is exclusively used to deliver courses, track academic records, issue certificates, and facilitate billing. We never sell, rent, or trade student personal information to any commercial advertisers.
+              Your data is exclusively used to deliver classes, track academic records, issue certificates, and facilitate billing. We never sell, rent, or trade student personal information to any commercial advertisers.
             </p>
           </section>
 

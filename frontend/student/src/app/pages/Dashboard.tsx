@@ -189,8 +189,8 @@ export function Dashboard() {
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl font-bold text-foreground">My Enrolled Courses</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Courses you have active subscription or month access for</p>
+              <h2 className="text-xl font-bold text-foreground">My Enrolled Classes</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Classes you have active subscription or month access for</p>
             </div>
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
               {courses.length} Active
@@ -199,8 +199,8 @@ export function Dashboard() {
 
           {courses.length === 0 ? (
             <div className="p-8 text-center bg-card rounded-2xl border border-dashed border-border">
-              <p className="text-muted-foreground text-sm">You haven't enrolled or paid for any courses yet.</p>
-              <p className="text-xs text-muted-foreground mt-1">Explore available courses below to start learning month-by-month!</p>
+              <p className="text-muted-foreground text-sm">You haven't enrolled or paid for any Classes yet.</p>
+              <p className="text-xs text-muted-foreground mt-1">Explore available Classes below to start learning month-by-month!</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -327,7 +327,7 @@ export function Dashboard() {
             <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto">
               <LogOut className="w-6 h-6" />
             </div>
-            
+
             <div className="text-center space-y-1">
               <h3 className="text-lg font-bold text-foreground">Do you want to log out?</h3>
               <p className="text-sm text-muted-foreground">

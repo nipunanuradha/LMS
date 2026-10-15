@@ -34,7 +34,7 @@ export function TermsOfService() {
               1. Acceptance of Terms
             </h2>
             <p>
-              By accessing the ICT Academy Student Learning Management System (LMS), logging into your portal, or submitting payments for courses and monthly modules, you agree to comply with and be bound by these Terms & Conditions.
+              By accessing the ICT Academy Student Learning Management System (LMS), logging into your portal, or submitting payments for classes and monthly modules, you agree to comply with and be bound by these Terms & Conditions.
             </p>
           </section>
 
@@ -55,10 +55,10 @@ export function TermsOfService() {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 text-blue-600" />
-              3. Course Fees, Monthly Payments & Currency
+              3. Classes Fees, Monthly Payments & Currency
             </h2>
             <p>
-              All fees for courses and monthly lecture modules are designated in <strong>Sri Lankan Rupees (LKR)</strong>.
+              All fees for classes and monthly lecture modules are designated in <strong>Sri Lankan Rupees (LKR)</strong>.
             </p>
             <ul className="list-disc pl-5 space-y-1.5 marker:text-blue-600">
               <li>Payments completed online via Credit/Debit card or Bank Transfer are securely processed by licensed payment partners.</li>
