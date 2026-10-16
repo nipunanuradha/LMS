@@ -74,15 +74,12 @@ LMS/
 cd backend
 npm install
 
-# Seed demo data (Students, past payments/enrollments, and courses)
-npm run seed     # or node seed_data.js
-
 # Start the development server
 npm run dev
 ```
 > **Default Admin Account:**
-> * **Username/Phone:** `0777777777`
-> * **Password:** `admin123`
+> * **Username/Phone:** ``
+> * **Password:** ``
 
 ### 2. Run the Landing Page
 ```bash
