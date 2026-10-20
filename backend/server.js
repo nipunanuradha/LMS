@@ -1601,6 +1601,36 @@ app.delete('/api/courses/content/:contentId', async (req, res) => {
     }
 });
 
+// Update course content (Notes/PDFs & Links)
+app.put('/api/courses/content/:contentId', async (req, res) => {
+    const { title, content_url, content_type, course_month_id } = req.body;
+    try {
+        const updateFields = [];
+        const params = [];
+        if (title !== undefined) { updateFields.push('title = ?'); params.push(title); }
+        if (content_url !== undefined) { updateFields.push('content_url = ?'); params.push(content_url); }
+        if (content_type !== undefined) { updateFields.push('content_type = ?'); params.push(content_type); }
+        if (course_month_id !== undefined) {
+            updateFields.push('course_month_id = ?');
+            params.push(course_month_id ? parseInt(course_month_id) : null);
+        }
+        if (updateFields.length === 0) {
+            return res.status(400).json({ error: 'No fields provided for update' });
+        }
+        params.push(req.params.contentId);
+        const [result] = await pool.execute(
+            `UPDATE course_content SET ${updateFields.join(', ')} WHERE id = ?`,
+            params
+        );
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Content not found' });
+        }
+        res.json({ message: 'Content updated successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Get course video recordings with optional course_month_id filter & security check
 app.get('/api/courses/:id/recordings', async (req, res) => {
     try {
@@ -1665,6 +1695,36 @@ app.delete('/api/courses/recordings/:recordingId', async (req, res) => {
     }
 });
 
+// Update course video recording
+app.put('/api/courses/recordings/:recordingId', async (req, res) => {
+    const { title, video_url, embed_code, course_month_id } = req.body;
+    try {
+        const updateFields = [];
+        const params = [];
+        if (title !== undefined) { updateFields.push('title = ?'); params.push(title); }
+        if (video_url !== undefined) { updateFields.push('video_url = ?'); params.push(video_url); }
+        if (embed_code !== undefined) { updateFields.push('embed_code = ?'); params.push(embed_code || ''); }
+        if (course_month_id !== undefined) {
+            updateFields.push('course_month_id = ?');
+            params.push(course_month_id ? parseInt(course_month_id) : null);
+        }
+        if (updateFields.length === 0) {
+            return res.status(400).json({ error: 'No fields provided for update' });
+        }
+        params.push(req.params.recordingId);
+        const [result] = await pool.execute(
+            `UPDATE video_recordings SET ${updateFields.join(', ')} WHERE id = ?`,
+            params
+        );
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Video recording not found' });
+        }
+        res.json({ message: 'Video recording updated successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Get course notices/notifications
 app.get('/api/courses/:id/notifications', async (req, res) => {
     try {
@@ -1694,6 +1754,31 @@ app.delete('/api/courses/notifications/:notificationId', async (req, res) => {
     try {
         await pool.execute('DELETE FROM course_notifications WHERE id = ?', [req.params.notificationId]);
         res.json({ message: 'Notice deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update course notice/notification
+app.put('/api/courses/notifications/:notificationId', async (req, res) => {
+    const { title, message } = req.body;
+    try {
+        const updateFields = [];
+        const params = [];
+        if (title !== undefined) { updateFields.push('title = ?'); params.push(title); }
+        if (message !== undefined) { updateFields.push('message = ?'); params.push(message); }
+        if (updateFields.length === 0) {
+            return res.status(400).json({ error: 'No fields provided for update' });
+        }
+        params.push(req.params.notificationId);
+        const [result] = await pool.execute(
+            `UPDATE course_notifications SET ${updateFields.join(', ')} WHERE id = ?`,
+            params
+        );
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Notice not found' });
+        }
+        res.json({ message: 'Notice updated successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
