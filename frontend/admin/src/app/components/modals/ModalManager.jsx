@@ -328,6 +328,11 @@ function ManageContentModal({ course, onClose }) {
   const [pdfForm, setPdfForm] = useState({ title: "", content_url: "" });
   const [linkForm, setLinkForm] = useState({ title: "", content_url: "" });
 
+  const [editingRecording, setEditingRecording] = useState(null);
+  const [editingContent, setEditingContent] = useState(null);
+  const [editingNotice, setEditingNotice] = useState(null);
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+
   // Fetch 12 course months
   const fetchMonths = async () => {
     try {
@@ -478,6 +483,102 @@ function ManageContentModal({ course, onClose }) {
     }
   };
 
+  const updateRecording = async () => {
+    if (!editingRecording || !editingRecording.title?.trim() || (!editingRecording.video_url?.trim() && !editingRecording.embed_code?.trim())) {
+      alert("Please provide a title and either a video URL or embed code.");
+      return;
+    }
+    setIsSubmittingEdit(true);
+    try {
+      const res = await fetch(`${API_URL}/api/courses/recordings/${editingRecording.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editingRecording.title.trim(),
+          video_url: editingRecording.video_url?.trim() || "",
+          embed_code: editingRecording.embed_code?.trim() || "",
+          course_month_id: editingRecording.course_month_id ? parseInt(editingRecording.course_month_id) : (selectedMonthId ? parseInt(selectedMonthId) : null)
+        })
+      });
+      if (res.ok) {
+        setEditingRecording(null);
+        await fetchAll();
+        await fetchMonths();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.error || "Failed to update video recording");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating recording: " + err.message);
+    } finally {
+      setIsSubmittingEdit(false);
+    }
+  };
+
+  const updateContent = async () => {
+    if (!editingContent || !editingContent.title?.trim() || !editingContent.content_url?.trim()) {
+      alert("Please provide both a title and URL.");
+      return;
+    }
+    setIsSubmittingEdit(true);
+    try {
+      const res = await fetch(`${API_URL}/api/courses/content/${editingContent.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editingContent.title.trim(),
+          content_url: editingContent.content_url.trim(),
+          content_type: editingContent.content_type,
+          course_month_id: editingContent.course_month_id ? parseInt(editingContent.course_month_id) : (selectedMonthId ? parseInt(selectedMonthId) : null)
+        })
+      });
+      if (res.ok) {
+        setEditingContent(null);
+        await fetchAll();
+        await fetchMonths();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.error || "Failed to update material");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating content: " + err.message);
+    } finally {
+      setIsSubmittingEdit(false);
+    }
+  };
+
+  const updateNotice = async () => {
+    if (!editingNotice || !editingNotice.title?.trim() || !editingNotice.message?.trim()) {
+      alert("Please provide both a notice title and message.");
+      return;
+    }
+    setIsSubmittingEdit(true);
+    try {
+      const res = await fetch(`${API_URL}/api/courses/notifications/${editingNotice.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editingNotice.title.trim(),
+          message: editingNotice.message.trim()
+        })
+      });
+      if (res.ok) {
+        setEditingNotice(null);
+        await fetchAll();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.error || "Failed to update notice");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating notice: " + err.message);
+    } finally {
+      setIsSubmittingEdit(false);
+    }
+  };
+
   const [monthPriceInput, setMonthPriceInput] = useState("");
   const [isUpdatingPrice, setIsUpdatingPrice] = useState(false);
 
@@ -534,7 +635,12 @@ function ManageContentModal({ course, onClose }) {
             <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>📅 Select Month:</span>
             <select
               value={selectedMonthId}
-              onChange={e => setSelectedMonthId(e.target.value)}
+              onChange={e => {
+                setSelectedMonthId(e.target.value);
+                setEditingRecording(null);
+                setEditingContent(null);
+                setEditingNotice(null);
+              }}
               style={{
                 padding: "7px 12px",
                 borderRadius: 8,
@@ -617,7 +723,12 @@ function ManageContentModal({ course, onClose }) {
           {["notices", "recordings", "notes", "links"].map(tab => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => {
+                setActiveTab(tab);
+                setEditingRecording(null);
+                setEditingContent(null);
+                setEditingNotice(null);
+              }}
               style={{
                 flex: 1,
                 padding: "12px 6px",
@@ -682,15 +793,91 @@ function ManageContentModal({ course, onClose }) {
                 <h4 style={{ margin: "10px 0 0 0", fontSize: 13, color: "#64748B" }}>
                   Videos in {currentSelectedMonth?.title || "this month"} ({recordings.length})
                 </h4>
-                {recordings.map(r => (
-                  <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 8 }}>
-                    <div style={{ flex: 1, marginRight: 10 }}>
-                      <h5 style={{ margin: 0, color: "#166534", fontSize: 13 }}>{r.title}</h5>
-                      <span style={{ fontSize: 11, color: "#15803D", wordBreak: "break-all" }}>{r.video_url || "Embed HTML Code"}</span>
+                {recordings.map(r => {
+                  const isEditing = editingRecording && editingRecording.id === r.id;
+                  if (isEditing) {
+                    return (
+                      <div key={r.id} style={{ display: "flex", flexDirection: "column", gap: 8, padding: 12, background: "#EFF6FF", border: "1.5px solid #3B82F6", borderRadius: 8 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: "#1D4ED8" }}>✏️ Edit Video Recording</span>
+                          <button onClick={() => setEditingRecording(null)} style={{ background: "none", border: "none", color: "#64748B", fontSize: 16, cursor: "pointer", fontWeight: 700, lineHeight: 1 }}>✕</button>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Video Title"
+                          value={editingRecording.title}
+                          onChange={e => setEditingRecording(prev => ({ ...prev, title: e.target.value }))}
+                          style={{ padding: "7px 10px", borderRadius: 6, border: "1px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Video URL"
+                          value={editingRecording.video_url || ""}
+                          onChange={e => setEditingRecording(prev => ({ ...prev, video_url: e.target.value }))}
+                          style={{ padding: "7px 10px", borderRadius: 6, border: "1px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                        />
+                        <textarea
+                          placeholder="Embed HTML Code"
+                          rows={2}
+                          value={editingRecording.embed_code || ""}
+                          onChange={e => setEditingRecording(prev => ({ ...prev, embed_code: e.target.value }))}
+                          style={{ padding: "7px 10px", borderRadius: 6, border: "1px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000", fontFamily: "inherit", resize: "vertical" }}
+                        />
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontSize: 11, color: "#475569", fontWeight: 600 }}>Month:</span>
+                            <select
+                              value={editingRecording.course_month_id || selectedMonthId}
+                              onChange={e => setEditingRecording(prev => ({ ...prev, course_month_id: e.target.value }))}
+                              style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid #CBD5E1", fontSize: 12, background: "#fff", color: "#1E293B" }}
+                            >
+                              {months.map(m => (
+                                <option key={m.id} value={m.id}>{m.title}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button
+                              onClick={() => setEditingRecording(null)}
+                              disabled={isSubmittingEdit}
+                              style={{ padding: "5px 12px", background: "#F1F5F9", border: "1px solid #CBD5E1", borderRadius: 6, fontSize: 12, fontWeight: 600, color: "#475569", cursor: "pointer" }}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={updateRecording}
+                              disabled={isSubmittingEdit}
+                              style={{ padding: "5px 14px", background: "#2563EB", border: "none", borderRadius: 6, fontSize: 12, fontWeight: 600, color: "#fff", cursor: "pointer" }}
+                            >
+                              {isSubmittingEdit ? "Saving..." : "Save Changes"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 8 }}>
+                      <div style={{ flex: 1, marginRight: 10 }}>
+                        <h5 style={{ margin: 0, color: "#166534", fontSize: 13 }}>{r.title}</h5>
+                        <span style={{ fontSize: 11, color: "#15803D", wordBreak: "break-all" }}>{r.video_url || "Embed HTML Code"}</span>
+                      </div>
+                      <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center" }}>
+                        <button
+                          onClick={() => {
+                            setEditingRecording({ id: r.id, title: r.title, video_url: r.video_url || "", embed_code: r.embed_code || "", course_month_id: r.course_month_id || selectedMonthId });
+                            setEditingContent(null);
+                            setEditingNotice(null);
+                          }}
+                          style={{ padding: "4px 10px", background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#1D4ED8", borderRadius: 5, fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+                        >
+                          Edit
+                        </button>
+                        <button onClick={() => deleteRecording(r.id)} style={{ padding: "4px 8px", background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", borderRadius: 5, fontSize: 11, cursor: "pointer" }}>Delete</button>
+                      </div>
                     </div>
-                    <button onClick={() => deleteRecording(r.id)} style={{ padding: "4px 8px", background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", borderRadius: 5, fontSize: 11, cursor: "pointer" }}>Delete</button>
-                  </div>
-                ))}
+                  );
+                })}
                 {recordings.length === 0 && <p style={{ fontSize: 12, color: "#94A3B8", textAlign: "center", padding: "10px 0" }}>No videos added for this month yet.</p>}
               </div>
             </>
@@ -728,15 +915,84 @@ function ManageContentModal({ course, onClose }) {
                 <h4 style={{ margin: "10px 0 0 0", fontSize: 13, color: "#64748B" }}>
                   Notes in {currentSelectedMonth?.title || "this month"} ({contents.filter(c => c.content_type === "pdf").length})
                 </h4>
-                {contents.filter(c => c.content_type === "pdf").map(c => (
-                  <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, background: "#FEF2F2", border: "1px solid #FEE2E2", borderRadius: 8 }}>
-                    <div style={{ flex: 1, marginRight: 10 }}>
-                      <h5 style={{ margin: 0, color: "#991B1B", fontSize: 13 }}>{c.title}</h5>
-                      <span style={{ fontSize: 11, color: "#B91C1C", wordBreak: "break-all" }}>{c.content_url}</span>
+                {contents.filter(c => c.content_type === "pdf").map(c => {
+                  const isEditing = editingContent && editingContent.id === c.id;
+                  if (isEditing) {
+                    return (
+                      <div key={c.id} style={{ display: "flex", flexDirection: "column", gap: 8, padding: 12, background: "#EFF6FF", border: "1.5px solid #3B82F6", borderRadius: 8 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: "#1D4ED8" }}>✏️ Edit Note / PDF</span>
+                          <button onClick={() => setEditingContent(null)} style={{ background: "none", border: "none", color: "#64748B", fontSize: 16, cursor: "pointer", fontWeight: 700, lineHeight: 1 }}>✕</button>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Document Title"
+                          value={editingContent.title}
+                          onChange={e => setEditingContent(prev => ({ ...prev, title: e.target.value }))}
+                          style={{ padding: "7px 10px", borderRadius: 6, border: "1px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Document URL"
+                          value={editingContent.content_url || ""}
+                          onChange={e => setEditingContent(prev => ({ ...prev, content_url: e.target.value }))}
+                          style={{ padding: "7px 10px", borderRadius: 6, border: "1px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                        />
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontSize: 11, color: "#475569", fontWeight: 600 }}>Month:</span>
+                            <select
+                              value={editingContent.course_month_id || selectedMonthId}
+                              onChange={e => setEditingContent(prev => ({ ...prev, course_month_id: e.target.value }))}
+                              style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid #CBD5E1", fontSize: 12, background: "#fff", color: "#1E293B" }}
+                            >
+                              {months.map(m => (
+                                <option key={m.id} value={m.id}>{m.title}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button
+                              onClick={() => setEditingContent(null)}
+                              disabled={isSubmittingEdit}
+                              style={{ padding: "5px 12px", background: "#F1F5F9", border: "1px solid #CBD5E1", borderRadius: 6, fontSize: 12, fontWeight: 600, color: "#475569", cursor: "pointer" }}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={updateContent}
+                              disabled={isSubmittingEdit}
+                              style={{ padding: "5px 14px", background: "#2563EB", border: "none", borderRadius: 6, fontSize: 12, fontWeight: 600, color: "#fff", cursor: "pointer" }}
+                            >
+                              {isSubmittingEdit ? "Saving..." : "Save Changes"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, background: "#FEF2F2", border: "1px solid #FEE2E2", borderRadius: 8 }}>
+                      <div style={{ flex: 1, marginRight: 10 }}>
+                        <h5 style={{ margin: 0, color: "#991B1B", fontSize: 13 }}>{c.title}</h5>
+                        <span style={{ fontSize: 11, color: "#B91C1C", wordBreak: "break-all" }}>{c.content_url}</span>
+                      </div>
+                      <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center" }}>
+                        <button
+                          onClick={() => {
+                            setEditingContent({ id: c.id, title: c.title, content_url: c.content_url, content_type: c.content_type, course_month_id: c.course_month_id || selectedMonthId });
+                            setEditingRecording(null);
+                            setEditingNotice(null);
+                          }}
+                          style={{ padding: "4px 10px", background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#1D4ED8", borderRadius: 5, fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+                        >
+                          Edit
+                        </button>
+                        <button onClick={() => deleteContent(c.id)} style={{ padding: "4px 8px", background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", borderRadius: 5, fontSize: 11, cursor: "pointer" }}>Delete</button>
+                      </div>
                     </div>
-                    <button onClick={() => deleteContent(c.id)} style={{ padding: "4px 8px", background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", borderRadius: 5, fontSize: 11, cursor: "pointer" }}>Delete</button>
-                  </div>
-                ))}
+                  );
+                })}
                 {contents.filter(c => c.content_type === "pdf").length === 0 && <p style={{ fontSize: 12, color: "#94A3B8", textAlign: "center", padding: "10px 0" }}>No notes added for this month yet.</p>}
               </div>
             </>
@@ -774,15 +1030,84 @@ function ManageContentModal({ course, onClose }) {
                 <h4 style={{ margin: "10px 0 0 0", fontSize: 13, color: "#64748B" }}>
                   Links in {currentSelectedMonth?.title || "this month"} ({contents.filter(c => c.content_type === "link").length})
                 </h4>
-                {contents.filter(c => c.content_type === "link").map(c => (
-                  <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, background: "#FAF5FF", border: "1px solid #E9D5FF", borderRadius: 8 }}>
-                    <div style={{ flex: 1, marginRight: 10 }}>
-                      <h5 style={{ margin: 0, color: "#6B21A8", fontSize: 13 }}>{c.title}</h5>
-                      <span style={{ fontSize: 11, color: "#7E22CE", wordBreak: "break-all" }}>{c.content_url}</span>
+                {contents.filter(c => c.content_type === "link").map(c => {
+                  const isEditing = editingContent && editingContent.id === c.id;
+                  if (isEditing) {
+                    return (
+                      <div key={c.id} style={{ display: "flex", flexDirection: "column", gap: 8, padding: 12, background: "#EFF6FF", border: "1.5px solid #3B82F6", borderRadius: 8 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: "#1D4ED8" }}>✏️ Edit External Link</span>
+                          <button onClick={() => setEditingContent(null)} style={{ background: "none", border: "none", color: "#64748B", fontSize: 16, cursor: "pointer", fontWeight: 700, lineHeight: 1 }}>✕</button>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Material Title"
+                          value={editingContent.title}
+                          onChange={e => setEditingContent(prev => ({ ...prev, title: e.target.value }))}
+                          style={{ padding: "7px 10px", borderRadius: 6, border: "1px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Material URL"
+                          value={editingContent.content_url || ""}
+                          onChange={e => setEditingContent(prev => ({ ...prev, content_url: e.target.value }))}
+                          style={{ padding: "7px 10px", borderRadius: 6, border: "1px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                        />
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontSize: 11, color: "#475569", fontWeight: 600 }}>Month:</span>
+                            <select
+                              value={editingContent.course_month_id || selectedMonthId}
+                              onChange={e => setEditingContent(prev => ({ ...prev, course_month_id: e.target.value }))}
+                              style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid #CBD5E1", fontSize: 12, background: "#fff", color: "#1E293B" }}
+                            >
+                              {months.map(m => (
+                                <option key={m.id} value={m.id}>{m.title}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button
+                              onClick={() => setEditingContent(null)}
+                              disabled={isSubmittingEdit}
+                              style={{ padding: "5px 12px", background: "#F1F5F9", border: "1px solid #CBD5E1", borderRadius: 6, fontSize: 12, fontWeight: 600, color: "#475569", cursor: "pointer" }}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={updateContent}
+                              disabled={isSubmittingEdit}
+                              style={{ padding: "5px 14px", background: "#2563EB", border: "none", borderRadius: 6, fontSize: 12, fontWeight: 600, color: "#fff", cursor: "pointer" }}
+                            >
+                              {isSubmittingEdit ? "Saving..." : "Save Changes"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, background: "#FAF5FF", border: "1px solid #E9D5FF", borderRadius: 8 }}>
+                      <div style={{ flex: 1, marginRight: 10 }}>
+                        <h5 style={{ margin: 0, color: "#6B21A8", fontSize: 13 }}>{c.title}</h5>
+                        <span style={{ fontSize: 11, color: "#7E22CE", wordBreak: "break-all" }}>{c.content_url}</span>
+                      </div>
+                      <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center" }}>
+                        <button
+                          onClick={() => {
+                            setEditingContent({ id: c.id, title: c.title, content_url: c.content_url, content_type: c.content_type, course_month_id: c.course_month_id || selectedMonthId });
+                            setEditingRecording(null);
+                            setEditingNotice(null);
+                          }}
+                          style={{ padding: "4px 10px", background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#1D4ED8", borderRadius: 5, fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+                        >
+                          Edit
+                        </button>
+                        <button onClick={() => deleteContent(c.id)} style={{ padding: "4px 8px", background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", borderRadius: 5, fontSize: 11, cursor: "pointer" }}>Delete</button>
+                      </div>
                     </div>
-                    <button onClick={() => deleteContent(c.id)} style={{ padding: "4px 8px", background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", borderRadius: 5, fontSize: 11, cursor: "pointer" }}>Delete</button>
-                  </div>
-                ))}
+                  );
+                })}
                 {contents.filter(c => c.content_type === "link").length === 0 && <p style={{ fontSize: 12, color: "#94A3B8", textAlign: "center", padding: "10px 0" }}>No external links added for this month yet.</p>}
               </div>
             </>
@@ -814,15 +1139,70 @@ function ManageContentModal({ course, onClose }) {
               {/* List */}
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <h4 style={{ margin: "10px 0 0 0", fontSize: 13, color: "#64748B" }}>Course Notices ({notices.length})</h4>
-                {notices.map(n => (
-                  <div key={n.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: 12, background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 8 }}>
-                    <div style={{ flex: 1, marginRight: 10 }}>
-                      <h5 style={{ margin: "0 0 4px 0", color: "#1E3A8A", fontSize: 13 }}>{n.title}</h5>
-                      <p style={{ margin: 0, fontSize: 12, color: "#1E40AF", lineHeight: 1.4 }}>{n.message}</p>
+                {notices.map(n => {
+                  const isEditing = editingNotice && editingNotice.id === n.id;
+                  if (isEditing) {
+                    return (
+                      <div key={n.id} style={{ display: "flex", flexDirection: "column", gap: 8, padding: 12, background: "#EFF6FF", border: "1.5px solid #3B82F6", borderRadius: 8 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: "#1D4ED8" }}>✏️ Edit Course Notice</span>
+                          <button onClick={() => setEditingNotice(null)} style={{ background: "none", border: "none", color: "#64748B", fontSize: 16, cursor: "pointer", fontWeight: 700, lineHeight: 1 }}>✕</button>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Notice Title"
+                          value={editingNotice.title}
+                          onChange={e => setEditingNotice(prev => ({ ...prev, title: e.target.value }))}
+                          style={{ padding: "7px 10px", borderRadius: 6, border: "1px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000" }}
+                        />
+                        <textarea
+                          placeholder="Notice Message..."
+                          rows={2}
+                          value={editingNotice.message}
+                          onChange={e => setEditingNotice(prev => ({ ...prev, message: e.target.value }))}
+                          style={{ padding: "7px 10px", borderRadius: 6, border: "1px solid #CBD5E1", fontSize: 13, background: "#fff", color: "#000", fontFamily: "inherit", resize: "vertical" }}
+                        />
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 4 }}>
+                          <button
+                            onClick={() => setEditingNotice(null)}
+                            disabled={isSubmittingEdit}
+                            style={{ padding: "5px 12px", background: "#F1F5F9", border: "1px solid #CBD5E1", borderRadius: 6, fontSize: 12, fontWeight: 600, color: "#475569", cursor: "pointer" }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={updateNotice}
+                            disabled={isSubmittingEdit}
+                            style={{ padding: "5px 14px", background: "#2563EB", border: "none", borderRadius: 6, fontSize: 12, fontWeight: 600, color: "#fff", cursor: "pointer" }}
+                          >
+                            {isSubmittingEdit ? "Saving..." : "Save Changes"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={n.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: 12, background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 8 }}>
+                      <div style={{ flex: 1, marginRight: 10 }}>
+                        <h5 style={{ margin: "0 0 4px 0", color: "#1E3A8A", fontSize: 13 }}>{n.title}</h5>
+                        <p style={{ margin: 0, fontSize: 12, color: "#1E40AF", lineHeight: 1.4 }}>{n.message}</p>
+                      </div>
+                      <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center" }}>
+                        <button
+                          onClick={() => {
+                            setEditingNotice({ id: n.id, title: n.title, message: n.message });
+                            setEditingRecording(null);
+                            setEditingContent(null);
+                          }}
+                          style={{ padding: "4px 10px", background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#1D4ED8", borderRadius: 5, fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+                        >
+                          Edit
+                        </button>
+                        <button onClick={() => deleteNotice(n.id)} style={{ padding: "4px 8px", background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", borderRadius: 5, fontSize: 11, cursor: "pointer" }}>Delete</button>
+                      </div>
                     </div>
-                    <button onClick={() => deleteNotice(n.id)} style={{ padding: "4px 8px", background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B", borderRadius: 5, fontSize: 11, cursor: "pointer" }}>Delete</button>
-                  </div>
-                ))}
+                  );
+                })}
                 {notices.length === 0 && <p style={{ fontSize: 12, color: "#94A3B8", textAlign: "center", padding: "10px 0" }}>No notices added yet.</p>}
               </div>
             </>
