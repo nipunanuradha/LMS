@@ -365,7 +365,15 @@ async function seedSystemSettings() {
             { key: 'maintenance_mode', value: 'false', category: 'notifications' },
             { key: 'base_students_enrolled', value: '15000', category: 'general' },
             { key: 'exam_pass_rate', value: '98', category: 'general' },
-            { key: 'expert_tutors', value: '12', category: 'general' }
+            { key: 'expert_tutors', value: '12', category: 'general' },
+            { key: 'bank_name', value: 'Bank of Ceylon (BOC)', category: 'payment' },
+            { key: 'bank_account_name', value: 'ICT Academy', category: 'payment' },
+            { key: 'bank_account_number', value: '0000000000', category: 'payment' },
+            { key: 'bank_branch', value: 'Colombo Super Branch', category: 'payment' },
+            { key: 'payment_contact_number', value: '+94 77 000 0000', category: 'payment' },
+            { key: 'payment_instructions', value: 'Please include your Student ID / Phone Number and Month in your deposit slip or transfer remarks. Send receipt/slip photo to WhatsApp.', category: 'payment' },
+            { key: 'payment_notes', value: 'Bank transfers and CDM deposits are verified and approved within 2-4 hours.', category: 'payment' },
+            { key: 'bank_payments_enabled', value: 'true', category: 'payment' }
         ];
 
         for (const item of defaults) {
@@ -2514,6 +2522,8 @@ app.post('/api/admin/settings', async (req, res) => {
             let category = 'general';
             if (['email_notifications', 'sms_alerts', 'maintenance_mode'].includes(key)) {
                 category = 'notifications';
+            } else if (key.startsWith('bank_') || key.startsWith('payment_')) {
+                category = 'payment';
             }
             await pool.execute(
                 'INSERT INTO system_settings (setting_key, setting_value, category) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
@@ -2522,6 +2532,58 @@ app.post('/api/admin/settings', async (req, res) => {
         }
         await createNotification('System settings were updated', 'info');
         res.json({ message: 'Settings saved successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get payment & bank details for students
+app.get('/api/payment-details', async (req, res) => {
+    const defaults = {
+        bank_name: 'Bank of Ceylon (BOC)',
+        bank_account_name: 'ICT Academy',
+        bank_account_number: '0000000000',
+        bank_branch: 'Colombo Super Branch',
+        payment_contact_number: '+94 77 000 0000',
+        payment_instructions: 'Please include your Student ID / Phone Number and Month in your deposit slip or transfer remarks. Send receipt/slip photo to WhatsApp.',
+        payment_notes: 'Bank transfers and CDM deposits are verified and approved within 2-4 hours.',
+        bank_payments_enabled: 'true'
+    };
+
+    if (!pool) {
+        return res.json(defaults);
+    }
+
+    try {
+        const [rows] = await pool.execute(
+            "SELECT setting_key, setting_value FROM system_settings WHERE category = 'payment' OR setting_key LIKE 'bank_%' OR setting_key LIKE 'payment_%'"
+        );
+        const details = { ...defaults };
+        rows.forEach(row => {
+            details[row.setting_key] = row.setting_value;
+        });
+        res.json(details);
+    } catch (err) {
+        console.error('Error fetching payment details:', err.message);
+        res.json(defaults);
+    }
+});
+
+// Update payment details specifically
+app.post('/api/admin/payment-details', async (req, res) => {
+    if (!pool) {
+        return res.status(500).json({ message: 'Database not connected' });
+    }
+    const settings = req.body;
+    try {
+        for (const [key, value] of Object.entries(settings)) {
+            await pool.execute(
+                'INSERT INTO system_settings (setting_key, setting_value, category) VALUES (?, ?, "payment") ON DUPLICATE KEY UPDATE setting_value = ?',
+                [key, String(value), String(value)]
+            );
+        }
+        await createNotification('Bank & Payment details were updated', 'info');
+        res.json({ message: 'Payment details saved successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
