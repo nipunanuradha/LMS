@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router";
-import { ArrowLeft, Bell, Video, FileText, ExternalLink as ExternalLinkIcon, Download, Check, Eye, Maximize, Minimize, Volume2, VolumeX, Gauge, SlidersHorizontal, ChevronDown, Lock, Unlock, CreditCard, Calendar, CheckCircle2, AlertCircle, Sparkles, Loader2, LogOut } from "lucide-react";
+import { ArrowLeft, Bell, Video, FileText, ExternalLink as ExternalLinkIcon, Download, Check, Eye, Maximize, Minimize, Volume2, VolumeX, Gauge, SlidersHorizontal, ChevronDown, Lock, Unlock, CreditCard, Calendar, CheckCircle2, AlertCircle, Sparkles, Loader2, LogOut, Building2, Copy, MessageSquare, Phone } from "lucide-react";
 import {
   mockCourses,
   mockRecordings,
@@ -463,11 +463,32 @@ export function CourseDetails() {
   // Payment Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [payTargetMonth, setPayTargetMonth] = useState<any>(null);
+  const [paymentMethodTab, setPaymentMethodTab] = useState<"online" | "bank">("online");
+  const [bankDetails, setBankDetails] = useState<any>({
+    bank_name: "Bank of Ceylon (BOC)",
+    bank_account_name: "ICT Academy",
+    bank_account_number: "0000000000",
+    bank_branch: "Colombo Super Branch",
+    payment_contact_number: "+94 77 000 0000",
+    payment_instructions: "Please include your Student ID / Phone Number and Month in your deposit slip or transfer remarks. Send receipt/slip photo to WhatsApp.",
+    payment_notes: "Bank transfers and CDM deposits are verified and approved within 2-4 hours.",
+    bank_payments_enabled: "true"
+  });
+  const [bankCopiedField, setBankCopiedField] = useState<string | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [paymentSuccessMsg, setPaymentSuccessMsg] = useState<string | null>(null);
   const [paymentTimeoutInfo, setPaymentTimeoutInfo] = useState<{ orderId: string; message: string } | null>(null);
   const [paymentDeclinedInfo, setPaymentDeclinedInfo] = useState<{ orderId: string; reason: string } | null>(null);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/payment-details`)
+      .then(res => res.json())
+      .then(data => {
+        if (data) setBankDetails(data);
+      })
+      .catch(err => console.error("Error fetching payment details:", err));
+  }, []);
 
   const recordings = dbRecordings;
   const notices = dbNotices;
@@ -1673,81 +1694,204 @@ export function CourseDetails() {
                     </div>
                   </div>
 
-                  {/* Payment Method Info */}
-                  <div className="p-3.5 rounded-xl border border-blue-600/40 bg-blue-50/60 dark:bg-blue-950/40 flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-base">💳</span>
-                      <div>
-                        <div className="text-xs font-bold text-foreground">Online Payment (Cards & Wallets)</div>
-                        <div className="text-[11px] text-muted-foreground">Visa, MasterCard, Frimi, Genie, eZ Cash</div>
-                      </div>
+                  {/* Payment Method Selector Tabs */}
+                  {bankDetails.bank_payments_enabled !== "false" && (
+                    <div className="grid grid-cols-2 gap-2 p-1 bg-muted/60 rounded-xl border border-border text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethodTab("online")}
+                        className={`py-2 px-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          paymentMethodTab === "online"
+                            ? "bg-card text-blue-600 shadow-xs"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <CreditCard className="w-3.5 h-3.5" />
+                        <span>Online Card (Instant)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethodTab("bank")}
+                        className={`py-2 px-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          paymentMethodTab === "bank"
+                            ? "bg-card text-blue-600 shadow-xs"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <Building2 className="w-3.5 h-3.5" />
+                        <span>Bank Transfer / Slip</span>
+                      </button>
                     </div>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-600/10 text-blue-600 dark:text-blue-400">
-                      Instant
-                    </span>
-                  </div>
+                  )}
 
-                  {/* Payment Info banner */}
-                  <div className="text-[11px] text-muted-foreground bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-900/40 p-3 rounded-xl flex items-start gap-2">
-                    <Sparkles className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                    <span>
-                      <strong>PayHere Secure Gateway:</strong> Pay instantly using Visa, MasterCard, Frimi, Genie, or eZ Cash. 256-bit SSL encrypted & secure.
-                    </span>
-                  </div>
+                  {paymentMethodTab === "bank" ? (
+                    /* Bank Transfer Details Tab */
+                    <div className="space-y-3.5 pt-1">
+                      <div className="p-3.5 rounded-xl border border-blue-200/80 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/30 space-y-2.5">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-muted-foreground">Bank & Branch:</span>
+                          <span className="font-bold text-foreground">
+                            {bankDetails.bank_name} ({bankDetails.bank_branch})
+                          </span>
+                        </div>
 
-                  {/* Payment Terms & Legal Agreement Notice */}
-                  <p className="text-[11px] text-center text-muted-foreground leading-normal px-2">
-                    By proceeding with payment, you agree to our{" "}
-                    <a
-                      href="/terms-of-service"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 dark:text-blue-400 font-semibold underline hover:text-blue-700"
-                    >
-                      Terms of Service
-                    </a>
-                    ,{" "}
-                    <a
-                      href="/privacy-policy"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 dark:text-blue-400 font-semibold underline hover:text-blue-700"
-                    >
-                      Privacy Policy
-                    </a>
-                    , and{" "}
-                    <a
-                      href="/refund-policy"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 dark:text-blue-400 font-semibold underline hover:text-blue-700"
-                    >
-                      Refund Policy
-                    </a>
-                    .
-                  </p>
+                        <div className="flex justify-between items-center text-xs pt-1 border-t border-border/50">
+                          <span className="text-blue-700 dark:text-blue-300 font-medium">Account Number:</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">
+                              {bankDetails.bank_account_number}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard?.writeText(bankDetails.bank_account_number);
+                                setBankCopiedField("acc");
+                                setTimeout(() => setBankCopiedField(null), 2000);
+                              }}
+                              className="px-2 py-0.5 rounded bg-blue-600 text-white text-[10px] font-semibold cursor-pointer"
+                            >
+                              {bankCopiedField === "acc" ? "Copied!" : "Copy"}
+                            </button>
+                          </div>
+                        </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-3 pt-1">
-                    <button
-                      type="button"
-                      disabled={isProcessingPayment}
-                      onClick={() => setShowPaymentModal(false)}
-                      className="flex-1 py-2.5 rounded-xl border border-border text-foreground hover:bg-muted font-medium text-xs transition-colors cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      disabled={isProcessingPayment}
-                      onClick={handleConfirmPayment}
-                      className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                    >
-                      {isProcessingPayment
-                        ? "Connecting Gateway..."
-                        : `Pay with PayHere (Rs. ${Number(payTargetMonth.monthly_price).toLocaleString()})`}
-                    </button>
-                  </div>
+                        <div className="flex justify-between items-center text-xs pt-1 border-t border-border/50">
+                          <span className="text-muted-foreground">Account Name:</span>
+                          <span className="font-bold text-foreground">{bankDetails.bank_account_name}</span>
+                        </div>
+
+                        <div className="flex justify-between items-center text-xs pt-1 border-t border-border/50">
+                          <span className="text-muted-foreground">Amount to Transfer:</span>
+                          <span className="font-bold text-emerald-600">
+                            Rs. {Number(payTargetMonth.monthly_price).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Instructions */}
+                      <div className="text-[11px] text-muted-foreground bg-muted/40 p-3 rounded-xl border border-border space-y-1">
+                        <div className="font-semibold text-foreground flex items-center gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5 text-blue-600" />
+                          <span>Bank Deposit Instructions:</span>
+                        </div>
+                        <p>1. Deposit or transfer the exact amount using Mobile Banking, Online Banking, or CDM.</p>
+                        <p>
+                          2. <strong>Transfer Remark:</strong> Use{" "}
+                          <span className="font-semibold text-foreground">{currentUser?.name || "Your Name"} - {payTargetMonth.title}</span>
+                        </p>
+                        <p>3. Send a photo or screenshot of the receipt/slip to WhatsApp for verification.</p>
+                        <p className="text-blue-600 dark:text-blue-400 font-medium pt-1">
+                          ℹ️ {bankDetails.payment_notes || "Approvals take 2-4 hours."}
+                        </p>
+                      </div>
+
+                      {/* WhatsApp Button */}
+                      {(() => {
+                        const cleanPhone = (bankDetails.payment_contact_number || "+94770000000").replace(/[^0-9]/g, "");
+                        const waMsg = `Hello ICT Academy! I have transferred the fee for:\nClass: ${course.title}\nMonth: ${payTargetMonth.title}\nAmount: Rs. ${Number(payTargetMonth.monthly_price).toLocaleString()}\nStudent Name: ${currentUser?.name || ""}\nPhone: ${currentUser?.phone || ""}\n\nPlease find my attached bank receipt / deposit slip.`;
+                        const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(waMsg)}`;
+                        return (
+                          <div className="flex gap-2.5 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => setShowPaymentModal(false)}
+                              className="flex-1 py-2.5 rounded-xl border border-border text-foreground hover:bg-muted font-medium text-xs transition-colors cursor-pointer"
+                            >
+                              Close
+                            </button>
+                            <a
+                              href={waUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                              <span>Send Slip via WhatsApp</span>
+                            </a>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  ) : (
+                    /* Online Payment Tab (PayHere) */
+                    <>
+                      {/* Payment Method Info */}
+                      <div className="p-3.5 rounded-xl border border-blue-600/40 bg-blue-50/60 dark:bg-blue-950/40 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-base">💳</span>
+                          <div>
+                            <div className="text-xs font-bold text-foreground">Online Payment (Cards & Wallets)</div>
+                            <div className="text-[11px] text-muted-foreground">Visa, MasterCard, Frimi, Genie, eZ Cash</div>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-600/10 text-blue-600 dark:text-blue-400">
+                          Instant
+                        </span>
+                      </div>
+
+                      {/* Payment Info banner */}
+                      <div className="text-[11px] text-muted-foreground bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-900/40 p-3 rounded-xl flex items-start gap-2">
+                        <Sparkles className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                        <span>
+                          <strong>PayHere Secure Gateway:</strong> Pay instantly using Visa, MasterCard, Frimi, Genie, or eZ Cash. 256-bit SSL encrypted & secure.
+                        </span>
+                      </div>
+
+                      {/* Payment Terms & Legal Agreement Notice */}
+                      <p className="text-[11px] text-center text-muted-foreground leading-normal px-2">
+                        By proceeding with payment, you agree to our{" "}
+                        <a
+                          href="/terms-of-service"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 dark:text-blue-400 font-semibold underline hover:text-blue-700"
+                        >
+                          Terms of Service
+                        </a>
+                        ,{" "}
+                        <a
+                          href="/privacy-policy"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 dark:text-blue-400 font-semibold underline hover:text-blue-700"
+                        >
+                          Privacy Policy
+                        </a>
+                        , and{" "}
+                        <a
+                          href="/refund-policy"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 dark:text-blue-400 font-semibold underline hover:text-blue-700"
+                        >
+                          Refund Policy
+                        </a>
+                        .
+                      </p>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-3 pt-1">
+                        <button
+                          type="button"
+                          disabled={isProcessingPayment}
+                          onClick={() => setShowPaymentModal(false)}
+                          className="flex-1 py-2.5 rounded-xl border border-border text-foreground hover:bg-muted font-medium text-xs transition-colors cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isProcessingPayment}
+                          onClick={handleConfirmPayment}
+                          className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                        >
+                          {isProcessingPayment
+                            ? "Connecting Gateway..."
+                            : `Pay with PayHere (Rs. ${Number(payTargetMonth.monthly_price).toLocaleString()})`}
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </div>
