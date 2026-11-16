@@ -475,6 +475,7 @@ export function CourseDetails() {
     bank_payments_enabled: "true"
   });
   const [bankCopiedField, setBankCopiedField] = useState<string | null>(null);
+  const [selectedBankIndex, setSelectedBankIndex] = useState(0);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [paymentSuccessMsg, setPaymentSuccessMsg] = useState<string | null>(null);
@@ -1726,127 +1727,169 @@ export function CourseDetails() {
 
                   {paymentMethodTab === "bank" ? (
                     /* Bank Transfer Details Tab */
-                    <div className="space-y-3.5 pt-1">
-                      <div className="p-3.5 rounded-xl border border-blue-200/80 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/30 space-y-2.5">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-muted-foreground">Bank & Branch:</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-foreground">
-                              {bankDetails?.bank_name || "Bank of Ceylon (BOC)"} ({bankDetails?.bank_branch || "Colombo"})
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const text = `${bankDetails?.bank_name || "Bank of Ceylon (BOC)"} (${bankDetails?.bank_branch || "Colombo"})`;
-                                navigator?.clipboard?.writeText ? navigator.clipboard.writeText(text) : null;
-                                setBankCopiedField("bank");
-                                setTimeout(() => setBankCopiedField(null), 2000);
-                              }}
-                              className="text-blue-600 hover:text-blue-700 cursor-pointer"
-                              title="Copy Bank"
-                            >
-                              {bankCopiedField === "bank" ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                            </button>
+                    (() => {
+                      const accounts: any[] = Array.isArray(bankDetails?.bank_accounts) && bankDetails.bank_accounts.length > 0
+                        ? bankDetails.bank_accounts
+                        : [
+                            {
+                              id: "acc_1",
+                              bank_name: bankDetails?.bank_name || "Bank of Ceylon (BOC)",
+                              bank_branch: bankDetails?.bank_branch || "Colombo Super Branch",
+                              bank_account_number: bankDetails?.bank_account_number || "0000000000",
+                              bank_account_name: bankDetails?.bank_account_name || "ICT Academy"
+                            }
+                          ];
+                      const activeAcc = accounts[selectedBankIndex] || accounts[0];
+
+                      return (
+                        <div className="space-y-3.5 pt-1">
+                          {/* Multiple Bank Selector Pills */}
+                          {accounts.length > 1 && (
+                            <div className="space-y-1.5">
+                              <span className="text-[11px] font-semibold text-muted-foreground">
+                                Select Your Preferred Bank ({accounts.length} Accounts):
+                              </span>
+                              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                                {accounts.map((acc: any, idx: number) => (
+                                  <button
+                                    key={acc.id || idx}
+                                    type="button"
+                                    onClick={() => setSelectedBankIndex(idx)}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer border ${
+                                      selectedBankIndex === idx
+                                        ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                                        : "bg-muted/50 hover:bg-muted text-muted-foreground border-border"
+                                    }`}
+                                  >
+                                    {acc.bank_name || `Bank #${idx + 1}`}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="p-3.5 rounded-xl border border-blue-200/80 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/30 space-y-2.5">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-muted-foreground">Bank & Branch:</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-foreground">
+                                  {activeAcc.bank_name} ({activeAcc.bank_branch})
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const text = `${activeAcc.bank_name} (${activeAcc.bank_branch})`;
+                                    navigator?.clipboard?.writeText ? navigator.clipboard.writeText(text) : null;
+                                    setBankCopiedField("bank");
+                                    setTimeout(() => setBankCopiedField(null), 2000);
+                                  }}
+                                  className="text-blue-600 hover:text-blue-700 cursor-pointer"
+                                  title="Copy Bank"
+                                >
+                                  {bankCopiedField === "bank" ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-between items-center text-xs pt-1 border-t border-border/50">
+                              <span className="text-blue-700 dark:text-blue-300 font-medium">Account Number:</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">
+                                  {activeAcc.bank_account_number}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const accNo = activeAcc.bank_account_number;
+                                    navigator?.clipboard?.writeText ? navigator.clipboard.writeText(accNo) : null;
+                                    setBankCopiedField("acc");
+                                    setTimeout(() => setBankCopiedField(null), 2000);
+                                  }}
+                                  className="px-2 py-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-semibold cursor-pointer transition-colors"
+                                >
+                                  {bankCopiedField === "acc" ? "Copied!" : "Copy"}
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-between items-center text-xs pt-1 border-t border-border/50">
+                              <span className="text-muted-foreground">Account Name:</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-foreground">{activeAcc.bank_account_name}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const accName = activeAcc.bank_account_name;
+                                    navigator?.clipboard?.writeText ? navigator.clipboard.writeText(accName) : null;
+                                    setBankCopiedField("name");
+                                    setTimeout(() => setBankCopiedField(null), 2000);
+                                  }}
+                                  className="text-blue-600 hover:text-blue-700 cursor-pointer"
+                                  title="Copy Name"
+                                >
+                                  {bankCopiedField === "name" ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-between items-center text-xs pt-1 border-t border-border/50">
+                              <span className="text-muted-foreground">Amount to Transfer:</span>
+                              <span className="font-bold text-emerald-600">
+                                Rs. {Number(payTargetMonth?.monthly_price || 0).toLocaleString()}
+                              </span>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="flex justify-between items-center text-xs pt-1 border-t border-border/50">
-                          <span className="text-blue-700 dark:text-blue-300 font-medium">Account Number:</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">
-                              {bankDetails?.bank_account_number || "0000000000"}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const acc = bankDetails?.bank_account_number || "0000000000";
-                                navigator?.clipboard?.writeText ? navigator.clipboard.writeText(acc) : null;
-                                setBankCopiedField("acc");
-                                setTimeout(() => setBankCopiedField(null), 2000);
-                              }}
-                              className="px-2 py-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-semibold cursor-pointer transition-colors"
-                            >
-                              {bankCopiedField === "acc" ? "Copied!" : "Copy"}
-                            </button>
+                          {/* Instructions */}
+                          <div className="text-[11px] text-muted-foreground bg-muted/40 p-3 rounded-xl border border-border space-y-1">
+                            <div className="font-semibold text-foreground flex items-center gap-1.5">
+                              <AlertCircle className="w-3.5 h-3.5 text-blue-600" />
+                              <span>Bank Deposit Instructions:</span>
+                            </div>
+                            <p>1. Deposit or transfer the exact amount using Mobile Banking, Online Banking, or CDM.</p>
+                            <p>
+                              2. <strong>Transfer Remark:</strong> Use{" "}
+                              <span className="font-semibold text-foreground">
+                                {currentUserObj?.full_name || currentUserObj?.name || "Your Name"} - {payTargetMonth?.title}
+                              </span>
+                            </p>
+                            <p>3. Send a photo or screenshot of the receipt/slip to WhatsApp for verification.</p>
+                            <p className="text-blue-600 dark:text-blue-400 font-medium pt-1">
+                              ℹ️ {bankDetails?.payment_notes || "Approvals take 2-4 hours."}
+                            </p>
                           </div>
-                        </div>
 
-                        <div className="flex justify-between items-center text-xs pt-1 border-t border-border/50">
-                          <span className="text-muted-foreground">Account Name:</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-foreground">{bankDetails?.bank_account_name || "ICT Academy"}</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const accName = bankDetails?.bank_account_name || "ICT Academy";
-                                navigator?.clipboard?.writeText ? navigator.clipboard.writeText(accName) : null;
-                                setBankCopiedField("name");
-                                setTimeout(() => setBankCopiedField(null), 2000);
-                              }}
-                              className="text-blue-600 hover:text-blue-700 cursor-pointer"
-                              title="Copy Name"
-                            >
-                              {bankCopiedField === "name" ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                            </button>
-                          </div>
+                          {/* WhatsApp Button */}
+                          {(() => {
+                            const cleanPhone = (bankDetails?.payment_contact_number || "+94770000000").replace(/[^0-9]/g, "");
+                            const studentName = currentUserObj?.full_name || currentUserObj?.name || "Student";
+                            const studentPhone = currentUserObj?.phone || currentUserObj?.phone_number || "";
+                            const waMsg = `Hello ICT Academy! I have transferred the fee for:\nClass: ${course?.title || ""}\nMonth: ${payTargetMonth?.title || ""}\nBank: ${activeAcc.bank_name}\nA/C: ${activeAcc.bank_account_number}\nAmount: Rs. ${Number(payTargetMonth?.monthly_price || 0).toLocaleString()}\nStudent Name: ${studentName}\nPhone: ${studentPhone}\n\nPlease find my attached bank receipt / deposit slip.`;
+                            const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(waMsg)}`;
+                            return (
+                              <div className="flex gap-2.5 pt-1">
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPaymentModal(false)}
+                                  className="flex-1 py-2.5 rounded-xl border border-border text-foreground hover:bg-muted font-medium text-xs transition-colors cursor-pointer"
+                                >
+                                  Close
+                                </button>
+                                <a
+                                  href={waUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center"
+                                >
+                                  <MessageSquare className="w-3.5 h-3.5" />
+                                  <span>Send Slip via WhatsApp</span>
+                                </a>
+                              </div>
+                            );
+                          })()}
                         </div>
-
-                        <div className="flex justify-between items-center text-xs pt-1 border-t border-border/50">
-                          <span className="text-muted-foreground">Amount to Transfer:</span>
-                          <span className="font-bold text-emerald-600">
-                            Rs. {Number(payTargetMonth?.monthly_price || 0).toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Instructions */}
-                      <div className="text-[11px] text-muted-foreground bg-muted/40 p-3 rounded-xl border border-border space-y-1">
-                        <div className="font-semibold text-foreground flex items-center gap-1.5">
-                          <AlertCircle className="w-3.5 h-3.5 text-blue-600" />
-                          <span>Bank Deposit Instructions:</span>
-                        </div>
-                        <p>1. Deposit or transfer the exact amount using Mobile Banking, Online Banking, or CDM.</p>
-                        <p>
-                          2. <strong>Transfer Remark:</strong> Use{" "}
-                          <span className="font-semibold text-foreground">
-                            {currentUserObj?.full_name || currentUserObj?.name || "Your Name"} - {payTargetMonth?.title}
-                          </span>
-                        </p>
-                        <p>3. Send a photo or screenshot of the receipt/slip to WhatsApp for verification.</p>
-                        <p className="text-blue-600 dark:text-blue-400 font-medium pt-1">
-                          ℹ️ {bankDetails?.payment_notes || "Approvals take 2-4 hours."}
-                        </p>
-                      </div>
-
-                      {/* WhatsApp Button */}
-                      {(() => {
-                        const cleanPhone = (bankDetails?.payment_contact_number || "+94770000000").replace(/[^0-9]/g, "");
-                        const studentName = currentUserObj?.full_name || currentUserObj?.name || "Student";
-                        const studentPhone = currentUserObj?.phone || currentUserObj?.phone_number || "";
-                        const waMsg = `Hello ICT Academy! I have transferred the fee for:\nClass: ${course?.title || ""}\nMonth: ${payTargetMonth?.title || ""}\nAmount: Rs. ${Number(payTargetMonth?.monthly_price || 0).toLocaleString()}\nStudent Name: ${studentName}\nPhone: ${studentPhone}\n\nPlease find my attached bank receipt / deposit slip.`;
-                        const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(waMsg)}`;
-                        return (
-                          <div className="flex gap-2.5 pt-1">
-                            <button
-                              type="button"
-                              onClick={() => setShowPaymentModal(false)}
-                              className="flex-1 py-2.5 rounded-xl border border-border text-foreground hover:bg-muted font-medium text-xs transition-colors cursor-pointer"
-                            >
-                              Close
-                            </button>
-                            <a
-                              href={waUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center"
-                            >
-                              <MessageSquare className="w-3.5 h-3.5" />
-                              <span>Send Slip via WhatsApp</span>
-                            </a>
-                          </div>
-                        );
-                      })()}
-                    </div>
+                      );
+                    })()
                   ) : (
                     /* Online Payment Tab (PayHere) */
                     <>
