@@ -52,6 +52,15 @@ export function Dashboard() {
     bank_account_name: "ICT Academy",
     bank_account_number: "0000000000",
     bank_branch: "Colombo Super Branch",
+    bank_accounts: [
+      {
+        id: "acc_1",
+        bank_name: "Bank of Ceylon (BOC)",
+        bank_account_name: "ICT Academy",
+        bank_account_number: "0000000000",
+        bank_branch: "Colombo Super Branch"
+      }
+    ],
     payment_contact_number: "+94 77 000 0000",
     payment_instructions: "Please include your Student ID / Phone Number and Month in your deposit slip or transfer remarks. Send receipt/slip photo to WhatsApp.",
     payment_notes: "Bank transfers and CDM deposits are verified and approved within 2-4 hours.",
@@ -164,27 +173,52 @@ export function Dashboard() {
   };
 
   const copyToClipboard = (text: string, fieldId: string) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-      setCopiedField(fieldId);
-      setTimeout(() => setCopiedField(null), 2000);
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {});
+    } else {
+      try {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      } catch (e) {}
     }
+    setCopiedField(fieldId);
+    setTimeout(() => setCopiedField(null), 2000);
   };
 
+  // Normalizing bank accounts list
+  const accounts: any[] = Array.isArray(paymentDetails?.bank_accounts) && paymentDetails.bank_accounts.length > 0
+    ? paymentDetails.bank_accounts
+    : [
+        {
+          id: "acc_1",
+          bank_name: paymentDetails?.bank_name || "Bank of Ceylon (BOC)",
+          bank_branch: paymentDetails?.bank_branch || "Colombo Super Branch",
+          bank_account_number: paymentDetails?.bank_account_number || "0000000000",
+          bank_account_name: paymentDetails?.bank_account_name || "ICT Academy"
+        }
+      ];
+
   const copyAllBankDetails = () => {
-    const formatted = `ICT Academy Bank Details:
-Bank: ${paymentDetails.bank_name}
-Branch: ${paymentDetails.bank_branch}
-Account No: ${paymentDetails.bank_account_number}
-Account Name: ${paymentDetails.bank_account_name}
-WhatsApp Support: ${paymentDetails.payment_contact_number}
-Instructions: ${paymentDetails.payment_instructions}`;
+    let formatted = `ICT Academy Official Bank Details:\n\n`;
+    accounts.forEach((acc, idx) => {
+      formatted += `Bank Account #${idx + 1}:\n`;
+      formatted += `Bank: ${acc.bank_name}\n`;
+      formatted += `Branch: ${acc.bank_branch}\n`;
+      formatted += `Account No: ${acc.bank_account_number}\n`;
+      formatted += `Account Name: ${acc.bank_account_name}\n\n`;
+    });
+    formatted += `WhatsApp Support: ${paymentDetails.payment_contact_number}\n`;
+    formatted += `Instructions: ${paymentDetails.payment_instructions}`;
     copyToClipboard(formatted, "all");
   };
 
   const cleanPhone = (paymentDetails.payment_contact_number || "+94770000000").replace(/[^0-9]/g, "");
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-    `Hello ICT Academy! I would like to submit my bank payment slip for class access.\n\nStudent Name: ${user?.name || ""}\nStudent Phone: ${user?.phone || ""}\nDate: ${new Date().toLocaleDateString()}`
+    `Hello ICT Academy! I would like to submit my bank payment slip for class access.\n\nStudent Name: ${user?.name || ""}\nPhone: ${user?.phone || ""}\nDate: ${new Date().toLocaleDateString()}`
   )}`;
 
   if (!user) return null;
@@ -209,7 +243,7 @@ Instructions: ${paymentDetails.payment_instructions}`;
                 className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/40 transition-colors cursor-pointer"
               >
                 <CreditCard className="w-3.5 h-3.5" />
-                <span>Payment Details</span>
+                <span>Payment Details ({accounts.length})</span>
               </button>
             )}
             <ThemeToggle />
@@ -293,11 +327,11 @@ Instructions: ${paymentDetails.payment_instructions}`;
                       Class Fee & Bank Payment Details
                     </h2>
                     <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                      Official Account
+                      {accounts.length} Bank Account{accounts.length > 1 ? "s" : ""} Available
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    පන්ති ගාස්තු ගෙවීමට අදාළ බැංකු ගිණුම් විස්තර සහ ගෙවීම් රිසිට්පත් WhatsApp කිරීමේ උපදෙස්
+                    පන්ති ගාස්තු තැන්පත් කිරීමට පහත සඳහන් ඕනෑම බැංකු ගිණුමක් භාවිතා කළ හැක (Online / CDM / Transfer)
                   </p>
                 </div>
               </div>
@@ -332,85 +366,99 @@ Instructions: ${paymentDetails.payment_instructions}`;
             {/* Expandable Content */}
             {isBankSectionExpanded && (
               <div className="p-5 sm:p-6 space-y-6">
-                {/* Bank Account Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {/* Bank Name */}
-                  <div className="p-4 rounded-xl bg-muted/40 border border-border flex flex-col justify-between group hover:border-blue-500/40 transition-all">
-                    <div>
-                      <span className="text-xs font-medium text-muted-foreground">Bank & Branch</span>
-                      <div className="text-sm font-bold text-foreground mt-1">{paymentDetails.bank_name}</div>
-                      <div className="text-xs text-muted-foreground">{paymentDetails.bank_branch}</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(paymentDetails.bank_name, "bank")}
-                      className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
+                {/* Bank Accounts Grid */}
+                <div className={`grid grid-cols-1 ${accounts.length > 1 ? "md:grid-cols-2 lg:grid-cols-3" : "md:grid-cols-2"} gap-4`}>
+                  {accounts.map((acc, index) => (
+                    <div
+                      key={acc.id || index}
+                      className="p-5 rounded-2xl bg-gradient-to-br from-card to-muted/30 border border-border hover:border-blue-500/50 flex flex-col justify-between group transition-all shadow-xs"
                     >
-                      {copiedField === "bank" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedField === "bank" ? "Copied" : "Copy Bank"}</span>
-                    </button>
-                  </div>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300">
+                            Bank #{index + 1}
+                          </span>
+                          <span className="text-xs text-muted-foreground">{acc.bank_branch}</span>
+                        </div>
 
-                  {/* Account Number */}
-                  <div className="p-4 rounded-xl bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/40 flex flex-col justify-between group hover:border-blue-500 transition-all">
-                    <div>
-                      <span className="text-xs font-medium text-blue-700 dark:text-blue-300">Account Number (ගිණුම් අංකය)</span>
-                      <div className="text-lg font-mono font-bold text-blue-600 dark:text-blue-400 mt-1 tracking-wider">
-                        {paymentDetails.bank_account_number}
+                        <div>
+                          <div className="text-base font-bold text-foreground group-hover:text-blue-600 transition-colors">
+                            {acc.bank_name}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            Account Holder: <strong className="text-foreground">{acc.bank_account_name}</strong>
+                          </div>
+                        </div>
+
+                        {/* Account Number Box */}
+                        <div className="p-3 rounded-xl bg-blue-50/60 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-900/40 flex items-center justify-between">
+                          <div>
+                            <span className="text-[10px] font-semibold text-blue-800 dark:text-blue-300 uppercase tracking-wider block">
+                              Account Number
+                            </span>
+                            <span className="text-base font-mono font-bold text-blue-600 dark:text-blue-400 tracking-wider">
+                              {acc.bank_account_number}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(acc.bank_account_number, `acc_${index}`)}
+                            className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold cursor-pointer shadow-xs transition-colors flex items-center gap-1"
+                          >
+                            {copiedField === `acc_${index}` ? (
+                              <>
+                                <Check className="w-3 h-3" />
+                                <span>Copied!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                <span>Copy</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground mt-3">
+                        <span>Use for CDM or Online Transfer</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const summary = `Bank: ${acc.bank_name}\nBranch: ${acc.bank_branch}\nA/C No: ${acc.bank_account_number}\nName: ${acc.bank_account_name}`;
+                            copyToClipboard(summary, `card_${index}`);
+                          }}
+                          className="text-blue-600 hover:text-blue-700 font-semibold cursor-pointer text-[11px]"
+                        >
+                          {copiedField === `card_${index}` ? "Copied All!" : "Copy Bank Info"}
+                        </button>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(paymentDetails.bank_account_number, "acc")}
-                      className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold cursor-pointer shadow-xs transition-colors w-fit"
-                    >
-                      {copiedField === "acc" ? (
-                        <>
-                          <Check className="w-3 h-3" />
-                          <span>Copied Account No!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3" />
-                          <span>Copy Account No</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
+                  ))}
 
-                  {/* Account Name */}
-                  <div className="p-4 rounded-xl bg-muted/40 border border-border flex flex-col justify-between group hover:border-blue-500/40 transition-all">
+                  {/* WhatsApp Support Card */}
+                  <div className="p-5 rounded-2xl bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 flex flex-col justify-between">
                     <div>
-                      <span className="text-xs font-medium text-muted-foreground">Account Holder (ගිණුම් හිමියා)</span>
-                      <div className="text-sm font-bold text-foreground mt-1">{paymentDetails.bank_account_name}</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(paymentDetails.bank_account_name, "name")}
-                      className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
-                    >
-                      {copiedField === "name" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedField === "name" ? "Copied" : "Copy Name"}</span>
-                    </button>
-                  </div>
-
-                  {/* WhatsApp Support */}
-                  <div className="p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 flex flex-col justify-between group hover:border-emerald-500 transition-all">
-                    <div>
-                      <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">WhatsApp Slip Verification</span>
-                      <div className="text-sm font-bold text-foreground mt-1 flex items-center gap-1.5">
-                        <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>{paymentDetails.payment_contact_number}</span>
+                      <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 font-bold text-sm">
+                        <Phone className="w-4 h-4" />
+                        <span>WhatsApp Slip Verification</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1.5">
+                        ගෙවීම සිදු කළ පසු receipt පත හෝ screenshot එක අපගේ WhatsApp අංකයට යොමු කරන්න:
+                      </p>
+                      <div className="text-base font-bold text-foreground mt-2 font-mono">
+                        {paymentDetails.payment_contact_number}
                       </div>
                     </div>
+
                     <a
                       href={whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold cursor-pointer shadow-xs transition-colors w-fit"
+                      className="mt-4 w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <MessageSquare className="w-3 h-3" />
-                      <span>Send Slip on WhatsApp</span>
+                      <MessageSquare className="w-4 h-4" />
+                      <span>Send Payment Slip on WhatsApp</span>
                     </a>
                   </div>
                 </div>
@@ -424,7 +472,7 @@ Instructions: ${paymentDetails.payment_instructions}`;
                     </div>
                     <ol className="list-decimal list-inside space-y-1 pl-1 text-[12px] leading-relaxed">
                       <li>
-                        Transfer or deposit your course fee to the official account above via Online Banking, Mobile App, or CDM.
+                        Transfer or deposit your course fee to any of the above accounts via Online Banking, Mobile App, or CDM.
                       </li>
                       <li>
                         <strong>Reference/Remark:</strong> Mention your <span className="font-semibold text-foreground">Student Name</span> and <span className="font-semibold text-foreground">Student ID</span> on the deposit slip or online note.
@@ -574,16 +622,16 @@ Instructions: ${paymentDetails.payment_instructions}`;
       {/* Payment Details Standalone Modal */}
       {showPaymentInfoModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fade-in">
-          <div className="bg-card border border-border rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden space-y-0 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-card border border-border rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden space-y-0 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
             {/* Modal Header */}
-            <div className="p-5 border-b border-border flex items-center justify-between bg-muted/30">
+            <div className="p-5 border-b border-border flex items-center justify-between bg-muted/30 shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                   <CreditCard className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-foreground">Official Bank Payment Details</h3>
-                  <p className="text-xs text-muted-foreground">Make payments via bank transfer or CDM</p>
+                  <h3 className="text-base font-bold text-foreground">Official Bank Accounts ({accounts.length})</h3>
+                  <p className="text-xs text-muted-foreground">Transfer via Online Banking, Mobile App, or CDM</p>
                 </div>
               </div>
               <button
@@ -596,59 +644,44 @@ Instructions: ${paymentDetails.payment_instructions}`;
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-4">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 rounded-xl bg-muted/50 border border-border">
-                  <span className="text-xs text-muted-foreground">Bank Name:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-foreground">{paymentDetails.bank_name}</span>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(paymentDetails.bank_name, "m_bank")}
-                      className="text-blue-600 hover:text-blue-700 cursor-pointer"
-                    >
-                      {copiedField === "m_bank" ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
+            <div className="p-6 space-y-4 overflow-y-auto">
+              {accounts.map((acc, index) => (
+                <div key={acc.id || index} className="p-4 rounded-xl bg-muted/40 border border-border space-y-2.5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                      {acc.bank_name} ({acc.bank_branch})
+                    </span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                      Account #{index + 1}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center p-2.5 rounded-lg bg-blue-50/60 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-900/40">
+                    <span className="text-xs text-blue-800 dark:text-blue-300 font-medium">A/C Number:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">
+                        {acc.bank_account_number}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(acc.bank_account_number, `m_acc_${index}`)}
+                        className="px-2 py-0.5 rounded bg-blue-600 text-white text-[11px] font-semibold cursor-pointer"
+                      >
+                        {copiedField === `m_acc_${index}` ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center text-xs text-muted-foreground">
+                    <span>Account Holder:</span>
+                    <strong className="text-foreground">{acc.bank_account_name}</strong>
                   </div>
                 </div>
+              ))}
 
-                <div className="flex justify-between items-center p-3 rounded-xl bg-blue-50/60 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-900/40">
-                  <span className="text-xs text-blue-800 dark:text-blue-300 font-medium">Account Number:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-mono font-bold text-blue-600 dark:text-blue-400">{paymentDetails.bank_account_number}</span>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(paymentDetails.bank_account_number, "m_acc")}
-                      className="px-2 py-0.5 rounded bg-blue-600 text-white text-[11px] font-semibold cursor-pointer"
-                    >
-                      {copiedField === "m_acc" ? "Copied!" : "Copy"}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center p-3 rounded-xl bg-muted/50 border border-border">
-                  <span className="text-xs text-muted-foreground">Account Holder:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-foreground">{paymentDetails.bank_account_name}</span>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(paymentDetails.bank_account_name, "m_name")}
-                      className="text-blue-600 hover:text-blue-700 cursor-pointer"
-                    >
-                      {copiedField === "m_name" ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center p-3 rounded-xl bg-muted/50 border border-border">
-                  <span className="text-xs text-muted-foreground">Branch:</span>
-                  <span className="text-xs font-bold text-foreground">{paymentDetails.bank_branch}</span>
-                </div>
-
-                <div className="flex justify-between items-center p-3 rounded-xl bg-muted/50 border border-border">
-                  <span className="text-xs text-muted-foreground">WhatsApp Slip Contact:</span>
-                  <span className="text-xs font-bold text-emerald-600">{paymentDetails.payment_contact_number}</span>
-                </div>
+              <div className="flex justify-between items-center p-3 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40">
+                <span className="text-xs text-emerald-800 dark:text-emerald-300 font-medium">WhatsApp Slip Support:</span>
+                <span className="text-xs font-bold text-emerald-600 font-mono">{paymentDetails.payment_contact_number}</span>
               </div>
 
               {/* Instructions */}
@@ -668,7 +701,7 @@ Instructions: ${paymentDetails.payment_instructions}`;
                   className="flex-1 py-2.5 px-3 rounded-xl border border-border bg-muted/50 hover:bg-muted text-foreground font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   {copiedField === "all" ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                  <span>{copiedField === "all" ? "Copied All!" : "Copy Details"}</span>
+                  <span>{copiedField === "all" ? "Copied All!" : "Copy All Details"}</span>
                 </button>
                 <a
                   href={whatsappUrl}

@@ -373,7 +373,20 @@ async function seedSystemSettings() {
             { key: 'payment_contact_number', value: '+94 77 000 0000', category: 'payment' },
             { key: 'payment_instructions', value: 'Please include your Student ID / Phone Number and Month in your deposit slip or transfer remarks. Send receipt/slip photo to WhatsApp.', category: 'payment' },
             { key: 'payment_notes', value: 'Bank transfers and CDM deposits are verified and approved within 2-4 hours.', category: 'payment' },
-            { key: 'bank_payments_enabled', value: 'true', category: 'payment' }
+            { key: 'bank_payments_enabled', value: 'true', category: 'payment' },
+            { 
+                key: 'bank_accounts', 
+                value: JSON.stringify([
+                    {
+                        id: 'acc_1',
+                        bank_name: 'Bank of Ceylon (BOC)',
+                        bank_account_name: 'ICT Academy',
+                        bank_account_number: '0000000000',
+                        bank_branch: 'Colombo Super Branch'
+                    }
+                ]), 
+                category: 'payment' 
+            }
         ];
 
         for (const item of defaults) {
@@ -2525,9 +2538,10 @@ app.post('/api/admin/settings', async (req, res) => {
             } else if (key.startsWith('bank_') || key.startsWith('payment_')) {
                 category = 'payment';
             }
+            const strVal = typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value);
             await pool.execute(
                 'INSERT INTO system_settings (setting_key, setting_value, category) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
-                [key, String(value), category, String(value)]
+                [key, strVal, category, strVal]
             );
         }
         await createNotification('System settings were updated', 'info');
@@ -2539,11 +2553,22 @@ app.post('/api/admin/settings', async (req, res) => {
 
 // Get payment & bank details for students
 app.get('/api/payment-details', async (req, res) => {
+    const defaultAccounts = [
+        {
+            id: 'acc_1',
+            bank_name: 'Bank of Ceylon (BOC)',
+            bank_account_name: 'ICT Academy',
+            bank_account_number: '0000000000',
+            bank_branch: 'Colombo Super Branch'
+        }
+    ];
+
     const defaults = {
         bank_name: 'Bank of Ceylon (BOC)',
         bank_account_name: 'ICT Academy',
         bank_account_number: '0000000000',
         bank_branch: 'Colombo Super Branch',
+        bank_accounts: defaultAccounts,
         payment_contact_number: '+94 77 000 0000',
         payment_instructions: 'Please include your Student ID / Phone Number and Month in your deposit slip or transfer remarks. Send receipt/slip photo to WhatsApp.',
         payment_notes: 'Bank transfers and CDM deposits are verified and approved within 2-4 hours.',
@@ -2562,6 +2587,40 @@ app.get('/api/payment-details', async (req, res) => {
         rows.forEach(row => {
             details[row.setting_key] = row.setting_value;
         });
+
+        // Parse bank_accounts if it is a JSON string
+        let accounts = [];
+        try {
+            if (details.bank_accounts) {
+                accounts = typeof details.bank_accounts === 'string'
+                    ? JSON.parse(details.bank_accounts)
+                    : details.bank_accounts;
+            }
+        } catch (e) {
+            accounts = [];
+        }
+
+        if (!Array.isArray(accounts) || accounts.length === 0) {
+            accounts = [
+                {
+                    id: 'acc_1',
+                    bank_name: details.bank_name || 'Bank of Ceylon (BOC)',
+                    bank_account_name: details.bank_account_name || 'ICT Academy',
+                    bank_account_number: details.bank_account_number || '0000000000',
+                    bank_branch: details.bank_branch || 'Colombo Super Branch'
+                }
+            ];
+        }
+        details.bank_accounts = accounts;
+
+        // Keep primary single fields synchronized with first account
+        if (accounts.length > 0) {
+            details.bank_name = accounts[0].bank_name || details.bank_name;
+            details.bank_account_name = accounts[0].bank_account_name || details.bank_account_name;
+            details.bank_account_number = accounts[0].bank_account_number || details.bank_account_number;
+            details.bank_branch = accounts[0].bank_branch || details.bank_branch;
+        }
+
         res.json(details);
     } catch (err) {
         console.error('Error fetching payment details:', err.message);

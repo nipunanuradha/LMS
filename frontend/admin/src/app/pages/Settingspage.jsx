@@ -14,11 +14,16 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [tog, setTog] = useState({ email: true, sms: false, maintenance: false });
 
-  // Bank & Payment Details State
-  const [bankName, setBankName] = useState("Bank of Ceylon (BOC)");
-  const [bankAccountName, setBankAccountName] = useState("ICT Academy");
-  const [bankAccountNumber, setBankAccountNumber] = useState("0000000000");
-  const [bankBranch, setBankBranch] = useState("Colombo Super Branch");
+  // Bank Accounts State (List of accounts)
+  const [bankAccounts, setBankAccounts] = useState([
+    {
+      id: "acc_1",
+      bank_name: "Bank of Ceylon (BOC)",
+      bank_account_name: "ICT Academy",
+      bank_account_number: "0000000000",
+      bank_branch: "Colombo Super Branch"
+    }
+  ]);
   const [paymentContactNumber, setPaymentContactNumber] = useState("+94 77 000 0000");
   const [paymentInstructions, setPaymentInstructions] = useState(
     "Please include your Student ID / Phone Number and Month in your deposit slip or transfer remarks. Send receipt/slip photo to WhatsApp."
@@ -27,7 +32,7 @@ export default function SettingsPage() {
     "Bank transfers and CDM deposits are verified and approved within 2-4 hours."
   );
   const [bankPaymentsEnabled, setBankPaymentsEnabled] = useState(true);
-  const [previewCopied, setPreviewCopied] = useState(false);
+  const [previewCopiedId, setPreviewCopiedId] = useState(null);
 
   useEffect(() => {
     fetch(`${API_URL}/api/admin/settings`)
@@ -41,11 +46,31 @@ export default function SettingsPage() {
         if (data.exam_pass_rate) setExamPassRate(data.exam_pass_rate);
         if (data.expert_tutors) setExpertTutors(data.expert_tutors);
 
-        // Bank details
-        if (data.bank_name) setBankName(data.bank_name);
-        if (data.bank_account_name) setBankAccountName(data.bank_account_name);
-        if (data.bank_account_number) setBankAccountNumber(data.bank_account_number);
-        if (data.bank_branch) setBankBranch(data.bank_branch);
+        // Parse Bank Accounts list
+        let parsedAccounts = [];
+        try {
+          if (data.bank_accounts) {
+            parsedAccounts = typeof data.bank_accounts === "string" ? JSON.parse(data.bank_accounts) : data.bank_accounts;
+          }
+        } catch (e) {
+          parsedAccounts = [];
+        }
+
+        if (Array.isArray(parsedAccounts) && parsedAccounts.length > 0) {
+          setBankAccounts(parsedAccounts);
+        } else if (data.bank_name || data.bank_account_number) {
+          // Fallback to single account if existing
+          setBankAccounts([
+            {
+              id: "acc_1",
+              bank_name: data.bank_name || "Bank of Ceylon (BOC)",
+              bank_account_name: data.bank_account_name || "ICT Academy",
+              bank_account_number: data.bank_account_number || "0000000000",
+              bank_branch: data.bank_branch || "Colombo Super Branch"
+            }
+          ]);
+        }
+
         if (data.payment_contact_number) setPaymentContactNumber(data.payment_contact_number);
         if (data.payment_instructions) setPaymentInstructions(data.payment_instructions);
         if (data.payment_notes) setPaymentNotes(data.payment_notes);
@@ -62,8 +87,38 @@ export default function SettingsPage() {
       .catch(err => console.error("Error fetching settings:", err));
   }, []);
 
+  const addBankAccount = () => {
+    setBankAccounts(prev => [
+      ...prev,
+      {
+        id: `acc_${Date.now()}`,
+        bank_name: "",
+        bank_account_name: prev[0]?.bank_account_name || "ICT Academy",
+        bank_account_number: "",
+        bank_branch: ""
+      }
+    ]);
+  };
+
+  const removeBankAccount = (index) => {
+    if (bankAccounts.length <= 1) {
+      alert("At least one bank account must remain.");
+      return;
+    }
+    setBankAccounts(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateBankAccount = (index, field, value) => {
+    setBankAccounts(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
   const save = async () => {
     try {
+      const primaryAccount = bankAccounts[0] || {};
       const response = await fetch(`${API_URL}/api/admin/settings`, {
         method: "POST",
         headers: {
@@ -80,10 +135,12 @@ export default function SettingsPage() {
           email_notifications: String(tog.email),
           sms_alerts: String(tog.sms),
           maintenance_mode: String(tog.maintenance),
-          bank_name: bankName,
-          bank_account_name: bankAccountName,
-          bank_account_number: bankAccountNumber,
-          bank_branch: bankBranch,
+          bank_accounts: bankAccounts,
+          // Legacy fields synchronization
+          bank_name: primaryAccount.bank_name || "",
+          bank_account_name: primaryAccount.bank_account_name || "",
+          bank_account_number: primaryAccount.bank_account_number || "",
+          bank_branch: primaryAccount.bank_branch || "",
           payment_contact_number: paymentContactNumber,
           payment_instructions: paymentInstructions,
           payment_notes: paymentNotes,
@@ -101,17 +158,19 @@ export default function SettingsPage() {
     }
   };
 
-  const copyPreview = (text) => {
+  const copyPreview = (text, id) => {
     navigator.clipboard?.writeText(text);
-    setPreviewCopied(true);
-    setTimeout(() => setPreviewCopied(false), 2000);
+    setPreviewCopiedId(id);
+    setTimeout(() => setPreviewCopiedId(null), 2000);
   };
 
   return (
-    <div style={{ animation: "fadeIn 0.25s ease", maxWidth: 800 }}>
+    <div style={{ animation: "fadeIn 0.25s ease", maxWidth: 840 }}>
       <div style={{ marginBottom: 24 }}>
         <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)" }}>Settings</h2>
-        <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 3 }}>Manage your LMS configuration & student payment details</p>
+        <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 3 }}>
+          Manage your LMS configuration, multiple bank accounts & student payment details
+        </p>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
@@ -123,9 +182,9 @@ export default function SettingsPage() {
                 {Ic.bank(20)}
               </div>
               <div>
-                <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>Student Payment & Bank Transfer Details</h3>
+                <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>Student Payment & Bank Accounts</h3>
                 <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
-                  Set the bank account and payment guidelines visible on the student dashboard
+                  Add multiple bank accounts (BOC, Commercial Bank, Sampath, etc.) visible on the student portal
                 </p>
               </div>
             </div>
@@ -144,37 +203,116 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: 18 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-              <Input
-                label="Bank Name (බැංකුවේ නම) *"
-                placeholder="e.g. Bank of Ceylon (BOC) / Commercial Bank"
-                value={bankName}
-                onChange={e => setBankName(e.target.value)}
-              />
-              <Input
-                label="Bank Branch (ශාඛාව) *"
-                placeholder="e.g. Colombo Super Branch / Kandy"
-                value={bankBranch}
-                onChange={e => setBankBranch(e.target.value)}
-              />
+          <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: 20 }}>
+            {/* Multiple Bank Accounts List */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", letterSpacing: "0.2px" }}>
+                  Configured Bank Accounts ({bankAccounts.length})
+                </span>
+                <button
+                  type="button"
+                  onClick={addBankAccount}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "7px 14px",
+                    borderRadius: 8,
+                    background: "rgba(37,99,235,0.08)",
+                    color: "#2563EB",
+                    border: "1px solid rgba(37,99,235,0.3)",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 0.15s"
+                  }}
+                >
+                  {Ic.plus(13)} Add Another Bank Account (තවත් බැංකුවක් එකතු කරන්න)
+                </button>
+              </div>
+
+              {bankAccounts.map((acc, index) => (
+                <div
+                  key={acc.id || index}
+                  style={{
+                    padding: "18px",
+                    borderRadius: 12,
+                    border: "1.5px solid var(--border-color)",
+                    background: "var(--bg-card-subtle)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 14,
+                    position: "relative"
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--border-color)", paddingBottom: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#2563EB", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700 }}>
+                        {index + 1}
+                      </span>
+                      <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>
+                        {acc.bank_name ? acc.bank_name : `Bank Account #${index + 1}`}
+                      </strong>
+                    </div>
+
+                    {bankAccounts.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeBankAccount(index)}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                          padding: "4px 8px",
+                          borderRadius: 6,
+                          border: "1px solid rgba(239,68,68,0.25)",
+                          background: "rgba(239,68,68,0.06)",
+                          color: "#EF4444",
+                          fontSize: 11,
+                          fontWeight: 500,
+                          cursor: "pointer"
+                        }}
+                      >
+                        {Ic.trash(12)} Remove
+                      </button>
+                    )}
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                    <Input
+                      label="Bank Name (බැංකුවේ නම) *"
+                      placeholder="e.g. Bank of Ceylon (BOC) / Commercial Bank"
+                      value={acc.bank_name}
+                      onChange={e => updateBankAccount(index, "bank_name", e.target.value)}
+                    />
+                    <Input
+                      label="Bank Branch (ශාඛාව) *"
+                      placeholder="e.g. Colombo Super Branch / Kandy"
+                      value={acc.bank_branch}
+                      onChange={e => updateBankAccount(index, "bank_branch", e.target.value)}
+                    />
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                    <Input
+                      label="Account Number (ගිණුම් අංකය) *"
+                      placeholder="e.g. 8001234567"
+                      value={acc.bank_account_number}
+                      onChange={e => updateBankAccount(index, "bank_account_number", e.target.value)}
+                    />
+                    <Input
+                      label="Account Holder Name (ගිණුම් හිමියාගේ නම) *"
+                      placeholder="e.g. ICT Academy / Anuradha Athukorala"
+                      value={acc.bank_account_name}
+                      onChange={e => updateBankAccount(index, "bank_account_name", e.target.value)}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-              <Input
-                label="Account Number (ගිණුම් අංකය) *"
-                placeholder="e.g. 8001234567"
-                value={bankAccountNumber}
-                onChange={e => setBankAccountNumber(e.target.value)}
-              />
-              <Input
-                label="Account Holder Name (ගිණුම් හිමියාගේ නම) *"
-                placeholder="e.g. ICT Academy / Anuradha Athukorala"
-                value={bankAccountName}
-                onChange={e => setBankAccountName(e.target.value)}
-              />
-            </div>
-
+            {/* General Guidelines & WhatsApp Contact */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 14 }}>
               <Input
                 label="WhatsApp / Slip Verification Number (ගෙවීම් රිසිට්පත් එවිය යුතු WhatsApp අංකය) *"
@@ -231,40 +369,57 @@ export default function SettingsPage() {
             <div style={{ marginTop: 6, padding: "16px", borderRadius: 12, background: "var(--bg-card-subtle)", border: "1px dashed var(--border-subtle)" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                 <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)" }}>
-                  Live Preview (ශිෂ්‍ය Dashboard එකේ පෙනෙන ආකාරය)
+                  Live Preview: Student Portal ({bankAccounts.length} {bankAccounts.length === 1 ? "Account" : "Accounts"})
                 </span>
                 <span style={{ fontSize: 11, color: bankPaymentsEnabled ? "#059669" : "#EF4444", fontWeight: 600 }}>
                   {bankPaymentsEnabled ? "● Visible to Students" : "○ Hidden from Students"}
                 </span>
               </div>
 
-              <div style={{ background: "var(--bg-card)", padding: "16px", borderRadius: 10, border: "1px solid var(--border-color)", display: "flex", flexDirection: "column", gap: 10 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "#2563EB" }}>{bankName || "Bank Name"}</div>
-                    <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Branch: {bankBranch || "Branch"}</div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => copyPreview(bankAccountNumber)}
-                    style={{ display: "flex", alignItems: "center", gap: 4, padding: "5px 10px", borderRadius: 6, border: "1px solid var(--border-subtle)", background: "var(--bg-card-subtle)", fontSize: 11, cursor: "pointer", color: "var(--text-primary)" }}
+              <div style={{ display: "grid", gridTemplateColumns: bankAccounts.length > 1 ? "repeat(auto-fit, minmax(280px, 1fr))" : "1fr", gap: 12 }}>
+                {bankAccounts.map((acc, idx) => (
+                  <div
+                    key={acc.id || idx}
+                    style={{
+                      background: "var(--bg-card)",
+                      padding: "16px",
+                      borderRadius: 10,
+                      border: "1px solid var(--border-color)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10
+                    }}
                   >
-                    {previewCopied ? "✓ Copied" : "Copy A/C"}
-                  </button>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, paddingTop: 6, borderTop: "1px solid var(--border-color)", fontSize: 12 }}>
-                  <div>
-                    <span style={{ color: "var(--text-muted)" }}>Account No: </span>
-                    <strong style={{ fontFamily: "monospace", fontSize: 13 }}>{bankAccountNumber || "0000000000"}</strong>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#2563EB" }}>{acc.bank_name || `Bank #${idx + 1}`}</div>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Branch: {acc.bank_branch || "Branch"}</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => copyPreview(acc.bank_account_number, acc.id || idx)}
+                        style={{ display: "flex", alignItems: "center", gap: 4, padding: "5px 10px", borderRadius: 6, border: "1px solid var(--border-subtle)", background: "var(--bg-card-subtle)", fontSize: 11, cursor: "pointer", color: "var(--text-primary)" }}
+                      >
+                        {previewCopiedId === (acc.id || idx) ? "✓ Copied" : "Copy A/C"}
+                      </button>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 6, borderTop: "1px solid var(--border-color)", fontSize: 12 }}>
+                      <div>
+                        <span style={{ color: "var(--text-muted)" }}>Account No: </span>
+                        <strong style={{ fontFamily: "monospace", fontSize: 13 }}>{acc.bank_account_number || "0000000000"}</strong>
+                      </div>
+                      <div>
+                        <span style={{ color: "var(--text-muted)" }}>Name: </span>
+                        <strong>{acc.bank_account_name || "Account Holder"}</strong>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <span style={{ color: "var(--text-muted)" }}>Name: </span>
-                    <strong>{bankAccountName || "Account Holder"}</strong>
-                  </div>
-                </div>
-                <div style={{ fontSize: 11, color: "var(--text-secondary)", background: "rgba(37,99,235,0.06)", padding: "8px 10px", borderRadius: 6 }}>
-                  💬 WhatsApp Slip to: <strong>{paymentContactNumber || "+94 77 000 0000"}</strong>
-                </div>
+                ))}
+              </div>
+
+              <div style={{ marginTop: 10, fontSize: 11, color: "var(--text-secondary)", background: "rgba(37,99,235,0.06)", padding: "8px 10px", borderRadius: 6 }}>
+                💬 WhatsApp Slip to: <strong>{paymentContactNumber || "+94 77 000 0000"}</strong>
               </div>
             </div>
           </div>
