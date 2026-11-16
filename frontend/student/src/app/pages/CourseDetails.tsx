@@ -1695,15 +1695,15 @@ export function CourseDetails() {
                   </div>
 
                   {/* Payment Method Selector Tabs */}
-                  {bankDetails.bank_payments_enabled !== "false" && (
+                  {bankDetails?.bank_payments_enabled !== "false" && (
                     <div className="grid grid-cols-2 gap-2 p-1 bg-muted/60 rounded-xl border border-border text-xs">
                       <button
                         type="button"
                         onClick={() => setPaymentMethodTab("online")}
                         className={`py-2 px-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                           paymentMethodTab === "online"
-                            ? "bg-card text-blue-600 shadow-xs"
-                            : "text-muted-foreground hover:text-foreground"
+                            ? "bg-card text-blue-600 dark:text-blue-400 shadow-sm border border-border"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
                         }`}
                       >
                         <CreditCard className="w-3.5 h-3.5" />
@@ -1714,8 +1714,8 @@ export function CourseDetails() {
                         onClick={() => setPaymentMethodTab("bank")}
                         className={`py-2 px-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                           paymentMethodTab === "bank"
-                            ? "bg-card text-blue-600 shadow-xs"
-                            : "text-muted-foreground hover:text-foreground"
+                            ? "bg-card text-blue-600 dark:text-blue-400 shadow-sm border border-border"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
                         }`}
                       >
                         <Building2 className="w-3.5 h-3.5" />
@@ -1730,25 +1730,41 @@ export function CourseDetails() {
                       <div className="p-3.5 rounded-xl border border-blue-200/80 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/30 space-y-2.5">
                         <div className="flex justify-between items-center text-xs">
                           <span className="text-muted-foreground">Bank & Branch:</span>
-                          <span className="font-bold text-foreground">
-                            {bankDetails.bank_name} ({bankDetails.bank_branch})
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-foreground">
+                              {bankDetails?.bank_name || "Bank of Ceylon (BOC)"} ({bankDetails?.bank_branch || "Colombo"})
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const text = `${bankDetails?.bank_name || "Bank of Ceylon (BOC)"} (${bankDetails?.bank_branch || "Colombo"})`;
+                                navigator?.clipboard?.writeText ? navigator.clipboard.writeText(text) : null;
+                                setBankCopiedField("bank");
+                                setTimeout(() => setBankCopiedField(null), 2000);
+                              }}
+                              className="text-blue-600 hover:text-blue-700 cursor-pointer"
+                              title="Copy Bank"
+                            >
+                              {bankCopiedField === "bank" ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
                         </div>
 
                         <div className="flex justify-between items-center text-xs pt-1 border-t border-border/50">
                           <span className="text-blue-700 dark:text-blue-300 font-medium">Account Number:</span>
                           <div className="flex items-center gap-1.5">
                             <span className="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">
-                              {bankDetails.bank_account_number}
+                              {bankDetails?.bank_account_number || "0000000000"}
                             </span>
                             <button
                               type="button"
                               onClick={() => {
-                                navigator.clipboard?.writeText(bankDetails.bank_account_number);
+                                const acc = bankDetails?.bank_account_number || "0000000000";
+                                navigator?.clipboard?.writeText ? navigator.clipboard.writeText(acc) : null;
                                 setBankCopiedField("acc");
                                 setTimeout(() => setBankCopiedField(null), 2000);
                               }}
-                              className="px-2 py-0.5 rounded bg-blue-600 text-white text-[10px] font-semibold cursor-pointer"
+                              className="px-2 py-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-semibold cursor-pointer transition-colors"
                             >
                               {bankCopiedField === "acc" ? "Copied!" : "Copy"}
                             </button>
@@ -1757,13 +1773,28 @@ export function CourseDetails() {
 
                         <div className="flex justify-between items-center text-xs pt-1 border-t border-border/50">
                           <span className="text-muted-foreground">Account Name:</span>
-                          <span className="font-bold text-foreground">{bankDetails.bank_account_name}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-foreground">{bankDetails?.bank_account_name || "ICT Academy"}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const accName = bankDetails?.bank_account_name || "ICT Academy";
+                                navigator?.clipboard?.writeText ? navigator.clipboard.writeText(accName) : null;
+                                setBankCopiedField("name");
+                                setTimeout(() => setBankCopiedField(null), 2000);
+                              }}
+                              className="text-blue-600 hover:text-blue-700 cursor-pointer"
+                              title="Copy Name"
+                            >
+                              {bankCopiedField === "name" ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
                         </div>
 
                         <div className="flex justify-between items-center text-xs pt-1 border-t border-border/50">
                           <span className="text-muted-foreground">Amount to Transfer:</span>
                           <span className="font-bold text-emerald-600">
-                            Rs. {Number(payTargetMonth.monthly_price).toLocaleString()}
+                            Rs. {Number(payTargetMonth?.monthly_price || 0).toLocaleString()}
                           </span>
                         </div>
                       </div>
@@ -1777,18 +1808,22 @@ export function CourseDetails() {
                         <p>1. Deposit or transfer the exact amount using Mobile Banking, Online Banking, or CDM.</p>
                         <p>
                           2. <strong>Transfer Remark:</strong> Use{" "}
-                          <span className="font-semibold text-foreground">{currentUser?.name || "Your Name"} - {payTargetMonth.title}</span>
+                          <span className="font-semibold text-foreground">
+                            {currentUserObj?.full_name || currentUserObj?.name || "Your Name"} - {payTargetMonth?.title}
+                          </span>
                         </p>
                         <p>3. Send a photo or screenshot of the receipt/slip to WhatsApp for verification.</p>
                         <p className="text-blue-600 dark:text-blue-400 font-medium pt-1">
-                          ℹ️ {bankDetails.payment_notes || "Approvals take 2-4 hours."}
+                          ℹ️ {bankDetails?.payment_notes || "Approvals take 2-4 hours."}
                         </p>
                       </div>
 
                       {/* WhatsApp Button */}
                       {(() => {
-                        const cleanPhone = (bankDetails.payment_contact_number || "+94770000000").replace(/[^0-9]/g, "");
-                        const waMsg = `Hello ICT Academy! I have transferred the fee for:\nClass: ${course.title}\nMonth: ${payTargetMonth.title}\nAmount: Rs. ${Number(payTargetMonth.monthly_price).toLocaleString()}\nStudent Name: ${currentUser?.name || ""}\nPhone: ${currentUser?.phone || ""}\n\nPlease find my attached bank receipt / deposit slip.`;
+                        const cleanPhone = (bankDetails?.payment_contact_number || "+94770000000").replace(/[^0-9]/g, "");
+                        const studentName = currentUserObj?.full_name || currentUserObj?.name || "Student";
+                        const studentPhone = currentUserObj?.phone || currentUserObj?.phone_number || "";
+                        const waMsg = `Hello ICT Academy! I have transferred the fee for:\nClass: ${course?.title || ""}\nMonth: ${payTargetMonth?.title || ""}\nAmount: Rs. ${Number(payTargetMonth?.monthly_price || 0).toLocaleString()}\nStudent Name: ${studentName}\nPhone: ${studentPhone}\n\nPlease find my attached bank receipt / deposit slip.`;
                         const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(waMsg)}`;
                         return (
                           <div className="flex gap-2.5 pt-1">
